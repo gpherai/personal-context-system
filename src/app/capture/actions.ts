@@ -1,0 +1,36 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+
+import { captureEntry, type CaptureEntryState } from "@/application/context-service";
+import { isRecoverableReadError } from "@/application/errors";
+import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
+
+export async function createEntryAction(
+  _previousState: CaptureEntryState,
+  formData: FormData
+): Promise<CaptureEntryState> {
+  const result = await captureEntry(formData, createPrismaContextRepository()).catch((error: unknown) => {
+    if (isRecoverableReadError(error)) {
+      return {
+        ok: false as const,
+        state: {
+          status: "error" as const,
+          message: "De lokale database is niet beschikbaar. Start PostgreSQL en voer de migrations uit."
+        }
+      };
+    }
+
+    throw error;
+  });
+
+  if (!result.ok) {
+    return result.state;
+  }
+
+  revalidatePath("/");
+  revalidatePath("/ledger");
+  revalidatePath("/cabinet");
+  redirect(`/entries/${result.entry.id}`);
+}

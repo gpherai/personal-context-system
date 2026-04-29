@@ -27,17 +27,22 @@ This file records current architecture decisions and open questions.
 - Full-text search and structured filtering come before any vector search or embeddings.
 - `detective`, `knowledge-base`, and `sanatana-kalender` remain separate canonical systems.
 - Use Context7 or official documentation lookup for up-to-date framework/library guidance when implementation decisions depend on current APIs.
+- Use npm as the package manager for this repository. Node and npm are already installed in the Fedora/Incus environment; pnpm is not installed.
+- Use Docker Compose for the default local PostgreSQL setup. It reduces setup friction without hiding the database model.
+- Use Tailwind CSS v4 with CSS-first theme tokens and PostCSS.
+- Use Prisma ORM 7 with `prisma.config.ts`, explicit generated client output under `src/generated/prisma`, and `@prisma/adapter-pg`.
+- Use the local `ui-ux-pro-max` skill for UI/UX direction when building or revising interface surfaces.
+- The initial implementation should include Dashboard, Capture, Ledger, Cabinet, Entry detail, Command Center, generated context mirror, and the supporting domain/application layers.
+- Use npm `overrides` only for narrow transitive security fixes when the latest direct package pins a vulnerable transitive version and the audit-suggested fix would downgrade major framework versions.
 
 ## Proposed
 
-- Docker Compose may be included from the start if it reduces PostgreSQL setup friction.
 - Prisma should be the default database layer; lower-level SQL can be added only for search/query cases where Prisma is awkward.
 
 ## Needs Discussion
 
 - Final storage model for generated files.
-- Whether to include Docker from the start.
 - Whether to use Prisma only or Prisma plus lower-level SQL for advanced search.
 - Full-text search approach.
-- Theme/design system direction.
-- Whether to install and use the local `ui-ux-pro-max` skill in this repository.
+- Whether to add local authentication once the app contains daily-use data.
+- Whether to add vector search after relational/full-text retrieval is proven insufficient.

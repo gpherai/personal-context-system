@@ -1,0 +1,302 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum EntryType {
+  observation
+  question
+  insight
+  suspicion
+  reflection
+  open_loop
+  decision
+  project_note
+  media_note
+  event_reflection
+  practice_note
+  ai_conversation_note
+}
+
+enum EntryStatus {
+  active
+  archived
+  draft
+}
+
+enum PrivacyLevel {
+  private
+  sensitive
+  shareable
+}
+
+enum RecordStatus {
+  active
+  archived
+}
+
+enum QuestionStatus {
+  open
+  active
+  parked
+  answered
+  reframed
+  abandoned
+}
+
+enum ObjectType {
+  entry
+  theme
+  project
+  question
+  thread
+  reference
+  attachment
+}
+
+enum RelationType {
+  relates_to
+  mentions
+  expands
+  contradicts
+  supports
+  questions
+  answers
+  reframes
+  part_of
+  inspired_by
+  external_reference
+}
+
+enum ReferenceKind {
+  url
+  book
+  article
+  film
+  game
+  repository
+  external_record
+  other
+}
+
+model Entry {
+  id           String       @id @default(cuid())
+  type         EntryType
+  status       EntryStatus  @default(active)
+  title        String       @db.VarChar(240)
+  body         String       @db.Text
+  summary      String?      @db.Text
+  source       String?      @db.VarChar(240)
+  confidence   Float?
+  privacyLevel PrivacyLevel @default(private)
+  occurredAt   DateTime?    @db.Timestamptz(6)
+  capturedAt   DateTime     @default(now()) @db.Timestamptz(6)
+  createdAt    DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime     @updatedAt @db.Timestamptz(6)
+  metadata     Json         @default("{}")
+
+  themes              EntryTheme[]
+  projects            EntryProject[]
+  questions           EntryQuestion[]
+  threads             EntryThread[]
+  references          EntryReference[]
+  attachments         EntryAttachment[]
+  originatedQuestions Question[]        @relation("QuestionOrigin")
+
+  @@index([type])
+  @@index([status])
+  @@index([privacyLevel])
+  @@index([capturedAt])
+  @@index([occurredAt])
+}
+
+model Theme {
+  id            String       @id @default(cuid())
+  slug          String       @unique @db.VarChar(120)
+  name          String       @db.VarChar(160)
+  description   String?      @db.Text
+  status        RecordStatus @default(active)
+  parentThemeId String?
+  metadata      Json         @default("{}")
+  createdAt     DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime     @updatedAt @db.Timestamptz(6)
+
+  parent  Theme?       @relation("ThemeTree", fields: [parentThemeId], references: [id], onDelete: SetNull)
+  children Theme[]      @relation("ThemeTree")
+  entries  EntryTheme[]
+
+  @@index([status])
+  @@index([parentThemeId])
+}
+
+model Project {
+  id          String       @id @default(cuid())
+  slug        String       @unique @db.VarChar(120)
+  name        String       @db.VarChar(180)
+  description String?      @db.Text
+  status      RecordStatus @default(active)
+  metadata    Json         @default("{}")
+  createdAt   DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime     @updatedAt @db.Timestamptz(6)
+
+  entries EntryProject[]
+
+  @@index([status])
+}
+
+model Question {
+  id            String         @id @default(cuid())
+  prompt        String         @db.Text
+  status        QuestionStatus @default(open)
+  summary       String?        @db.Text
+  originEntryId String?
+  metadata      Json           @default("{}")
+  createdAt     DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime       @updatedAt @db.Timestamptz(6)
+
+  originEntry Entry?          @relation("QuestionOrigin", fields: [originEntryId], references: [id], onDelete: SetNull)
+  entries     EntryQuestion[]
+
+  @@index([status])
+  @@index([originEntryId])
+}
+
+model Thread {
+  id          String       @id @default(cuid())
+  slug        String       @unique @db.VarChar(120)
+  title       String       @db.VarChar(180)
+  description String?      @db.Text
+  status      RecordStatus @default(active)
+  metadata    Json         @default("{}")
+  createdAt   DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime     @updatedAt @db.Timestamptz(6)
+
+  entries EntryThread[]
+
+  @@index([status])
+}
+
+model Reference {
+  id          String        @id @default(cuid())
+  kind        ReferenceKind @default(url)
+  title       String        @db.VarChar(220)
+  url         String?       @db.Text
+  description String?       @db.Text
+  metadata    Json          @default("{}")
+  createdAt   DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime      @updatedAt @db.Timestamptz(6)
+
+  entries EntryReference[]
+
+  @@index([kind])
+}
+
+model Attachment {
+  id          String   @id @default(cuid())
+  path        String   @db.Text
+  mediaType   String?  @db.VarChar(160)
+  checksum    String?  @db.VarChar(128)
+  sizeBytes   BigInt?
+  title       String?  @db.VarChar(220)
+  description String?  @db.Text
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(6)
+
+  entries EntryAttachment[]
+
+  @@index([checksum])
+}
+
+model Relationship {
+  id           String       @id @default(cuid())
+  fromType     ObjectType
+  fromId       String
+  toType       ObjectType
+  toId         String
+  relationType RelationType
+  note         String?      @db.Text
+  createdAt    DateTime     @default(now()) @db.Timestamptz(6)
+
+  @@index([fromType, fromId])
+  @@index([toType, toId])
+  @@index([relationType])
+}
+
+model EntryTheme {
+  entryId   String
+  themeId   String
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  entry Entry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  theme Theme @relation(fields: [themeId], references: [id], onDelete: Cascade)
+
+  @@id([entryId, themeId])
+  @@index([themeId])
+}
+
+model EntryProject {
+  entryId   String
+  projectId String
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  entry   Entry   @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@id([entryId, projectId])
+  @@index([projectId])
+}
+
+model EntryQuestion {
+  entryId    String
+  questionId String
+  createdAt  DateTime @default(now()) @db.Timestamptz(6)
+
+  entry    Entry    @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@id([entryId, questionId])
+  @@index([questionId])
+}
+
+model EntryThread {
+  entryId   String
+  threadId  String
+  position  Int
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  entry  Entry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  thread Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@id([entryId, threadId])
+  @@index([threadId])
+  @@unique([threadId, position])
+}
+
+model EntryReference {
+  entryId     String
+  referenceId String
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+
+  entry     Entry     @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  reference Reference @relation(fields: [referenceId], references: [id], onDelete: Cascade)
+
+  @@id([entryId, referenceId])
+  @@index([referenceId])
+}
+
+model EntryAttachment {
+  entryId      String
+  attachmentId String
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+
+  entry      Entry      @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  attachment Attachment @relation(fields: [attachmentId], references: [id], onDelete: Cascade)
+
+  @@id([entryId, attachmentId])
+  @@index([attachmentId])
+}

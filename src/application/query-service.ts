@@ -1,0 +1,30 @@
+import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
+
+export async function getDashboardOverview() {
+  return createPrismaContextRepository().getDashboardOverview();
+}
+
+export async function getEntryById(id: string) {
+  return createPrismaContextRepository().getEntry(id);
+}
+
+export async function getThemeBySlug(slug: string) {
+  return createPrismaContextRepository().getThemeBySlug(slug);
+}
+
+export async function getProjectBySlug(slug: string) {
+  return createPrismaContextRepository().getProjectBySlug(slug);
+}
+
+export async function getQuestionById(id: string) {
+  return createPrismaContextRepository().getQuestion(id);
+}
+
+export async function getLedgerEntries(params?: URLSearchParams) {
+  const { listEntries } = await import("./context-service");
+  return listEntries(createPrismaContextRepository(), params);
+}
+
+export async function getContextMirrorSnapshot() {
+  return createPrismaContextRepository().getContextMirrorSnapshot();
+}

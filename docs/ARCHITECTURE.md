@@ -507,13 +507,14 @@ This is not an MVP-only design, but implementation still needs order:
 10. Add graph/map view once relationship data exists.
 11. Add MCP adapter when the core domain and context services are stable.
 
-## Next Design Artifacts
+## Detailed Design Artifacts
 
-Create these before implementation:
+The canonical detailed design is split across:
 
 - `docs/DATA-MODEL.md`
 - `docs/UI-IA.md`
 - `docs/AI-CONTEXT.md`
 - `docs/LOCAL-OPERATION.md`
-- initial Prisma model sketch
-- initial context mirror example files
+- `docs/ENGINEERING.md`
+
+Use this document for the system-level shape. Use the focused documents for implementation rules, data-field details, UI flows, local operations, and AI projection behavior.

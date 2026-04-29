@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:18-alpine
+    container_name: personal-context-system-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pcs
+      POSTGRES_PASSWORD: pcs
+      POSTGRES_DB: personal_context_system
+    ports:
+      - "54329:5432"
+    volumes:
+      - pcs-postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pcs -d personal_context_system"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pcs-postgres-data:
