@@ -1,0 +1,519 @@
+# Personal Context System - Architecture
+
+Updated: 2026-04-29
+
+## Purpose
+
+Personal Context System is a private single-user application for capturing, structuring, connecting, and reusing Gerald's personal context with AI.
+
+It is not a generator app, todo app, public knowledge base, or external investigation database. It is the personal context layer around Gerald's thoughts, observations, active questions, projects, themes, and AI workflows.
+
+## Target Shape
+
+The system is a local-first private web application with a structured database core and deliberately generated AI-facing projections.
+
+Baseline architecture:
+
+- Next.js application for the main user experience.
+- PostgreSQL as canonical source of truth.
+- Prisma as the primary typed persistence layer.
+- Zod for runtime validation at external and application boundaries.
+- Generated markdown and JSON context mirror under `data/context-mirror`.
+- Application services that own writes and enforce invariants.
+- Future CLI and MCP server as adapters over the same application and context services.
+
+Core distinction:
+
+- The database stores durable personal context.
+- The app edits and explores that context.
+- The context mirror publishes selected AI-readable views.
+- AI tools consume the mirror, CLI, read-only database access, or future MCP resources.
+- AI write actions, if added, go through explicit validated commands.
+
+## Scope
+
+In scope:
+
+- Personal thoughts, observations, questions, reflections, interests, projects, and recurring themes.
+- Gerald's interpretation of external events.
+- References to media, code projects, spiritual practice, research topics, and AI conversations.
+- AI-readable context assembly.
+- Local search, filtering, linking, review, and export.
+
+Out of scope for the core system:
+
+- Full external-world investigation datasets. Those belong in `detective`.
+- Canonical Sanatana knowledge modeling. That belongs in `knowledge-base` or `sanatana-kalender`.
+- Calendar replacement, habit tracking, recurring todos, and general task management.
+- Autonomous AI mutation of the knowledge base.
+
+## Architecture Goals
+
+Optimize for:
+
+- Long-lived personal knowledge.
+- Low-friction daily capture.
+- Retrieval by time, theme, project, question, type, and relationship.
+- Safe AI interoperability.
+- Clear code ownership boundaries.
+- Generated artifacts that can be inspected and rebuilt.
+- Operation that remains understandable with AI-assisted development.
+
+Avoid:
+
+- Split-brain source of truth between database and markdown.
+- Premature graph complexity.
+- Treating AI chat as the core product.
+- Direct database mutation from UI or AI tools.
+- Turning loose thoughts into second-class records.
+
+## Code Layers
+
+Recommended source layout:
+
+```txt
+src/domain          types, schemas, invariants
+src/application     use cases and workflows
+src/repositories    repository interfaces
+src/infrastructure  Prisma, file projections, search, adapters
+src/ai-context      context builders, mirror generation, future MCP resources
+src/app             Next.js routes, pages, server actions
+src/components      UI components
+```
+
+Rules:
+
+- UI components do not call Prisma directly.
+- Server actions call application services.
+- Application services validate commands and enforce invariants.
+- Repositories hide Prisma details from domain and application layers.
+- Projection builders read durable state and generate files deterministically.
+
+## Core Domain Model
+
+### Entry
+
+`Entry` is the central capture unit.
+
+Likely fields:
+
+- `id`
+- `type`
+- `title`
+- `body`
+- `summary`
+- `capturedAt`
+- `occurredAt`
+- `updatedAt`
+- `status`
+- `source`
+- `confidence`
+- `privacyLevel`
+- `metadata`
+
+Suggested types:
+
+- `observation`
+- `question`
+- `insight`
+- `suspicion`
+- `reflection`
+- `open_loop`
+- `decision`
+- `project_note`
+- `media_note`
+- `event_reflection`
+- `practice_note`
+- `ai_conversation_note`
+
+Types should guide validation and UI affordances without forcing every entry into a rigid form.
+
+### Theme
+
+`Theme` represents a recurring area of attention or meaning.
+
+Likely fields:
+
+- `id`
+- `slug`
+- `name`
+- `description`
+- `parentThemeId`
+- `status`
+- `metadata`
+
+Themes can support hierarchy lightly, but the system should not require a full ontology.
+
+### Project
+
+`Project` represents a concrete creative, technical, study, or research effort.
+
+Projects connect entries, decisions, questions, references, and summaries. Examples include `personal-context-system`, `detective`, `sanatana-kalender`, `knowledge-base`, MSc work, and AI workflow experiments.
+
+### Question
+
+`Question` deserves first-class treatment because active questions are one of the highest-value AI context surfaces.
+
+Statuses:
+
+- `open`
+- `active`
+- `parked`
+- `answered`
+- `reframed`
+- `abandoned`
+
+A question can originate from an entry, belong to themes/projects, and link to entries that answer, complicate, or reframe it.
+
+### Thread
+
+`Thread` is a curated sequence of entries around a continuing line of thought. It is useful when a topic becomes more than a tag but less than a formal project.
+
+### Relationship
+
+Relationships connect domain objects while keeping graph complexity controlled.
+
+Recommended fields:
+
+- `fromType`
+- `fromId`
+- `toType`
+- `toId`
+- `relationType`
+- `note`
+- `createdAt`
+
+Suggested relation types:
+
+- `relates_to`
+- `mentions`
+- `expands`
+- `contradicts`
+- `supports`
+- `questions`
+- `answers`
+- `reframes`
+- `part_of`
+- `inspired_by`
+- `external_reference`
+
+The graph/map view should emerge from explicit links; it should not become the primary editing model too early.
+
+### Attachment
+
+Attachments are files with database metadata.
+
+Examples:
+
+- screenshots
+- PDFs
+- exported AI conversations
+- images
+- audio notes
+- source documents
+
+Track path, media type, checksum, size, title, description, and related domain objects.
+
+### Reference
+
+References are lightweight pointers to external material such as URLs, books, films, games, articles, repositories, or records in external apps.
+
+The system should support references without becoming a full bibliography manager.
+
+## Data Modeling Strategy
+
+Use a hybrid schema:
+
+- Stable, commonly queried fields become relational columns.
+- Flexible type-specific fields live in `metadata` JSONB.
+- Zod schemas validate metadata per entry type where useful.
+- Prisma models define durable structure and migrations.
+
+Important indexes:
+
+- entry `type`
+- entry `capturedAt`
+- entry `occurredAt`
+- entry `status`
+- theme/project/question slugs
+- relationship endpoints
+- full-text index over title/body/summary
+- JSONB indexes only where query patterns justify them
+
+## Write Path
+
+All mutations follow one path:
+
+```txt
+UI / CLI / future MCP tool
+  -> application command
+  -> Zod validation
+  -> domain rules
+  -> repository interface
+  -> Prisma transaction
+  -> optional projection rebuild or invalidation
+```
+
+File projections are generated after durable writes. Generated files are not edited by hand.
+
+## Read Path
+
+Reads are split by purpose:
+
+- UI reads: typed application queries for screens and interactions.
+- AI context reads: context builders optimized for usefulness and compactness.
+- Search reads: text and filter retrieval.
+- Maintenance reads: debugging, export, backup, and projection inspection.
+
+## Context Mirror
+
+`data/context-mirror` is a deterministic generated projection of selected database state.
+
+Possible structure:
+
+```txt
+data/context-mirror/
+  manifest.json
+  ai-index.md
+  today.md
+  recent.md
+  open-questions.md
+  projects/
+  themes/
+  entries/
+  threads/
+  timeline/
+```
+
+The mirror should include:
+
+- stable generated paths
+- source IDs
+- generation timestamp
+- concise summaries
+- related object links
+- enough metadata for AI filtering
+
+The mirror should not include:
+
+- secrets
+- raw private attachments by default
+- every internal database field
+- generated speculation presented as fact
+
+Markdown is for human and AI reading. JSON is for scripts, tests, future MCP resources, and deterministic tooling.
+
+## AI Access Model
+
+Recommended progression:
+
+1. Generated context mirror.
+2. Helper CLI over generated context and application queries.
+3. Read-only database user or local query helper.
+4. MCP server exposing resources and validated tools.
+5. Optional in-app AI chat.
+
+The MCP server is an adapter, not the architectural core. It should call the same application services and context builders as the UI and CLI.
+
+Possible MCP resources:
+
+- `pcs://today`
+- `pcs://theme/{slug}`
+- `pcs://project/{slug}`
+- `pcs://open-questions`
+- `pcs://entry/{id}`
+
+Possible MCP tools:
+
+- `search_entries`
+- `get_context`
+- `create_observation`
+- `link_entries`
+- `summarize_thread`
+
+AI write access should remain explicit, validated, and auditable.
+
+## Future CLI
+
+The CLI supports terminal and external AI workflows.
+
+Read commands:
+
+```txt
+pcs context today
+pcs context topic <slug>
+pcs context project <slug>
+pcs context questions
+pcs search <query>
+pcs entry show <id>
+pcs mirror status
+```
+
+Maintenance command:
+
+```txt
+pcs mirror rebuild
+```
+
+Later write commands:
+
+```txt
+pcs capture observation
+pcs capture question
+pcs link <from> <relation> <to>
+```
+
+Non-interactive commands are preferred for AI/tool use.
+
+## Search And Retrieval
+
+Start with PostgreSQL search:
+
+- full-text search over entries
+- filtering by type/status/date/theme/project
+- saved filters for repeated command-center queries
+- trigram similarity later if fuzzy matching becomes valuable
+
+Embeddings and vector search are deferred. If added later, store embeddings separately, record provider/model/version, make re-embedding explicit, and never make embeddings the only retrieval mechanism.
+
+## UI Information Architecture
+
+Recommended routes:
+
+```txt
+/
+/capture
+/ledger
+/cabinet
+/map
+/command
+/entries/[id]
+/themes/[slug]
+/projects/[slug]
+/questions/[id]
+/threads/[slug]
+/settings
+```
+
+Primary screens:
+
+- Dashboard: today, current questions, current projects, active themes, recent entries.
+- Capture: fast entry creation with type, title/body, themes, project, and occurred date.
+- Ledger: chronological thinking stream with filters.
+- Cabinet: structured browsing by type/theme/project/question.
+- Map: relationship exploration, secondary to cabinet/ledger.
+- Command: context builder, projection status, saved searches, and AI export surfaces.
+
+First build surface: Dashboard, Capture, Ledger, and Entry detail.
+
+## UI Direction
+
+Use a restrained professional interface:
+
+- dense but calm layouts
+- excellent filtering and scanning
+- keyboard-friendly capture
+- clear empty states
+- type/status badges with limited color use
+- stable navigation between entries, themes, projects, questions, and threads
+
+Avoid a marketing-site feel, diary-toy feel, or generic admin-panel feel.
+
+When implementation starts, use Context7 or official documentation lookup for current framework/library guidance before locking in details that may have changed.
+
+## Local Operation
+
+Recommended setup:
+
+- Next.js app running locally.
+- PostgreSQL via local service or Docker Compose.
+- Prisma migrations committed once implementation starts.
+- `data/context-mirror` generated locally and ignored by default.
+- `data/attachments` and `data/exports` excluded from source control by default.
+
+Docker Compose is useful from the start if it reduces setup friction. It should not hide how the system works.
+
+## Privacy And Safety
+
+Defaults:
+
+- no external telemetry
+- no cloud sync
+- no public deployment assumption
+- no AI provider calls without explicit configuration
+- conservative context mirror privacy policy
+- documented backup process before daily-use dependence
+
+Simple local authentication can be added later. The first real security boundary is the local machine and filesystem.
+
+## Backups And Export
+
+Minimum backup surfaces:
+
+- PostgreSQL dump
+- `data/attachments`
+- schema and migration history
+
+Generated context mirror can be rebuilt, but may be included in backups for convenience.
+
+Useful export formats:
+
+- full JSON export
+- markdown export by date/theme/project
+- compact AI context bundle
+
+Exports should preserve source IDs.
+
+## External Project Boundaries
+
+### detective
+
+`detective` owns structured external-world investigations.
+
+This system may store Gerald's reflections, active questions, links to detective records, and copied summaries with provenance. It should not store canonical people/org/event/source graphs, investigation datasets, or evidence boards as primary data.
+
+### knowledge-base and sanatana-kalender
+
+Those systems own structured Sanatana knowledge and calendar/practice mechanics.
+
+This system may store personal practice reflections, study questions, links to knowledge-base topics, and project notes. It should not become the canonical scripture/source/topic database.
+
+## Testing Strategy
+
+Focus testing where mistakes would damage trust:
+
+- domain validation for entry types and relationships
+- application service tests for create/update/link workflows
+- repository integration tests around Prisma transactions
+- projection tests for generated markdown/json shapes
+- search tests for expected retrieval behavior
+- UI smoke tests for capture, ledger, cabinet, and command surfaces
+
+Generated context is product behavior and should be tested.
+
+## Implementation Sequence
+
+This is not an MVP-only design, but implementation still needs order:
+
+1. Scaffold TypeScript, Next.js, Tailwind, Prisma, Zod, and the folder structure.
+2. Define the first Prisma schema for entries, themes, projects, questions, threads, relationships, references, and attachments.
+3. Build domain schemas and application services for capture, update, link, and query.
+4. Build Dashboard, Capture, Ledger, and Entry detail.
+5. Add Cabinet views for themes, projects, and questions.
+6. Add context mirror generation with markdown and JSON projections.
+7. Add search and saved filters.
+8. Add Command Center for context building and mirror inspection.
+9. Add CLI adapter over context/query services.
+10. Add graph/map view once relationship data exists.
+11. Add MCP adapter when the core domain and context services are stable.
+
+## Next Design Artifacts
+
+Create these before implementation:
+
+- `docs/DATA-MODEL.md`
+- `docs/UI-IA.md`
+- `docs/AI-CONTEXT.md`
+- `docs/LOCAL-OPERATION.md`
+- initial Prisma model sketch
+- initial context mirror example files

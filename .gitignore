@@ -1,0 +1,26 @@
+# Local assistant/config state
+.codex/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Dependencies and build output
+node_modules/
+.next/
+dist/
+build/
+coverage/
+test-results/
+playwright-report/
+*.tsbuildinfo
+
+# Generated and private data
+data/context-mirror/
+data/attachments/
+data/exports/
+
+# Logs and OS/editor noise
+*.log
+.DS_Store
