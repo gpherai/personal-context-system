@@ -26,6 +26,10 @@ Initial target files:
 - `ai-index.md`
 - `today.md`
 - `ai-bundle.md`
+- `bundles/local-full.md`
+- `bundles/shareable-only.md`
+- `bundles/projects/{slug}.md`
+- `bundles/questions/{id}.md`
 - `recent.md`
 - `question-queue.md`
 - `projects/index.md`
@@ -62,10 +66,10 @@ Default inclusion:
 
 Future export modes should allow stricter bundles:
 
-- `local-full`
-- `shareable-only`
-- `project-scoped`
-- `question-scoped`
+- `local-full`: all locally readable entries and the question queue
+- `shareable-only`: only entries marked `shareable`
+- `project-scoped`: one bundle per project
+- `question-scoped`: one bundle per tracked question
 
 ## Context Builders
 

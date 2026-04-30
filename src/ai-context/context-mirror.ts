@@ -103,6 +103,55 @@ function recentList(entries: EntryRecord[]): string {
     .join("\n");
 }
 
+function entryList(entries: EntryRecord[]): string {
+  if (!entries.length) {
+    return "- None";
+  }
+
+  return entries
+    .map(
+      (entry) =>
+        `- ${formatDate(entry.occurredAt ?? entry.capturedAt)} [${entry.type}/${entry.status}/${entry.privacyLevel}] ${entry.title} (${entry.id})\n  - ${excerpt(entry)}`
+    )
+    .join("\n");
+}
+
+function bundleMarkdown({
+  title,
+  generatedAtIso,
+  scope,
+  entries,
+  questions = []
+}: {
+  title: string;
+  generatedAtIso: string;
+  scope: string;
+  entries: EntryRecord[];
+  questions?: QuestionRecord[];
+}): string {
+  return [
+    `# ${title}`,
+    "",
+    `Generated: ${generatedAtIso}`,
+    `Scope: ${scope}`,
+    "Source of truth: PostgreSQL.",
+    "",
+    "## Counts",
+    "",
+    `- entries: ${entries.length}`,
+    `- questions: ${questions.length}`,
+    "",
+    "## Questions",
+    "",
+    questionList(questions),
+    "",
+    "## Entries",
+    "",
+    entryList(entries),
+    ""
+  ].join("\n");
+}
+
 function entryJson(entry: EntryRecord): string {
   return JSON.stringify(
     {
@@ -228,6 +277,29 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
     ].join("\n")
   });
 
+  const shareableEntries = snapshot.entries.filter((entry) => entry.privacyLevel === "shareable");
+
+  files.push({
+    path: "bundles/local-full.md",
+    contents: bundleMarkdown({
+      title: "Local Full Context Bundle",
+      generatedAtIso,
+      scope: "local-full",
+      entries: snapshot.entries,
+      questions: snapshot.openQuestions
+    })
+  });
+
+  files.push({
+    path: "bundles/shareable-only.md",
+    contents: bundleMarkdown({
+      title: "Shareable Context Bundle",
+      generatedAtIso,
+      scope: "shareable-only",
+      entries: shareableEntries
+    })
+  });
+
   files.push({
     path: "themes/index.md",
     contents: ["# Themes", "", `Generated: ${generatedAtIso}`, "", namedList("Themes", snapshot.themes), ""].join("\n")
@@ -259,6 +331,10 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
 
   for (const project of snapshot.projects) {
     const entries = slugSectionEntries(snapshot.entries, "project", project.slug);
+    const projectQuestions = snapshot.openQuestions.filter((question) =>
+      entries.some((entry) => entry.questions.some((entryQuestion) => entryQuestion.id === question.id))
+    );
+
     files.push({
       path: `projects/${project.slug}.md`,
       contents: [
@@ -274,12 +350,40 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
         ""
       ].join("\n")
     });
+
+    files.push({
+      path: `bundles/projects/${project.slug}.md`,
+      contents: bundleMarkdown({
+        title: `${project.name} Project Context Bundle`,
+        generatedAtIso,
+        scope: `project:${project.slug}`,
+        entries,
+        questions: projectQuestions
+      })
+    });
   }
 
   files.push({
     path: "threads/index.md",
     contents: ["# Threads", "", `Generated: ${generatedAtIso}`, "", threadList(snapshot.threads), ""].join("\n")
   });
+
+  for (const question of snapshot.openQuestions) {
+    const entries = snapshot.entries.filter((entry) =>
+      entry.questions.some((entryQuestion) => entryQuestion.id === question.id)
+    );
+
+    files.push({
+      path: `bundles/questions/${question.id}.md`,
+      contents: bundleMarkdown({
+        title: "Question Context Bundle",
+        generatedAtIso,
+        scope: `question:${question.id}`,
+        entries,
+        questions: [question]
+      })
+    });
+  }
 
   files.push({
     path: "entries/index.json",

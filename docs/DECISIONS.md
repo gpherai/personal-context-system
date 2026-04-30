@@ -48,6 +48,7 @@ Updated: 2026-04-30
 - Question status semantics are fixed as: `open` = captured but not currently worked, `active` = currently worked, `parked` = intentionally deferred, `answered` = resolved, `reframed` = superseded by a clearer question, `abandoned` = no longer useful enough to keep active.
 - Dashboard and Cabinet use separate read models. Dashboard shows current working context; Cabinet is the structured archive/browser and must not label ordinary recent entries as archived.
 - `Reference` records are the primary model for external material. The `external_reference` relationship type is reserved for explicit links to external app/database records when creating a full Reference would be the wrong abstraction.
+- Context bundle variants are generated as mirror files first: `local-full`, `shareable-only`, `project-scoped`, and `question-scoped`. No MeiliSearch, vector search, or embedding dependency is introduced for this stage.
 
 ### Technology choices
 - Use npm as the package manager for this repository. Node and npm are already installed in the Fedora/Incus environment; pnpm is not installed.

@@ -280,6 +280,12 @@ data/context-mirror/
   manifest.json
   ai-index.md
   today.md
+  ai-bundle.md
+  bundles/
+    local-full.md
+    shareable-only.md
+    projects/{slug}.md
+    questions/{id}.md
   recent.md
   question-queue.md
   projects/
@@ -525,13 +531,12 @@ Last updated: 2026-04-30
 - Dashboard and Cabinet use different read models: Dashboard stays focused on current context, while Cabinet is the structured archive with entry type/status counts and truly archived entries.
 - Relationship creation from entry and question detail pages uses selectable targets for entries, questions, projects, themes, threads, references, and attachments instead of requiring pasted object IDs.
 - Ledger filters can be persisted as named saved filters and reused from both Ledger and Command Center. System filters remain available as starter shortcuts.
-- Context mirror generation for `manifest.json`, `ai-index.md`, `today.md`, `ai-bundle.md`, `recent.md`, `question-queue.md`, project/theme indexes and pages, `threads/index.md`, `entries/index.json`, and per-entry Markdown/JSON files.
+- Context mirror generation for `manifest.json`, `ai-index.md`, `today.md`, `ai-bundle.md`, context bundle variants, `recent.md`, `question-queue.md`, project/theme indexes and pages, `threads/index.md`, `entries/index.json`, and per-entry Markdown/JSON files.
 
 **Not yet built:**
 
 - Richer relationship validation and resolved relationship labels in read views.
 - Per-thread context mirror detail projections, timeline views, and alternate privacy export modes.
-- Command Center context bundle variants beyond the generated compact bundle.
 - CLI adapter.
 - Graph/map visual layout beyond the current text-first relationship map.
 - MCP adapter.

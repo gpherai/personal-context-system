@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bot, FolderTree, ShieldCheck, Terminal } from "lucide-react";
+import { Bot, FileText, FolderTree, ShieldCheck, Terminal } from "lucide-react";
 
 import { isRecoverableReadError } from "@/application/errors";
 import { getSavedFilters } from "@/application/query-service";
@@ -20,6 +20,8 @@ export default async function CommandPage() {
 
     throw error;
   });
+  const projectBundleCount = mirrorStatus.files.filter((file) => file.startsWith("bundles/projects/")).length;
+  const questionBundleCount = mirrorStatus.files.filter((file) => file.startsWith("bundles/questions/")).length;
 
   return (
     <div className="mx-auto grid max-w-5xl gap-6">
@@ -115,6 +117,47 @@ export default async function CommandPage() {
           ) : (
             <p className="mt-3 text-sm text-muted-foreground">No generated files found.</p>
           )}
+        </div>
+      </section>
+
+      <section className="border border-border bg-surface p-5">
+        <div className="mb-3 flex items-center gap-2">
+          <FileText className="h-4 w-4 text-primary" aria-hidden="true" />
+          <h2 className="text-sm font-semibold">Context bundle variants</h2>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-2">
+            <p className="text-sm font-medium">Local full</p>
+            <code className="block break-all rounded bg-surface-muted px-2 py-1 text-xs">
+              bundles/local-full.md
+            </code>
+            <p className="text-sm leading-6 text-muted-foreground">All local entries and the question queue.</p>
+          </div>
+          <div className="grid gap-2">
+            <p className="text-sm font-medium">Shareable only</p>
+            <code className="block break-all rounded bg-surface-muted px-2 py-1 text-xs">
+              bundles/shareable-only.md
+            </code>
+            <p className="text-sm leading-6 text-muted-foreground">Only entries marked shareable.</p>
+          </div>
+          <div className="grid gap-2">
+            <p className="text-sm font-medium">Project scoped</p>
+            <code className="block break-all rounded bg-surface-muted px-2 py-1 text-xs">
+              bundles/projects/*.md
+            </code>
+            <p className="text-sm leading-6 text-muted-foreground">
+              {mirrorStatus.exists ? `${projectBundleCount} generated project bundles.` : "Generated per project."}
+            </p>
+          </div>
+          <div className="grid gap-2">
+            <p className="text-sm font-medium">Question scoped</p>
+            <code className="block break-all rounded bg-surface-muted px-2 py-1 text-xs">
+              bundles/questions/*.md
+            </code>
+            <p className="text-sm leading-6 text-muted-foreground">
+              {mirrorStatus.exists ? `${questionBundleCount} generated question bundles.` : "Generated per tracked question."}
+            </p>
+          </div>
         </div>
       </section>
 

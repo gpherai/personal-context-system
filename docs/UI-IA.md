@@ -170,7 +170,7 @@ First features:
 - show recent generated files if available
 - explain privacy defaults through concise labels, not long in-app prose
 
-Current state: the Command Center can rebuild the mirror, show mirror status, list generated files, and expose system context filters.
+Current state: the Command Center can rebuild the mirror, show mirror status, list generated files, show generated bundle variants, and expose system context filters.
 User-defined saved context filters are persisted from the Ledger and shown in Command Center alongside the system filters.
 
 Later features:
