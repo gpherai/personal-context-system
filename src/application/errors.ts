@@ -1,3 +1,5 @@
+export const DATABASE_UNAVAILABLE_MESSAGE = "The local database is not available. Start PostgreSQL and run migrations.";
+
 export class DatabaseUnavailableError extends Error {
   constructor(message = "The local database is not available.") {
     super(message);

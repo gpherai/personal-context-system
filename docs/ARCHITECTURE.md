@@ -517,8 +517,8 @@ Last updated: 2026-04-30
 - Layered source structure: `src/domain`, `src/application`, `src/repositories`, `src/infrastructure`, `src/ai-context`, `src/app`, `src/components`.
 - Domain validation and application services for entry capture/update, question status update, object linking, reference/attachment metadata, thread creation, list/query reads, graph reads, and context mirror snapshots.
 - UI routes for Dashboard, Capture, Ledger, Cabinet, Entry detail/edit, Command Center, Settings, Map, and detail views for themes, projects, questions, and threads.
-- Relationship creation from entry and question detail pages uses selectable targets for entries, questions, projects, and themes instead of requiring pasted object IDs.
-- Ledger filters can be persisted as named saved filters and reused from both Ledger and Command Center.
+- Relationship creation from entry and question detail pages uses selectable targets for entries, questions, projects, and themes instead of requiring pasted object IDs. Thread, reference, and attachment targets are still future relationship-picker scope.
+- Ledger filters can be persisted as named saved filters and reused from both Ledger and Command Center. System filters remain available as starter shortcuts.
 - Context mirror generation for `manifest.json`, `ai-index.md`, `today.md`, `ai-bundle.md`, `recent.md`, `open-questions.md`, project/theme indexes and pages, `threads/index.md`, `entries/index.json`, and per-entry Markdown/JSON files.
 
 **Not yet built:**

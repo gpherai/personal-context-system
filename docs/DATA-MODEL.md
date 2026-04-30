@@ -169,7 +169,7 @@ Relation types:
 
 ### SavedFilter
 
-Purpose: reusable Ledger/context query definition stored in the database instead of hardcoded UI links.
+Purpose: reusable user-defined Ledger/context query definition stored in the database.
 
 Fields:
 
@@ -192,7 +192,7 @@ Fields:
 - `occurredFrom`
 - `occurredTo`
 
-The database is authoritative for saved filters. The Command Center reads persisted filters and links back to Ledger query URLs.
+The database is authoritative for user-defined saved filters. System filters are static starter shortcuts in the UI and are not stored as `SavedFilter` records. The Command Center shows both system filters and persisted filters as links back to Ledger query URLs.
 
 ### Reference
 

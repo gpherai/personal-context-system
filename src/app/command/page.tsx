@@ -5,7 +5,7 @@ import { isRecoverableReadError } from "@/application/errors";
 import { getSavedFilters } from "@/application/query-service";
 import { getContextMirrorStatus } from "@/infrastructure/files/context-mirror-writer";
 import { formatDateTime } from "@/lib/format";
-import { savedFilterHref } from "@/lib/saved-filter-url";
+import { savedFilterHref, systemSavedFilters } from "@/lib/saved-filter-url";
 
 import { RebuildMirrorForm } from "./rebuild-form";
 
@@ -119,12 +119,12 @@ export default async function CommandPage() {
       </section>
 
       <section className="border border-border bg-surface p-5">
-        <h2 className="text-sm font-semibold">Saved context filters</h2>
-        {savedFilters.length ? (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {savedFilters.map((filter) => (
+        <h2 className="text-sm font-semibold">Context filters</h2>
+        <div className="mt-3 grid gap-3">
+          <div className="flex flex-wrap gap-2">
+            {systemSavedFilters.map((filter) => (
               <Link
-                key={filter.id}
+                key={filter.name}
                 href={savedFilterHref(filter.params)}
                 className="inline-flex h-9 items-center rounded-md border border-border bg-surface px-3 text-sm font-medium transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
               >
@@ -132,9 +132,20 @@ export default async function CommandPage() {
               </Link>
             ))}
           </div>
-        ) : (
-          <p className="mt-3 text-sm text-muted-foreground">No saved filters yet. Save one from the Ledger.</p>
-        )}
+          {savedFilters.length ? (
+            <div className="flex flex-wrap gap-2 border-t border-border pt-3">
+              {savedFilters.map((filter) => (
+                <Link
+                  key={filter.id}
+                  href={savedFilterHref(filter.params)}
+                  className="inline-flex h-9 items-center rounded-md border border-border bg-surface px-3 text-sm font-medium transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                >
+                  {filter.name}
+                </Link>
+              ))}
+            </div>
+          ) : null}
+        </div>
       </section>
     </div>
   );

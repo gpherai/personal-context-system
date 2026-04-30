@@ -138,7 +138,7 @@ Content:
 
 Editing can be added after capture and read flows are stable.
 
-Current state: editing is available for entry core fields, status, privacy, themes, and projects. Relationship, reference, attachment, and thread creation start from the entry detail page. Relationship creation uses selectable targets for entries, questions, projects, and themes.
+Current state: editing is available for entry core fields, status, privacy, themes, and projects. Relationship, reference, attachment, and thread creation start from the entry detail page. Relationship creation uses selectable targets for entries, questions, projects, and themes. Thread, reference, and attachment relationship targets are still future picker scope.
 
 ## Command Center
 
@@ -151,8 +151,8 @@ First features:
 - show recent generated files if available
 - explain privacy defaults through concise labels, not long in-app prose
 
-Current state: the Command Center can rebuild the mirror, show mirror status, list generated files, and expose preset context filters.
-Saved context filters are persisted from the Ledger and shown in Command Center.
+Current state: the Command Center can rebuild the mirror, show mirror status, list generated files, and expose system context filters.
+User-defined saved context filters are persisted from the Ledger and shown in Command Center alongside the system filters.
 
 Later features:
 

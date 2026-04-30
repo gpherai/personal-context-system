@@ -10,7 +10,7 @@ import {
   linkObjectsFromForm,
   type MutationState
 } from "@/application/context-service";
-import { isRecoverableReadError } from "@/application/errors";
+import { DATABASE_UNAVAILABLE_MESSAGE, isRecoverableReadError } from "@/application/errors";
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
 
 export { initialMutationState };
@@ -18,7 +18,7 @@ export { initialMutationState };
 function databaseErrorState(): MutationState {
   return {
     status: "error",
-    message: "De lokale database is niet beschikbaar. Start PostgreSQL en voer de migrations uit."
+    message: DATABASE_UNAVAILABLE_MESSAGE
   };
 }
 

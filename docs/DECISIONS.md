@@ -42,7 +42,7 @@ Updated: 2026-04-30
 - The `/map` graph view is a planned route but deferred until Cabinet views are stable and sufficient relationship data exists.
 - Full-text search and structured filtering come before any vector search or embeddings.
 - Use PostgreSQL native full-text search with a GIN index for entry text search. Prisma raw SQL is acceptable for this query path when Prisma's high-level API is too limited.
-- Persisted saved filters are modeled as database records with JSONB query params, not as hardcoded UI presets.
+- User-defined saved filters are modeled as database records with JSONB query params. Stable system filters remain static UI shortcuts so a fresh install has useful starting points before any user-defined filter exists.
 
 ### Technology choices
 - Use npm as the package manager for this repository. Node and npm are already installed in the Fedora/Incus environment; pnpm is not installed.

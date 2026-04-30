@@ -1,5 +1,13 @@
 import type { SavedFilterParams } from "@/domain/context";
 
+export const systemSavedFilters: { name: string; params: SavedFilterParams }[] = [
+  { name: "Active entries", params: { status: "active" } },
+  { name: "Question entries", params: { type: "question" } },
+  { name: "Sensitive records", params: { privacyLevel: "sensitive" } },
+  { name: "Decisions", params: { type: "decision" } },
+  { name: "Open loops", params: { type: "open_loop" } }
+];
+
 export function savedFilterHref(params: SavedFilterParams): string {
   const searchParams = new URLSearchParams();
 

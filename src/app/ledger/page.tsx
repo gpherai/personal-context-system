@@ -10,7 +10,7 @@ import { SetupNotice } from "@/components/setup-notice";
 import type { SavedFilterParams } from "@/domain/context";
 import { entryStatuses, entryTypes, privacyLevels, savedFilterParamsSchema } from "@/domain/context";
 import { labelize } from "@/lib/format";
-import { savedFilterHref } from "@/lib/saved-filter-url";
+import { savedFilterHref, systemSavedFilters } from "@/lib/saved-filter-url";
 
 import { SaveFilterForm } from "./save-filter-form";
 
@@ -63,6 +63,7 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
       getSavedFilters()
     ]);
     const currentFilterParams = toSavedFilterParams(params);
+    const hasCurrentFilter = Object.keys(currentFilterParams).length > 0;
 
     return (
       <div className="mx-auto grid max-w-6xl gap-5">
@@ -74,14 +75,14 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
           </p>
         </header>
 
-        <section className="grid gap-4 lg:grid-cols-[1fr_340px]">
+        <section className={hasCurrentFilter ? "grid gap-4 lg:grid-cols-[1fr_340px]" : "grid gap-4"}>
           <div className="border border-border bg-surface p-4">
-            <h2 className="text-sm font-semibold">Saved filters</h2>
-            {savedFilters.length ? (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {savedFilters.map((filter) => (
+            <h2 className="text-sm font-semibold">Context filters</h2>
+            <div className="mt-3 grid gap-3">
+              <div className="flex flex-wrap gap-2">
+                {systemSavedFilters.map((filter) => (
                   <Link
-                    key={filter.id}
+                    key={filter.name}
                     href={savedFilterHref(filter.params)}
                     className="inline-flex h-9 items-center rounded-md border border-border bg-surface px-3 text-sm font-medium transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
                   >
@@ -89,11 +90,22 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
                   </Link>
                 ))}
               </div>
-            ) : (
-              <p className="mt-3 text-sm text-muted-foreground">No saved filters yet.</p>
-            )}
+              {savedFilters.length ? (
+                <div className="flex flex-wrap gap-2 border-t border-border pt-3">
+                  {savedFilters.map((filter) => (
+                    <Link
+                      key={filter.id}
+                      href={savedFilterHref(filter.params)}
+                      className="inline-flex h-9 items-center rounded-md border border-border bg-surface px-3 text-sm font-medium transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                    >
+                      {filter.name}
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+            </div>
           </div>
-          <SaveFilterForm params={currentFilterParams} />
+          {hasCurrentFilter ? <SaveFilterForm params={currentFilterParams} /> : null}
         </section>
 
         <form className="grid gap-3 border border-border bg-surface p-4 md:grid-cols-2 xl:grid-cols-[1fr_180px_160px_160px_180px_180px]">

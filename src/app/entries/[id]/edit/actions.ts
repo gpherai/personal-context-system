@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { isRecoverableReadError } from "@/application/errors";
+import { DATABASE_UNAVAILABLE_MESSAGE, isRecoverableReadError } from "@/application/errors";
 import {
   initialMutationState,
   updateEntryFromForm,
@@ -24,7 +24,7 @@ export async function updateEntryAction(
         ok: false as const,
         state: {
           status: "error" as const,
-          message: "De lokale database is niet beschikbaar. Start PostgreSQL en voer de migrations uit."
+          message: DATABASE_UNAVAILABLE_MESSAGE
         }
       };
     }
