@@ -146,6 +146,26 @@ export interface DashboardOverview {
   };
 }
 
+export interface EntryTypeSummary {
+  type: EntryType;
+  count: number;
+}
+
+export interface EntryStatusSummary {
+  status: EntryStatus;
+  count: number;
+}
+
+export interface CabinetOverview {
+  entryTypes: EntryTypeSummary[];
+  entryStatuses: EntryStatusSummary[];
+  archivedEntries: EntryRecord[];
+  themes: NamedRecord[];
+  projects: NamedRecord[];
+  questions: QuestionRecord[];
+  threads: Omit<ThreadRecord, "entries">[];
+}
+
 export interface ContextMirrorSnapshot {
   entries: EntryRecord[];
   openQuestions: QuestionRecord[];
@@ -205,5 +225,6 @@ export interface ContextRepository {
   getThreadBySlug(slug: string): Promise<ThreadRecord | null>;
   getGraphSnapshot(): Promise<GraphSnapshot>;
   getDashboardOverview(): Promise<DashboardOverview>;
+  getCabinetOverview(): Promise<CabinetOverview>;
   getContextMirrorSnapshot(): Promise<ContextMirrorSnapshot>;
 }

@@ -46,6 +46,7 @@ Updated: 2026-04-30
 - `Entry.type = "question"` is the capture-side representation of a first-class `Question`. Creating a question entry auto-creates and links the tracked Question. Existing entries can be promoted explicitly from entry detail.
 - `open_loop` remains separate from `question`: use it for unresolved thoughts or actions that need closure but are not yet framed as tracked Questions.
 - Question status semantics are fixed as: `open` = captured but not currently worked, `active` = currently worked, `parked` = intentionally deferred, `answered` = resolved, `reframed` = superseded by a clearer question, `abandoned` = no longer useful enough to keep active.
+- Dashboard and Cabinet use separate read models. Dashboard shows current working context; Cabinet is the structured archive/browser and must not label ordinary recent entries as archived.
 
 ### Technology choices
 - Use npm as the package manager for this repository. Node and npm are already installed in the Fedora/Incus environment; pnpm is not installed.

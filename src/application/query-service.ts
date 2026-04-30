@@ -4,6 +4,10 @@ export async function getDashboardOverview() {
   return createPrismaContextRepository().getDashboardOverview();
 }
 
+export async function getCabinetOverview() {
+  return createPrismaContextRepository().getCabinetOverview();
+}
+
 export async function getEntryById(id: string) {
   return createPrismaContextRepository().getEntry(id);
 }

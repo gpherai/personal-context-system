@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, CircleHelp, Layers, Library, PenLine } from "lucide-react";
+import { ArrowRight, CircleHelp, Layers, PenLine } from "lucide-react";
 
 import { isRecoverableReadError } from "@/application/errors";
 import { getDashboardOverview } from "@/application/query-service";
@@ -53,7 +53,7 @@ export default async function DashboardPage() {
           <p className="text-sm font-medium text-primary">Today</p>
           <h1 className="mt-1 text-3xl font-semibold tracking-normal text-foreground">Context dashboard</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Current entries, questions, projects, and themes from the local database.
+            Current work, active questions, and recent capture from the local database.
           </p>
         </div>
         <Link
@@ -121,24 +121,6 @@ export default async function DashboardPage() {
                 ))
               ) : (
                 <p className="text-sm text-muted-foreground">No projects yet.</p>
-              )}
-            </div>
-          </section>
-
-          <section className="border border-border bg-surface p-4">
-            <div className="mb-3 flex items-center gap-2">
-              <Library className="h-4 w-4 text-primary" aria-hidden="true" />
-              <h2 className="text-sm font-semibold">Active themes</h2>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {overview.activeThemes.length ? (
-                overview.activeThemes.map((theme) => (
-                  <Badge key={theme.id} tone="teal">
-                    {theme.name} {theme.count !== undefined ? `(${theme.count})` : ""}
-                  </Badge>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground">No themes yet.</p>
               )}
             </div>
           </section>

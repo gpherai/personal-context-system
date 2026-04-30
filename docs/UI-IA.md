@@ -59,11 +59,10 @@ Content:
 - recent entries
 - question queue
 - active projects
-- active themes
 - context mirror status
 - setup warning if the database is unavailable
 
-The dashboard should not become a decorative hero page. The first viewport should show useful state.
+The dashboard should not become a decorative hero page or a second archive. The first viewport should show useful current state. Thematic browsing belongs in Cabinet.
 
 ## Capture
 
@@ -122,8 +121,9 @@ Sections:
 - projects
 - questions
 - threads
+- archived entries
 
-This is the archive/cabinet mode. It should support scanning and later deeper filters.
+This is the archive/cabinet mode. It should support scanning and later deeper filters. It should use its own cabinet overview query rather than reusing Dashboard data, and archived entry sections must filter by `Entry.status = "archived"`.
 
 ## Entry Detail
 

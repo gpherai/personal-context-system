@@ -1,6 +1,8 @@
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 
 import {
+  entryStatuses,
+  entryTypes,
   savedFilterParamsSchema,
   slugifyName,
   type CreateAttachmentCommand,
@@ -16,6 +18,7 @@ import {
 } from "@/domain/context";
 import type {
   AttachmentRecord,
+  CabinetOverview,
   ContextMirrorSnapshot,
   ContextRepository,
   DashboardOverview,
@@ -978,6 +981,55 @@ export class PrismaContextRepository implements ContextRepository {
         themes: counts[2],
         projects: counts[3]
       }
+    };
+  }
+
+  async getCabinetOverview(): Promise<CabinetOverview> {
+    const [entryTypeCounts, entryStatusCounts, archivedEntries, themes, projects, questions, threads] =
+      await Promise.all([
+        this.prisma.entry.groupBy({
+          by: ["type"],
+          _count: { _all: true }
+        }),
+        this.prisma.entry.groupBy({
+          by: ["status"],
+          _count: { _all: true }
+        }),
+        this.listEntries({ status: "archived", limit: 8 }),
+        this.prisma.theme.findMany({
+          include: { _count: { select: { entries: true } } },
+          orderBy: [{ name: "asc" }],
+          take: 16
+        }),
+        this.prisma.project.findMany({
+          include: { _count: { select: { entries: true } } },
+          orderBy: [{ updatedAt: "desc" }],
+          take: 16
+        }),
+        this.prisma.question.findMany({
+          orderBy: [{ updatedAt: "desc" }],
+          take: 12
+        }),
+        this.listThreads()
+      ]);
+
+    const countByType = new Map(entryTypeCounts.map((row) => [row.type, row._count._all]));
+    const countByStatus = new Map(entryStatusCounts.map((row) => [row.status, row._count._all]));
+
+    return {
+      entryTypes: entryTypes.map((type) => ({
+        type,
+        count: countByType.get(type) ?? 0
+      })),
+      entryStatuses: entryStatuses.map((status) => ({
+        status,
+        count: countByStatus.get(status) ?? 0
+      })),
+      archivedEntries,
+      themes: themes.map(mapNamed),
+      projects: projects.map(mapNamed),
+      questions: questions.map(mapQuestion),
+      threads: threads.slice(0, 16)
     };
   }
 
