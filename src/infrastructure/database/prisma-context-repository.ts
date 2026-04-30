@@ -1096,7 +1096,19 @@ export class PrismaContextRepository implements ContextRepository {
         include: { _count: { select: { entries: true } } },
         orderBy: [{ name: "asc" }]
       }),
-      this.listThreads()
+      this.prisma.thread.findMany({
+        include: {
+          entries: {
+            include: {
+              entry: {
+                include: entryInclude
+              }
+            },
+            orderBy: { position: "asc" }
+          }
+        },
+        orderBy: [{ updatedAt: "desc" }]
+      })
     ]);
 
     return {
@@ -1104,7 +1116,12 @@ export class PrismaContextRepository implements ContextRepository {
       openQuestions: openQuestions.map(mapQuestion),
       themes: themes.map(mapNamed),
       projects: projects.map(mapNamed),
-      threads
+      threads: threads.map((thread) =>
+        mapThread(
+          thread,
+          thread.entries.map(({ entry }) => mapEntry(entry))
+        )
+      )
     };
   }
 }

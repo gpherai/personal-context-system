@@ -37,6 +37,9 @@ Initial target files:
 - `themes/index.md`
 - `themes/{slug}.md`
 - `threads/index.md`
+- `threads/{slug}.md`
+- `timeline/entries.md`
+- `timeline/shareable.md`
 - `entries/index.json`
 - `entries/{id}.md`
 - `entries/{id}.json`

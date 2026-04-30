@@ -81,6 +81,28 @@ function threadList(threads: Omit<ThreadRecord, "entries">[]): string {
   return threads.map((thread) => `- [${thread.status}] ${thread.title} (${thread.slug})`).join("\n");
 }
 
+function threadMarkdown(thread: ThreadRecord, generatedAtIso: string): string {
+  return [
+    `# ${thread.title}`,
+    "",
+    `Generated: ${generatedAtIso}`,
+    "",
+    `- id: ${thread.id}`,
+    `- slug: ${thread.slug}`,
+    `- status: ${thread.status}`,
+    `- updated: ${thread.updatedAt.toISOString()}`,
+    "",
+    "## Description",
+    "",
+    thread.description || "No description.",
+    "",
+    "## Entries",
+    "",
+    entryList(thread.entries),
+    ""
+  ].join("\n");
+}
+
 function questionList(questions: QuestionRecord[]): string {
   if (!questions.length) {
     return "- None";
@@ -113,6 +135,31 @@ function entryList(entries: EntryRecord[]): string {
       (entry) =>
         `- ${formatDate(entry.occurredAt ?? entry.capturedAt)} [${entry.type}/${entry.status}/${entry.privacyLevel}] ${entry.title} (${entry.id})\n  - ${excerpt(entry)}`
     )
+    .join("\n");
+}
+
+function timelineList(entries: EntryRecord[]): string {
+  if (!entries.length) {
+    return "- None";
+  }
+
+  return entries
+    .map((entry) => {
+      const timelineDate = entry.occurredAt ?? entry.capturedAt;
+      return [
+        `## ${formatDate(timelineDate)} - ${entry.title}`,
+        "",
+        `- id: ${entry.id}`,
+        `- type: ${entry.type}`,
+        `- status: ${entry.status}`,
+        `- privacy: ${entry.privacyLevel}`,
+        `- captured: ${entry.capturedAt.toISOString()}`,
+        `- occurred: ${entry.occurredAt ? entry.occurredAt.toISOString() : "unknown"}`,
+        "",
+        excerpt(entry),
+        ""
+      ].join("\n");
+    })
     .join("\n");
 }
 
@@ -366,6 +413,41 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
   files.push({
     path: "threads/index.md",
     contents: ["# Threads", "", `Generated: ${generatedAtIso}`, "", threadList(snapshot.threads), ""].join("\n")
+  });
+
+  for (const thread of snapshot.threads) {
+    files.push({
+      path: `threads/${thread.slug}.md`,
+      contents: threadMarkdown(thread, generatedAtIso)
+    });
+  }
+
+  const timelineEntries = [...snapshot.entries].sort(
+    (a, b) => (b.occurredAt ?? b.capturedAt).getTime() - (a.occurredAt ?? a.capturedAt).getTime()
+  );
+
+  files.push({
+    path: "timeline/entries.md",
+    contents: [
+      "# Entry Timeline",
+      "",
+      `Generated: ${generatedAtIso}`,
+      "",
+      timelineList(timelineEntries),
+      ""
+    ].join("\n")
+  });
+
+  files.push({
+    path: "timeline/shareable.md",
+    contents: [
+      "# Shareable Entry Timeline",
+      "",
+      `Generated: ${generatedAtIso}`,
+      "",
+      timelineList(timelineEntries.filter((entry) => entry.privacyLevel === "shareable")),
+      ""
+    ].join("\n")
   });
 
   for (const question of snapshot.openQuestions) {

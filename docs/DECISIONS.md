@@ -49,6 +49,7 @@ Updated: 2026-04-30
 - Dashboard and Cabinet use separate read models. Dashboard shows current working context; Cabinet is the structured archive/browser and must not label ordinary recent entries as archived.
 - `Reference` records are the primary model for external material. The `external_reference` relationship type is reserved for explicit links to external app/database records when creating a full Reference would be the wrong abstraction.
 - Context bundle variants are generated as mirror files first: `local-full`, `shareable-only`, `project-scoped`, and `question-scoped`. No MeiliSearch, vector search, or embedding dependency is introduced for this stage.
+- Context mirror thread detail pages and timeline pages are generated files, not new source-of-truth records. They are rebuilt from PostgreSQL.
 
 ### Technology choices
 - Use npm as the package manager for this repository. Node and npm are already installed in the Fedora/Incus environment; pnpm is not installed.

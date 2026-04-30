@@ -171,7 +171,7 @@ export interface ContextMirrorSnapshot {
   openQuestions: QuestionRecord[];
   themes: NamedRecord[];
   projects: NamedRecord[];
-  threads: Omit<ThreadRecord, "entries">[];
+  threads: ThreadRecord[];
 }
 
 export interface NamedRecordContext extends NamedRecord {
