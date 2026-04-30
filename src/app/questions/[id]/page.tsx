@@ -5,7 +5,9 @@ import { getQuestionById } from "@/application/query-service";
 import { EntryList } from "@/components/entry-list";
 import { SetupNotice } from "@/components/setup-notice";
 import { Badge } from "@/components/ui/badge";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, labelize } from "@/lib/format";
+
+import { QuestionRelationshipForm, QuestionUpdateForm } from "./question-forms";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +29,59 @@ export default async function QuestionPage({ params }: { params: Promise<{ id: s
           <p className="mt-2 text-sm text-muted-foreground">Updated {formatDateTime(question.updatedAt)}</p>
           {question.summary && <p className="mt-3 text-sm leading-6 text-muted-foreground">{question.summary}</p>}
         </header>
-        <EntryList entries={question.entries} />
+
+        <section className="grid gap-4 lg:grid-cols-[1fr_340px]">
+          <div className="grid gap-3">
+            <h2 className="text-lg font-semibold">Linked entries</h2>
+            <EntryList entries={question.entries} />
+          </div>
+          <aside className="grid content-start gap-4">
+            <div className="border border-border bg-surface p-5">
+              <h2 className="mb-3 text-sm font-semibold">Question workflow</h2>
+              <QuestionUpdateForm question={question} />
+            </div>
+            <div className="border border-border bg-surface p-5">
+              <h2 className="mb-3 text-sm font-semibold">Create relationship</h2>
+              <QuestionRelationshipForm questionId={question.id} />
+            </div>
+          </aside>
+        </section>
+
+        <section className="border border-border bg-surface p-5">
+          <h2 className="text-sm font-semibold">Relationships</h2>
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <div>
+              <h3 className="text-xs font-semibold uppercase text-muted-foreground">Outgoing</h3>
+              <div className="mt-2 grid gap-2">
+                {question.outgoingRelationships.length ? (
+                  question.outgoingRelationships.map((relationship) => (
+                    <p key={relationship.id} className="text-sm text-muted-foreground">
+                      <span className="font-medium text-foreground">{labelize(relationship.relationType)}</span>{" "}
+                      {relationship.toType}:{relationship.toId}
+                    </p>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">No outgoing relationships.</p>
+                )}
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xs font-semibold uppercase text-muted-foreground">Incoming</h3>
+              <div className="mt-2 grid gap-2">
+                {question.incomingRelationships.length ? (
+                  question.incomingRelationships.map((relationship) => (
+                    <p key={relationship.id} className="text-sm text-muted-foreground">
+                      {relationship.fromType}:{relationship.fromId}{" "}
+                      <span className="font-medium text-foreground">{labelize(relationship.relationType)}</span>
+                    </p>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">No incoming relationships.</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     );
   } catch (error) {

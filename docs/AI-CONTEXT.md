@@ -1,6 +1,6 @@
 # AI Context Model
 
-Updated: 2026-04-29
+Updated: 2026-04-30
 
 ## Purpose
 
@@ -20,17 +20,26 @@ Path:
 data/context-mirror/
 ```
 
-Initial files:
+Initial target files:
 
 - `manifest.json`
 - `ai-index.md`
+- `today.md`
+- `ai-bundle.md`
 - `recent.md`
 - `open-questions.md`
 - `projects/index.md`
+- `projects/{slug}.md`
 - `themes/index.md`
+- `themes/{slug}.md`
+- `threads/index.md`
 - `entries/index.json`
 - `entries/{id}.md`
 - `entries/{id}.json`
+
+A `timeline/` directory for time-sequenced entry views is a planned later addition, not part of the initial build.
+
+Current state: the initial target files above are generated. Not yet built: per-thread detail projections, timeline views, and alternate privacy export modes.
 
 Rules:
 

@@ -1,6 +1,6 @@
 # Engineering Practices
 
-Updated: 2026-04-29
+Updated: 2026-04-30
 
 ## Purpose
 
@@ -79,8 +79,9 @@ Database integration tests can be added after the initial schema stabilizes. Gen
 
 The interface is a work tool, not a landing page.
 
+- Follow the design principles in `docs/UI-IA.md` when building or revising interface surfaces.
 - Prefer semantic HTML, stable layouts, visible focus states, and keyboard-friendly forms.
-- Use lucide icons for icon buttons and clear affordances.
+- Use lucide-react for icon buttons and clear affordances.
 - Keep cards for repeated items or framed tools only; do not nest cards.
 - Avoid oversized hero composition, decorative gradients, emoji icons, and one-note color palettes.
 - Ensure mobile layouts fit at 375px without horizontal scrolling.
@@ -89,7 +90,7 @@ The interface is a work tool, not a landing page.
 ## Dependency Policy
 
 - Use current stable packages when starting a new implementation.
-- Confirm framework patterns against Context7 or official docs when APIs are version-sensitive.
+- Confirm framework patterns against Context7 or official documentation when APIs are version-sensitive.
 - Avoid adding a dependency for small utilities that are easy and clearer to own locally.
 - Do not add AI-provider SDKs until an explicit provider integration exists.
 
@@ -109,5 +110,6 @@ Current starting stack:
 
 - Keep commits coherent and explain why a change exists.
 - Before commit, run at least typecheck, lint, and focused tests.
+- If a change explicitly excludes tests, still run typecheck and lint and state that tests were intentionally not run.
 - Separate generated/private data from source code using `.gitignore`.
 - Do not commit secrets, local `.env`, database dumps, attachments, or generated context mirrors.

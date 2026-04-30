@@ -2,7 +2,8 @@ import type {
   ContextMirrorSnapshot,
   EntryRecord,
   NamedRecord,
-  QuestionRecord
+  QuestionRecord,
+  ThreadRecord
 } from "@/repositories/context-repository";
 
 export interface ContextMirrorFile {
@@ -56,12 +57,28 @@ function entryMarkdown(entry: EntryRecord): string {
   ].join("\n");
 }
 
+function slugSectionEntries(entries: EntryRecord[], kind: "project" | "theme", slug: string): EntryRecord[] {
+  return entries.filter((entry) =>
+    kind === "project"
+      ? entry.projects.some((project) => project.slug === slug)
+      : entry.themes.some((theme) => theme.slug === slug)
+  );
+}
+
 function namedList(title: string, records: NamedRecord[]): string {
   const lines = records.length
     ? records.map((record) => `- ${record.name} (${record.slug})${record.count !== undefined ? ` - ${record.count} entries` : ""}`)
     : ["- None"];
 
   return [`## ${title}`, "", ...lines].join("\n");
+}
+
+function threadList(threads: Omit<ThreadRecord, "entries">[]): string {
+  if (!threads.length) {
+    return "- None";
+  }
+
+  return threads.map((thread) => `- [${thread.status}] ${thread.title} (${thread.slug})`).join("\n");
 }
 
 function questionList(questions: QuestionRecord[]): string {
@@ -121,7 +138,8 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
       entries: snapshot.entries.length,
       openQuestions: snapshot.openQuestions.length,
       themes: snapshot.themes.length,
-      projects: snapshot.projects.length
+      projects: snapshot.projects.length,
+      threads: snapshot.threads.length
     },
     files: [] as string[]
   };
@@ -141,6 +159,7 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
       `- open questions: ${snapshot.openQuestions.length}`,
       `- themes: ${snapshot.themes.length}`,
       `- projects: ${snapshot.projects.length}`,
+      `- threads: ${snapshot.threads.length}`,
       "",
       "## Recent Entries",
       "",
@@ -159,8 +178,54 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
   });
 
   files.push({
+    path: "today.md",
+    contents: [
+      "# Today",
+      "",
+      `Generated: ${generatedAtIso}`,
+      "",
+      "## Recent Entries",
+      "",
+      recentList(snapshot.entries.slice(0, 12)),
+      "",
+      "## Open Questions",
+      "",
+      questionList(snapshot.openQuestions),
+      ""
+    ].join("\n")
+  });
+
+  files.push({
     path: "open-questions.md",
     contents: ["# Open Questions", "", `Generated: ${generatedAtIso}`, "", questionList(snapshot.openQuestions), ""].join("\n")
+  });
+
+  files.push({
+    path: "ai-bundle.md",
+    contents: [
+      "# Compact AI Context Bundle",
+      "",
+      `Generated: ${generatedAtIso}`,
+      "",
+      "Use this as a short starting context. Source of truth remains PostgreSQL.",
+      "",
+      "## Current Counts",
+      "",
+      `- entries: ${snapshot.entries.length}`,
+      `- open questions: ${snapshot.openQuestions.length}`,
+      `- themes: ${snapshot.themes.length}`,
+      `- projects: ${snapshot.projects.length}`,
+      `- threads: ${snapshot.threads.length}`,
+      "",
+      "## Open Questions",
+      "",
+      questionList(snapshot.openQuestions.slice(0, 12)),
+      "",
+      "## Recent Entries",
+      "",
+      recentList(snapshot.entries.slice(0, 12)),
+      ""
+    ].join("\n")
   });
 
   files.push({
@@ -168,9 +233,52 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
     contents: ["# Themes", "", `Generated: ${generatedAtIso}`, "", namedList("Themes", snapshot.themes), ""].join("\n")
   });
 
+  for (const theme of snapshot.themes) {
+    const entries = slugSectionEntries(snapshot.entries, "theme", theme.slug);
+    files.push({
+      path: `themes/${theme.slug}.md`,
+      contents: [
+        `# ${theme.name}`,
+        "",
+        `Generated: ${generatedAtIso}`,
+        "",
+        theme.description ?? "",
+        "",
+        "## Entries",
+        "",
+        recentList(entries),
+        ""
+      ].join("\n")
+    });
+  }
+
   files.push({
     path: "projects/index.md",
     contents: ["# Projects", "", `Generated: ${generatedAtIso}`, "", namedList("Projects", snapshot.projects), ""].join("\n")
+  });
+
+  for (const project of snapshot.projects) {
+    const entries = slugSectionEntries(snapshot.entries, "project", project.slug);
+    files.push({
+      path: `projects/${project.slug}.md`,
+      contents: [
+        `# ${project.name}`,
+        "",
+        `Generated: ${generatedAtIso}`,
+        "",
+        project.description ?? "",
+        "",
+        "## Entries",
+        "",
+        recentList(entries),
+        ""
+      ].join("\n")
+    });
+  }
+
+  files.push({
+    path: "threads/index.md",
+    contents: ["# Threads", "", `Generated: ${generatedAtIso}`, "", threadList(snapshot.threads), ""].join("\n")
   });
 
   files.push({

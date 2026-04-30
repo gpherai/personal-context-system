@@ -1,6 +1,6 @@
 # Data Model
 
-Updated: 2026-04-29
+Updated: 2026-04-30
 
 ## Purpose
 
@@ -28,8 +28,8 @@ Fields:
 - `title`
 - `body`
 - `summary`
-- `source`
-- `confidence`
+- `source` — free-text provenance. May be a URL, a person's name, a book title, an AI tool name, or any description of origin. Null if not relevant or unknown.
+- `confidence` — float from 0.0 (very uncertain) to 1.0 (highly confident). Null means no confidence assessment was made.
 - `privacyLevel`
 - `occurredAt`
 - `capturedAt`
@@ -234,7 +234,7 @@ Required from the start:
 - relationship relation type
 - join table composite keys
 
-Full-text search should be added with PostgreSQL search once the basic schema is stable. Vector search remains deferred.
+Full-text search uses a PostgreSQL `to_tsvector` GIN index over entry title, summary, and body. Vector search remains deferred.
 
 ## Privacy Levels
 
@@ -244,7 +244,7 @@ Initial privacy levels:
 - `sensitive`
 - `shareable`
 
-Default is `private`. Context mirror builders must exclude or redact sensitive records unless explicitly configured.
+Default is `private`. The local full mirror may include private and sensitive records because it is local and git-ignored, but generated outputs must preserve privacy labels. Shareable/export modes must exclude or redact sensitive records unless explicitly configured.
 
 ## Generated Projections
 
@@ -258,6 +258,23 @@ Rules:
 - generated JSON is optimized for scripts and future MCP resources
 - generated files can be deleted and rebuilt
 - generated files are ignored by git by default
+
+## Metadata Guidance
+
+The `metadata` JSONB field is flexible and type-specific. Use it for context that does not warrant its own column. Promote a metadata field to a relational column only when it becomes a common filter, query condition, or validation concern.
+
+Example shapes per entry type:
+
+- `observation`: `{ location?: string, mood?: string }`
+- `question`: `{ domain?: string, urgency?: "low" | "medium" | "high" }`
+- `insight`: `{ confidence_basis?: string }`
+- `practice_note`: `{ practice?: string, duration_minutes?: number, tradition?: string }`
+- `media_note`: `{ medium?: string, title?: string, creator?: string, url?: string }`
+- `ai_conversation_note`: `{ tool?: string, conversation_id?: string }`
+- `project_note`: `{ milestone?: string }`
+- `event_reflection`: `{ event_date?: string, location?: string }`
+
+These shapes are examples, not enforced schemas. Add Zod validation per type only when a type's metadata becomes structured enough to require it.
 
 ## Prisma Mapping
 

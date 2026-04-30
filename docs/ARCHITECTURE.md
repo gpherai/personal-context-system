@@ -1,6 +1,6 @@
 # Personal Context System - Architecture
 
-Updated: 2026-04-29
+Updated: 2026-04-30
 
 ## Purpose
 
@@ -269,7 +269,7 @@ Reads are split by purpose:
 
 `data/context-mirror` is a deterministic generated projection of selected database state.
 
-Possible structure:
+Planned structure:
 
 ```txt
 data/context-mirror/
@@ -282,7 +282,7 @@ data/context-mirror/
   themes/
   entries/
   threads/
-  timeline/
+  timeline/    (later addition — time-based entry sequences)
 ```
 
 The mirror should include:
@@ -328,7 +328,7 @@ Possible MCP tools:
 - `search_entries`
 - `get_context`
 - `create_observation`
-- `link_entries`
+- `link_objects`
 - `summarize_thread`
 
 AI write access should remain explicit, validated, and auditable.
@@ -385,7 +385,6 @@ Recommended routes:
 /capture
 /ledger
 /cabinet
-/map
 /command
 /entries/[id]
 /themes/[slug]
@@ -393,6 +392,7 @@ Recommended routes:
 /questions/[id]
 /threads/[slug]
 /settings
+/map          (deferred — after Cabinet is stable and relationship data exists)
 ```
 
 Primary screens:
@@ -401,8 +401,8 @@ Primary screens:
 - Capture: fast entry creation with type, title/body, themes, project, and occurred date.
 - Ledger: chronological thinking stream with filters.
 - Cabinet: structured browsing by type/theme/project/question.
-- Map: relationship exploration, secondary to cabinet/ledger.
 - Command: context builder, projection status, saved searches, and AI export surfaces.
+- Map: relationship exploration, secondary to cabinet/ledger. Deferred.
 
 First build surface: Dashboard, Capture, Ledger, and Entry detail.
 
@@ -493,19 +493,41 @@ Generated context is product behavior and should be tested.
 
 ## Implementation Sequence
 
-This is not an MVP-only design, but implementation still needs order:
+This is not an MVP-only design, but implementation still needs order.
 
-1. Scaffold TypeScript, Next.js, Tailwind, Prisma, Zod, and the folder structure.
-2. Define the first Prisma schema for entries, themes, projects, questions, threads, relationships, references, and attachments.
-3. Build domain schemas and application services for capture, update, link, and query.
-4. Build Dashboard, Capture, Ledger, and Entry detail.
-5. Add Cabinet views for themes, projects, and questions.
-6. Add context mirror generation with markdown and JSON projections.
-7. Add search and saved filters.
-8. Add Command Center for context building and mirror inspection.
-9. Add CLI adapter over context/query services.
-10. Add graph/map view once relationship data exists.
-11. Add MCP adapter when the core domain and context services are stable.
+1. [done] Scaffold TypeScript, Next.js, Tailwind, Prisma, Zod, and the folder structure.
+2. [done] Define the first Prisma schema for entries, themes, projects, questions, threads, relationships, references, and attachments.
+3. [done] Build domain schemas and application services for capture, update, link, and query.
+4. [done] Build Dashboard, Capture, Ledger, and Entry detail.
+5. [done] Add Cabinet views for themes, projects, and questions.
+6. [done] Add context mirror generation with markdown and JSON projections.
+7. [in progress] Add search and saved filters. Full-text search, structured filters, and command-center preset links exist; persisted user-defined saved filters are not yet modeled.
+8. [in progress] Complete Command Center for context building and mirror inspection.
+9. [todo] Add CLI adapter over context/query services.
+10. [todo] Add graph/map view once relationship data exists.
+11. [todo] Add MCP adapter when the core domain and context services are stable.
+
+## Current State
+
+Last updated: 2026-04-30
+
+**Built:**
+
+- Full Prisma schema including Entry, Theme, Project, Question, Thread, Reference, Attachment, Relationship, and all explicit join tables.
+- Layered source structure: `src/domain`, `src/application`, `src/repositories`, `src/infrastructure`, `src/ai-context`, `src/app`, `src/components`.
+- Domain validation and application services for entry capture/update, question status update, object linking, reference/attachment metadata, thread creation, list/query reads, graph reads, and context mirror snapshots.
+- UI routes for Dashboard, Capture, Ledger, Cabinet, Entry detail/edit, Command Center, Settings, Map, and detail views for themes, projects, questions, and threads.
+- Context mirror generation for `manifest.json`, `ai-index.md`, `today.md`, `ai-bundle.md`, `recent.md`, `open-questions.md`, project/theme indexes and pages, `threads/index.md`, `entries/index.json`, and per-entry Markdown/JSON files.
+
+**Not yet built:**
+
+- Persisted user-defined saved filters.
+- Richer relationship validation and object pickers so users do not need to paste IDs manually.
+- Per-thread context mirror detail projections, timeline views, and alternate privacy export modes.
+- Command Center context bundle variants beyond the generated compact bundle.
+- CLI adapter.
+- Graph/map visual layout beyond the current text-first relationship map.
+- MCP adapter.
 
 ## Detailed Design Artifacts
 

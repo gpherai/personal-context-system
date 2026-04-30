@@ -20,6 +20,18 @@ export async function getQuestionById(id: string) {
   return createPrismaContextRepository().getQuestion(id);
 }
 
+export async function getThreads() {
+  return createPrismaContextRepository().listThreads();
+}
+
+export async function getThreadBySlug(slug: string) {
+  return createPrismaContextRepository().getThreadBySlug(slug);
+}
+
+export async function getGraphSnapshot() {
+  return createPrismaContextRepository().getGraphSnapshot();
+}
+
 export async function getLedgerEntries(params?: URLSearchParams) {
   const { listEntries } = await import("./context-service");
   return listEntries(createPrismaContextRepository(), params);

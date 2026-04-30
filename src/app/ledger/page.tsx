@@ -1,7 +1,8 @@
+import Link from "next/link";
 import { Search } from "lucide-react";
 
 import { isRecoverableReadError } from "@/application/errors";
-import { getLedgerEntries } from "@/application/query-service";
+import { getDashboardOverview, getLedgerEntries } from "@/application/query-service";
 import { EntryList } from "@/components/entry-list";
 import { SetupNotice } from "@/components/setup-notice";
 import { entryStatuses, entryTypes, privacyLevels } from "@/domain/context";
@@ -30,7 +31,7 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
   const params = toUrlSearchParams(rawSearchParams);
 
   try {
-    const entries = await getLedgerEntries(params);
+    const [entries, overview] = await Promise.all([getLedgerEntries(params), getDashboardOverview()]);
 
     return (
       <div className="mx-auto grid max-w-6xl gap-5">
@@ -42,7 +43,7 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
           </p>
         </header>
 
-        <form className="grid gap-3 border border-border bg-surface p-4 md:grid-cols-[1fr_180px_160px_160px_auto]">
+        <form className="grid gap-3 border border-border bg-surface p-4 md:grid-cols-2 xl:grid-cols-[1fr_180px_160px_160px_180px_180px]">
           <label className="grid gap-2 text-sm font-medium">
             Search
             <span className="relative">
@@ -100,9 +101,80 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
               ))}
             </select>
           </label>
-          <button className="h-10 self-end rounded-md border border-primary bg-primary px-4 text-sm font-medium text-white transition-colors duration-200 hover:bg-primary-strong focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
-            Apply
-          </button>
+          <label className="grid gap-2 text-sm font-medium">
+            Theme
+            <select
+              className="h-10 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+              defaultValue={params.get("themeSlug") ?? ""}
+              name="themeSlug"
+            >
+              <option value="">Any</option>
+              {overview.activeThemes.map((theme) => (
+                <option key={theme.id} value={theme.slug}>
+                  {theme.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="grid gap-2 text-sm font-medium">
+            Project
+            <select
+              className="h-10 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+              defaultValue={params.get("projectSlug") ?? ""}
+              name="projectSlug"
+            >
+              <option value="">Any</option>
+              {overview.activeProjects.map((project) => (
+                <option key={project.id} value={project.slug}>
+                  {project.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="grid gap-2 text-sm font-medium">
+            Question
+            <select
+              className="h-10 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+              defaultValue={params.get("questionId") ?? ""}
+              name="questionId"
+            >
+              <option value="">Any</option>
+              {overview.openQuestions.map((question) => (
+                <option key={question.id} value={question.id}>
+                  {question.prompt}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="grid gap-2 text-sm font-medium">
+            From
+            <input
+              className="h-10 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+              defaultValue={params.get("occurredFrom") ?? ""}
+              name="occurredFrom"
+              type="date"
+            />
+          </label>
+          <label className="grid gap-2 text-sm font-medium">
+            To
+            <input
+              className="h-10 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+              defaultValue={params.get("occurredTo") ?? ""}
+              name="occurredTo"
+              type="date"
+            />
+          </label>
+          <div className="flex items-end gap-2">
+            <button className="h-10 rounded-md border border-primary bg-primary px-4 text-sm font-medium text-white transition-colors duration-200 hover:bg-primary-strong focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
+              Apply
+            </button>
+            <Link
+              href="/ledger"
+              className="inline-flex h-10 items-center rounded-md border border-border bg-surface px-4 text-sm font-medium text-foreground transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+            >
+              Reset
+            </Link>
+          </div>
         </form>
 
         <EntryList entries={entries} />

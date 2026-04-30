@@ -1,10 +1,16 @@
+import Link from "next/link";
 import { Bot, FolderTree, ShieldCheck, Terminal } from "lucide-react";
+
+import { getContextMirrorStatus } from "@/infrastructure/files/context-mirror-writer";
+import { formatDateTime } from "@/lib/format";
 
 import { RebuildMirrorForm } from "./rebuild-form";
 
 export const dynamic = "force-dynamic";
 
-export default function CommandPage() {
+export default async function CommandPage() {
+  const mirrorStatus = await getContextMirrorStatus();
+
   return (
     <div className="mx-auto grid max-w-5xl gap-6">
       <header className="border-b border-border pb-5">
@@ -53,6 +59,74 @@ export default function CommandPage() {
           <h2 className="text-sm font-semibold">Equivalent terminal command</h2>
         </div>
         <code className="block overflow-x-auto bg-surface-muted px-3 py-2 text-sm">npm run mirror:build</code>
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-[320px_1fr]">
+        <div className="border border-border bg-surface p-5">
+          <h2 className="text-sm font-semibold">Mirror status</h2>
+          <dl className="mt-3 grid gap-2 text-sm text-muted-foreground">
+            <div>
+              <dt className="font-medium text-foreground">State</dt>
+              <dd>{mirrorStatus.exists ? "Generated" : "Not generated"}</dd>
+            </div>
+            <div>
+              <dt className="font-medium text-foreground">Output path</dt>
+              <dd className="break-all">{mirrorStatus.outputDir}</dd>
+            </div>
+            {mirrorStatus.exists && (
+              <>
+                <div>
+                  <dt className="font-medium text-foreground">Generated at</dt>
+                  <dd>{mirrorStatus.generatedAt ?? "Unknown"}</dd>
+                </div>
+                <div>
+                  <dt className="font-medium text-foreground">Manifest updated</dt>
+                  <dd>{formatDateTime(mirrorStatus.manifestUpdatedAt)}</dd>
+                </div>
+                <div>
+                  <dt className="font-medium text-foreground">Files</dt>
+                  <dd>{mirrorStatus.files.length}</dd>
+                </div>
+              </>
+            )}
+          </dl>
+        </div>
+
+        <div className="border border-border bg-surface p-5">
+          <h2 className="text-sm font-semibold">Generated files</h2>
+          {mirrorStatus.files.length ? (
+            <div className="mt-3 grid max-h-96 gap-1 overflow-auto text-sm">
+              {mirrorStatus.files.slice(0, 80).map((file) => (
+                <code key={file} className="rounded bg-surface-muted px-2 py-1 text-xs">
+                  {file}
+                </code>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-3 text-sm text-muted-foreground">No generated files found.</p>
+          )}
+        </div>
+      </section>
+
+      <section className="border border-border bg-surface p-5">
+        <h2 className="text-sm font-semibold">Saved context filters</h2>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {[
+            { href: "/ledger?status=active", label: "Active entries" },
+            { href: "/ledger?type=question", label: "Question entries" },
+            { href: "/ledger?privacyLevel=sensitive", label: "Sensitive records" },
+            { href: "/ledger?type=decision", label: "Decisions" },
+            { href: "/ledger?type=open_loop", label: "Open loops" }
+          ].map((filter) => (
+            <Link
+              key={filter.href}
+              href={filter.href}
+              className="inline-flex h-9 items-center rounded-md border border-border bg-surface px-3 text-sm font-medium transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+            >
+              {filter.label}
+            </Link>
+          ))}
+        </div>
       </section>
     </div>
   );

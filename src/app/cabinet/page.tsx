@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Archive, CircleHelp, Layers, Library } from "lucide-react";
 
 import { isRecoverableReadError } from "@/application/errors";
-import { getDashboardOverview } from "@/application/query-service";
+import { getDashboardOverview, getThreads } from "@/application/query-service";
 import { EntryList } from "@/components/entry-list";
 import { EmptyState } from "@/components/empty-state";
 import { SetupNotice } from "@/components/setup-notice";
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 export default async function CabinetPage() {
   try {
-    const overview = await getDashboardOverview();
+    const [overview, threads] = await Promise.all([getDashboardOverview(), getThreads()]);
 
     return (
       <div className="mx-auto grid max-w-7xl gap-6">
@@ -24,7 +24,7 @@ export default async function CabinetPage() {
           </p>
         </header>
 
-        <section className="grid gap-5 lg:grid-cols-3">
+        <section className="grid gap-5 lg:grid-cols-4">
           <div className="border border-border bg-surface p-4">
             <div className="mb-3 flex items-center gap-2">
               <Library className="h-4 w-4 text-accent" aria-hidden="true" />
@@ -79,13 +79,39 @@ export default async function CabinetPage() {
             <div className="grid gap-3">
               {overview.openQuestions.length ? (
                 overview.openQuestions.map((question) => (
-                  <div key={question.id} className="border-t border-border pt-3 first:border-t-0 first:pt-0">
+                  <Link
+                    key={question.id}
+                    href={`/questions/${question.id}`}
+                    className="block border-t border-border pt-3 transition-colors duration-200 first:border-t-0 first:pt-0 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                  >
                     <Badge tone="amber">{question.status}</Badge>
                     <p className="mt-2 text-sm leading-6">{question.prompt}</p>
-                  </div>
+                  </Link>
                 ))
               ) : (
                 <EmptyState title="No questions" body="Question entries create first-class question records." />
+              )}
+            </div>
+          </div>
+
+          <div className="border border-border bg-surface p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <Archive className="h-4 w-4 text-primary" aria-hidden="true" />
+              <h2 className="text-sm font-semibold">Threads</h2>
+            </div>
+            <div className="grid gap-2">
+              {threads.length ? (
+                threads.slice(0, 8).map((thread) => (
+                  <Link
+                    key={thread.id}
+                    href={`/threads/${thread.slug}`}
+                    className="rounded-md px-2 py-2 text-sm transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                  >
+                    {thread.title}
+                  </Link>
+                ))
+              ) : (
+                <EmptyState title="No threads" body="Threads appear when entries are curated into sequences." />
               )}
             </div>
           </div>

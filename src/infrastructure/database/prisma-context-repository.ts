@@ -1,15 +1,30 @@
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 
-import { slugifyName, type CreateEntryCommand, type ListEntriesQuery } from "@/domain/context";
+import {
+  slugifyName,
+  type CreateAttachmentCommand,
+  type CreateEntryCommand,
+  type CreateReferenceCommand,
+  type CreateThreadCommand,
+  type ListEntriesQuery,
+  type LinkObjectsCommand,
+  type UpdateEntryCommand,
+  type UpdateQuestionCommand
+} from "@/domain/context";
 import type {
+  AttachmentRecord,
   ContextMirrorSnapshot,
   ContextRepository,
   DashboardOverview,
   EntryRecord,
+  GraphSnapshot,
   NamedRecord,
   NamedRecordContext,
   QuestionContext,
-  QuestionRecord
+  QuestionRecord,
+  ReferenceRecord,
+  RelationshipRecord,
+  ThreadRecord
 } from "@/repositories/context-repository";
 
 import { getPrismaClient } from "./client";
@@ -28,6 +43,21 @@ const entryInclude = {
   questions: {
     include: {
       question: true
+    }
+  },
+  threads: {
+    include: {
+      thread: true
+    }
+  },
+  references: {
+    include: {
+      reference: true
+    }
+  },
+  attachments: {
+    include: {
+      attachment: true
     }
   }
 } satisfies Prisma.EntryInclude;
@@ -48,7 +78,76 @@ function optional<T>(value: T | null | undefined): T | undefined {
   return value ?? undefined;
 }
 
-function mapEntry(entry: EntryWithRelations): EntryRecord {
+function mapReference(reference: {
+  id: string;
+  kind: ReferenceRecord["kind"];
+  title: string;
+  url: string | null;
+  description: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}): ReferenceRecord {
+  return {
+    id: reference.id,
+    kind: reference.kind,
+    title: reference.title,
+    url: optional(reference.url),
+    description: optional(reference.description),
+    createdAt: reference.createdAt,
+    updatedAt: reference.updatedAt
+  };
+}
+
+function mapAttachment(attachment: {
+  id: string;
+  path: string;
+  mediaType: string | null;
+  checksum: string | null;
+  sizeBytes: bigint | null;
+  title: string | null;
+  description: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}): AttachmentRecord {
+  return {
+    id: attachment.id,
+    path: attachment.path,
+    mediaType: optional(attachment.mediaType),
+    checksum: optional(attachment.checksum),
+    sizeBytes: attachment.sizeBytes?.toString(),
+    title: optional(attachment.title),
+    description: optional(attachment.description),
+    createdAt: attachment.createdAt,
+    updatedAt: attachment.updatedAt
+  };
+}
+
+function mapRelationship(relationship: {
+  id: string;
+  fromType: RelationshipRecord["fromType"];
+  fromId: string;
+  toType: RelationshipRecord["toType"];
+  toId: string;
+  relationType: RelationshipRecord["relationType"];
+  note: string | null;
+  createdAt: Date;
+}): RelationshipRecord {
+  return {
+    id: relationship.id,
+    fromType: relationship.fromType,
+    fromId: relationship.fromId,
+    toType: relationship.toType,
+    toId: relationship.toId,
+    relationType: relationship.relationType,
+    note: optional(relationship.note),
+    createdAt: relationship.createdAt
+  };
+}
+
+function mapEntry(
+  entry: EntryWithRelations,
+  relationships: { outgoing?: RelationshipRecord[]; incoming?: RelationshipRecord[] } = {}
+): EntryRecord {
   return {
     id: entry.id,
     type: entry.type,
@@ -72,7 +171,18 @@ function mapEntry(entry: EntryWithRelations): EntryRecord {
       .sort((a, b) => a.name.localeCompare(b.name)),
     questions: entry.questions
       .map(({ question }) => ({ id: question.id, prompt: question.prompt, status: question.status }))
-      .sort((a, b) => a.prompt.localeCompare(b.prompt))
+      .sort((a, b) => a.prompt.localeCompare(b.prompt)),
+    threads: entry.threads
+      .map(({ thread }) => ({ id: thread.id, slug: thread.slug, title: thread.title }))
+      .sort((a, b) => a.title.localeCompare(b.title)),
+    references: entry.references
+      .map(({ reference }) => mapReference(reference))
+      .sort((a, b) => a.title.localeCompare(b.title)),
+    attachments: entry.attachments
+      .map(({ attachment }) => mapAttachment(attachment))
+      .sort((a, b) => (a.title ?? a.path).localeCompare(b.title ?? b.path)),
+    outgoingRelationships: relationships.outgoing ?? [],
+    incomingRelationships: relationships.incoming ?? []
   };
 }
 
@@ -110,7 +220,31 @@ function mapNamed(record: {
   };
 }
 
-function entryWhere(query?: Partial<ListEntriesQuery>): Prisma.EntryWhereInput {
+function mapThread(
+  thread: {
+    id: string;
+    slug: string;
+    title: string;
+    description: string | null;
+    status: ThreadRecord["status"];
+    createdAt: Date;
+    updatedAt: Date;
+  },
+  entries: EntryRecord[] = []
+): ThreadRecord {
+  return {
+    id: thread.id,
+    slug: thread.slug,
+    title: thread.title,
+    description: optional(thread.description),
+    status: thread.status,
+    createdAt: thread.createdAt,
+    updatedAt: thread.updatedAt,
+    entries
+  };
+}
+
+function entryWhere(query?: Partial<ListEntriesQuery>, searchIds?: string[]): Prisma.EntryWhereInput {
   const where: Prisma.EntryWhereInput = {};
 
   if (query?.type) {
@@ -125,12 +259,27 @@ function entryWhere(query?: Partial<ListEntriesQuery>): Prisma.EntryWhereInput {
     where.privacyLevel = query.privacyLevel;
   }
 
-  if (query?.search) {
-    where.OR = [
-      { title: { contains: query.search, mode: "insensitive" } },
-      { body: { contains: query.search, mode: "insensitive" } },
-      { summary: { contains: query.search, mode: "insensitive" } }
-    ];
+  if (query?.themeSlug) {
+    where.themes = { some: { theme: { slug: query.themeSlug } } };
+  }
+
+  if (query?.projectSlug) {
+    where.projects = { some: { project: { slug: query.projectSlug } } };
+  }
+
+  if (query?.questionId) {
+    where.questions = { some: { questionId: query.questionId } };
+  }
+
+  if (query?.occurredFrom || query?.occurredTo) {
+    where.occurredAt = {
+      ...(query.occurredFrom ? { gte: query.occurredFrom } : {}),
+      ...(query.occurredTo ? { lte: query.occurredTo } : {})
+    };
+  }
+
+  if (searchIds) {
+    where.id = { in: searchIds };
   }
 
   return where;
@@ -138,6 +287,99 @@ function entryWhere(query?: Partial<ListEntriesQuery>): Prisma.EntryWhereInput {
 
 export class PrismaContextRepository implements ContextRepository {
   constructor(private readonly prisma: PrismaClient = getPrismaClient()) {}
+
+  private async searchEntryIds(search: string, limit: number): Promise<string[]> {
+    const rows = await this.prisma.$queryRaw<{ id: string }[]>`
+      SELECT "id"
+      FROM "Entry"
+      WHERE to_tsvector('simple', coalesce("title", '') || ' ' || coalesce("summary", '') || ' ' || coalesce("body", ''))
+        @@ plainto_tsquery('simple', ${search})
+      ORDER BY ts_rank(
+        to_tsvector('simple', coalesce("title", '') || ' ' || coalesce("summary", '') || ' ' || coalesce("body", '')),
+        plainto_tsquery('simple', ${search})
+      ) DESC,
+      "capturedAt" DESC
+      LIMIT ${limit}
+    `;
+
+    return rows.map((row) => row.id);
+  }
+
+  private async getRelationshipsForObject(type: RelationshipRecord["fromType"], id: string) {
+    const [outgoing, incoming] = await Promise.all([
+      this.prisma.relationship.findMany({
+        where: { fromType: type, fromId: id },
+        orderBy: { createdAt: "desc" }
+      }),
+      this.prisma.relationship.findMany({
+        where: { toType: type, toId: id },
+        orderBy: { createdAt: "desc" }
+      })
+    ]);
+
+    return {
+      outgoing: outgoing.map(mapRelationship),
+      incoming: incoming.map(mapRelationship)
+    };
+  }
+
+  private async syncEntryNames(tx: Prisma.TransactionClient, entryId: string, themeNames: string[], projectNames: string[]) {
+    await tx.entryTheme.deleteMany({ where: { entryId } });
+    await tx.entryProject.deleteMany({ where: { entryId } });
+
+    for (const name of themeNames) {
+      const slug = slugifyName(name);
+      if (!slug) {
+        continue;
+      }
+
+      const theme = await tx.theme.upsert({
+        where: { slug },
+        update: { name },
+        create: { slug, name }
+      });
+
+      await tx.entryTheme.create({
+        data: {
+          entryId,
+          themeId: theme.id
+        }
+      });
+    }
+
+    for (const name of projectNames) {
+      const slug = slugifyName(name);
+      if (!slug) {
+        continue;
+      }
+
+      const project = await tx.project.upsert({
+        where: { slug },
+        update: { name },
+        create: { slug, name }
+      });
+
+      await tx.entryProject.create({
+        data: {
+          entryId,
+          projectId: project.id
+        }
+      });
+    }
+  }
+
+  private async uniqueThreadSlug(title: string): Promise<string> {
+    const baseSlug = slugifyName(title) || "thread";
+    let candidate = baseSlug;
+    let suffix = 2;
+
+    while (await this.prisma.thread.findUnique({ where: { slug: candidate }, select: { id: true } })) {
+      candidate = `${baseSlug}-${suffix}`;
+      suffix += 1;
+    }
+
+    return candidate;
+  }
 
   async createEntry(command: CreateEntryCommand): Promise<EntryRecord> {
     const entry = await this.prisma.$transaction(async (tx) => {
@@ -147,54 +389,16 @@ export class PrismaContextRepository implements ContextRepository {
           status: command.status,
           title: command.title,
           body: command.body,
-          summary: command.summary,
-          source: command.source,
-          confidence: command.confidence,
+          summary: command.summary ?? null,
+          source: command.source ?? null,
+          confidence: command.confidence ?? null,
           privacyLevel: command.privacyLevel,
-          occurredAt: command.occurredAt,
+          occurredAt: command.occurredAt ?? null,
           metadata: command.metadata as Prisma.InputJsonValue
         }
       });
 
-      for (const name of command.themeNames) {
-        const slug = slugifyName(name);
-        if (!slug) {
-          continue;
-        }
-
-        const theme = await tx.theme.upsert({
-          where: { slug },
-          update: { name },
-          create: { slug, name }
-        });
-
-        await tx.entryTheme.create({
-          data: {
-            entryId: created.id,
-            themeId: theme.id
-          }
-        });
-      }
-
-      for (const name of command.projectNames) {
-        const slug = slugifyName(name);
-        if (!slug) {
-          continue;
-        }
-
-        const project = await tx.project.upsert({
-          where: { slug },
-          update: { name },
-          create: { slug, name }
-        });
-
-        await tx.entryProject.create({
-          data: {
-            entryId: created.id,
-            projectId: project.id
-          }
-        });
-      }
+      await this.syncEntryNames(tx, created.id, command.themeNames, command.projectNames);
 
       if (command.type === "question") {
         const question = await tx.question.create({
@@ -223,24 +427,83 @@ export class PrismaContextRepository implements ContextRepository {
     return mapEntry(entry);
   }
 
+  async updateEntry(command: UpdateEntryCommand): Promise<EntryRecord> {
+    const entry = await this.prisma.$transaction(async (tx) => {
+      await tx.entry.update({
+        where: { id: command.id },
+        data: {
+          type: command.type,
+          status: command.status,
+          title: command.title,
+          body: command.body,
+          summary: command.summary,
+          source: command.source,
+          confidence: command.confidence,
+          privacyLevel: command.privacyLevel,
+          occurredAt: command.occurredAt,
+          metadata: command.metadata as Prisma.InputJsonValue
+        }
+      });
+
+      await this.syncEntryNames(tx, command.id, command.themeNames, command.projectNames);
+
+      if (command.type === "question") {
+        const existingQuestion = await tx.question.findFirst({
+          where: { originEntryId: command.id },
+          select: { id: true }
+        });
+
+        if (!existingQuestion) {
+          const question = await tx.question.create({
+            data: {
+              prompt: command.title,
+              summary: command.summary,
+              originEntryId: command.id,
+              status: "open"
+            }
+          });
+
+          await tx.entryQuestion.create({
+            data: {
+              entryId: command.id,
+              questionId: question.id
+            }
+          });
+        }
+      }
+
+      return tx.entry.findUniqueOrThrow({
+        where: { id: command.id },
+        include: entryInclude
+      });
+    });
+
+    const relationships = await this.getRelationshipsForObject("entry", entry.id);
+    return mapEntry(entry, relationships);
+  }
+
   async listEntries(query: Partial<ListEntriesQuery> = {}): Promise<EntryRecord[]> {
+    const searchIds = query.search ? await this.searchEntryIds(query.search, 200) : undefined;
     const entries = await this.prisma.entry.findMany({
-      where: entryWhere(query),
+      where: entryWhere(query, searchIds),
       include: entryInclude,
       orderBy: [{ capturedAt: "desc" }, { createdAt: "desc" }],
       take: query.limit ?? 50
     });
 
-    return entries.map(mapEntry);
+    return entries.map((entry) => mapEntry(entry));
   }
 
   async getEntry(id: string): Promise<EntryRecord | null> {
-    const entry = await this.prisma.entry.findUnique({
-      where: { id },
-      include: entryInclude
-    });
+    const [entry, relationships] = await Promise.all([
+      this.prisma.entry.findUnique({
+        where: { id },
+        include: entryInclude
+      }),
+      this.getRelationshipsForObject("entry", id)
+    ]);
 
-    return entry ? mapEntry(entry) : null;
+    return entry ? mapEntry(entry, relationships) : null;
   }
 
   async getThemeBySlug(slug: string): Promise<NamedRecordContext | null> {
@@ -294,18 +557,21 @@ export class PrismaContextRepository implements ContextRepository {
   }
 
   async getQuestion(id: string): Promise<QuestionContext | null> {
-    const question = await this.prisma.question.findUnique({
-      where: { id },
-      include: {
-        entries: {
-          include: {
-            entry: {
-              include: entryInclude
+    const [question, relationships] = await Promise.all([
+      this.prisma.question.findUnique({
+        where: { id },
+        include: {
+          entries: {
+            include: {
+              entry: {
+                include: entryInclude
+              }
             }
           }
         }
-      }
-    });
+      }),
+      this.getRelationshipsForObject("question", id)
+    ]);
 
     if (!question) {
       return null;
@@ -313,7 +579,207 @@ export class PrismaContextRepository implements ContextRepository {
 
     return {
       ...mapQuestion(question),
-      entries: question.entries.map(({ entry }) => mapEntry(entry))
+      entries: question.entries.map(({ entry }) => mapEntry(entry)),
+      outgoingRelationships: relationships.outgoing,
+      incomingRelationships: relationships.incoming
+    };
+  }
+
+  async updateQuestion(command: UpdateQuestionCommand): Promise<QuestionRecord> {
+    const question = await this.prisma.question.update({
+      where: { id: command.id },
+      data: {
+        status: command.status,
+        summary: command.summary ?? null
+      }
+    });
+
+    return mapQuestion(question);
+  }
+
+  async linkObjects(command: LinkObjectsCommand): Promise<RelationshipRecord> {
+    const relationship = await this.prisma.relationship.create({
+      data: {
+        fromType: command.fromType,
+        fromId: command.fromId,
+        toType: command.toType,
+        toId: command.toId,
+        relationType: command.relationType,
+        note: command.note
+      }
+    });
+
+    return mapRelationship(relationship);
+  }
+
+  async createReference(command: CreateReferenceCommand): Promise<ReferenceRecord> {
+    const reference = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.reference.create({
+        data: {
+          kind: command.kind,
+          title: command.title,
+          url: command.url,
+          description: command.description,
+          metadata: command.metadata as Prisma.InputJsonValue
+        }
+      });
+
+      await tx.entryReference.create({
+        data: {
+          entryId: command.entryId,
+          referenceId: created.id
+        }
+      });
+
+      return created;
+    });
+
+    return mapReference(reference);
+  }
+
+  async createAttachment(command: CreateAttachmentCommand): Promise<AttachmentRecord> {
+    const attachment = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.attachment.create({
+        data: {
+          path: command.path,
+          mediaType: command.mediaType,
+          checksum: command.checksum,
+          sizeBytes: command.sizeBytes !== undefined ? BigInt(command.sizeBytes) : undefined,
+          title: command.title,
+          description: command.description,
+          metadata: command.metadata as Prisma.InputJsonValue
+        }
+      });
+
+      await tx.entryAttachment.create({
+        data: {
+          entryId: command.entryId,
+          attachmentId: created.id
+        }
+      });
+
+      return created;
+    });
+
+    return mapAttachment(attachment);
+  }
+
+  async createThread(command: CreateThreadCommand): Promise<ThreadRecord> {
+    const slug = await this.uniqueThreadSlug(command.title);
+    const thread = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.thread.create({
+        data: {
+          slug,
+          title: command.title,
+          description: command.description,
+          status: command.status,
+          metadata: command.metadata as Prisma.InputJsonValue
+        }
+      });
+
+      const uniqueEntryIds = [...new Set(command.entryIds)];
+      for (const [index, entryId] of uniqueEntryIds.entries()) {
+        await tx.entryThread.create({
+          data: {
+            entryId,
+            threadId: created.id,
+            position: index + 1
+          }
+        });
+      }
+
+      return tx.thread.findUniqueOrThrow({
+        where: { id: created.id },
+        include: {
+          entries: {
+            include: {
+              entry: {
+                include: entryInclude
+              }
+            },
+            orderBy: { position: "asc" }
+          }
+        }
+      });
+    });
+
+    return mapThread(
+      thread,
+      thread.entries.map(({ entry }) => mapEntry(entry))
+    );
+  }
+
+  async listThreads(): Promise<Omit<ThreadRecord, "entries">[]> {
+    const threads = await this.prisma.thread.findMany({
+      orderBy: [{ updatedAt: "desc" }],
+      take: 100
+    });
+
+    return threads.map((thread) => ({
+      id: thread.id,
+      slug: thread.slug,
+      title: thread.title,
+      description: optional(thread.description),
+      status: thread.status,
+      createdAt: thread.createdAt,
+      updatedAt: thread.updatedAt
+    }));
+  }
+
+  async getThreadBySlug(slug: string): Promise<ThreadRecord | null> {
+    const thread = await this.prisma.thread.findUnique({
+      where: { slug },
+      include: {
+        entries: {
+          include: {
+            entry: {
+              include: entryInclude
+            }
+          },
+          orderBy: { position: "asc" }
+        }
+      }
+    });
+
+    if (!thread) {
+      return null;
+    }
+
+    return mapThread(
+      thread,
+      thread.entries.map(({ entry }) => mapEntry(entry))
+    );
+  }
+
+  async getGraphSnapshot(): Promise<GraphSnapshot> {
+    const [entries, themes, projects, questions, threads, relationships] = await Promise.all([
+      this.listEntries({ limit: 120 }),
+      this.prisma.theme.findMany({
+        include: { _count: { select: { entries: true } } },
+        orderBy: { name: "asc" }
+      }),
+      this.prisma.project.findMany({
+        include: { _count: { select: { entries: true } } },
+        orderBy: { name: "asc" }
+      }),
+      this.prisma.question.findMany({
+        orderBy: { updatedAt: "desc" },
+        take: 120
+      }),
+      this.listThreads(),
+      this.prisma.relationship.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 240
+      })
+    ]);
+
+    return {
+      entries,
+      themes: themes.map(mapNamed),
+      projects: projects.map(mapNamed),
+      questions: questions.map(mapQuestion),
+      threads,
+      relationships: relationships.map(mapRelationship)
     };
   }
 
@@ -360,7 +826,7 @@ export class PrismaContextRepository implements ContextRepository {
   }
 
   async getContextMirrorSnapshot(): Promise<ContextMirrorSnapshot> {
-    const [entries, openQuestions, themes, projects] = await Promise.all([
+    const [entries, openQuestions, themes, projects, threads] = await Promise.all([
       this.listEntries({ limit: 200 }),
       this.prisma.question.findMany({
         where: { status: { in: ["open", "active", "parked"] } },
@@ -374,14 +840,16 @@ export class PrismaContextRepository implements ContextRepository {
       this.prisma.project.findMany({
         include: { _count: { select: { entries: true } } },
         orderBy: [{ name: "asc" }]
-      })
+      }),
+      this.listThreads()
     ]);
 
     return {
       entries,
       openQuestions: openQuestions.map(mapQuestion),
       themes: themes.map(mapNamed),
-      projects: projects.map(mapNamed)
+      projects: projects.map(mapNamed),
+      threads
     };
   }
 }

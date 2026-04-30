@@ -20,6 +20,7 @@ export const privacyLevels = ["private", "sensitive", "shareable"] as const;
 export const recordStatuses = ["active", "archived"] as const;
 export const questionStatuses = ["open", "active", "parked", "answered", "reframed", "abandoned"] as const;
 export const objectTypes = ["entry", "theme", "project", "question", "thread", "reference", "attachment"] as const;
+export const referenceKinds = ["url", "book", "article", "film", "game", "repository", "external_record", "other"] as const;
 export const relationTypes = [
   "relates_to",
   "mentions",
@@ -40,13 +41,16 @@ export type PrivacyLevel = (typeof privacyLevels)[number];
 export type RecordStatus = (typeof recordStatuses)[number];
 export type QuestionStatus = (typeof questionStatuses)[number];
 export type ObjectType = (typeof objectTypes)[number];
+export type ReferenceKind = (typeof referenceKinds)[number];
 export type RelationType = (typeof relationTypes)[number];
 
 export const entryTypeSchema = z.enum(entryTypes);
 export const entryStatusSchema = z.enum(entryStatuses);
 export const privacyLevelSchema = z.enum(privacyLevels);
+export const recordStatusSchema = z.enum(recordStatuses);
 export const questionStatusSchema = z.enum(questionStatuses);
 export const objectTypeSchema = z.enum(objectTypes);
+export const referenceKindSchema = z.enum(referenceKinds);
 export const relationTypeSchema = z.enum(relationTypes);
 
 export const metadataSchema = z.record(z.string(), z.unknown());
@@ -71,7 +75,22 @@ export const listEntriesQuerySchema = z.object({
   type: entryTypeSchema.optional(),
   status: entryStatusSchema.optional(),
   privacyLevel: privacyLevelSchema.optional(),
+  themeSlug: z.string().trim().optional(),
+  projectSlug: z.string().trim().optional(),
+  questionId: z.string().trim().optional(),
+  occurredFrom: z.date().optional(),
+  occurredTo: z.date().optional(),
   limit: z.number().int().min(1).max(200).default(50)
+});
+
+export const updateEntryCommandSchema = createEntryCommandSchema.extend({
+  id: z.string().min(1)
+});
+
+export const updateQuestionCommandSchema = z.object({
+  id: z.string().min(1),
+  status: questionStatusSchema,
+  summary: z.string().trim().max(4000).optional()
 });
 
 export const linkObjectsCommandSchema = z.object({
@@ -83,9 +102,42 @@ export const linkObjectsCommandSchema = z.object({
   note: z.string().trim().max(2000).optional()
 });
 
+export const createReferenceCommandSchema = z.object({
+  entryId: z.string().min(1),
+  kind: referenceKindSchema.default("url"),
+  title: z.string().trim().min(1, "Title is required").max(220),
+  url: z.string().trim().max(4000).optional(),
+  description: z.string().trim().max(4000).optional(),
+  metadata: metadataSchema.default({})
+});
+
+export const createAttachmentCommandSchema = z.object({
+  entryId: z.string().min(1),
+  path: z.string().trim().min(1, "Path is required").max(4000),
+  mediaType: z.string().trim().max(160).optional(),
+  checksum: z.string().trim().max(128).optional(),
+  sizeBytes: z.number().int().min(0).optional(),
+  title: z.string().trim().max(220).optional(),
+  description: z.string().trim().max(4000).optional(),
+  metadata: metadataSchema.default({})
+});
+
+export const createThreadCommandSchema = z.object({
+  title: z.string().trim().min(1, "Title is required").max(180),
+  description: z.string().trim().max(4000).optional(),
+  status: recordStatusSchema.default("active"),
+  entryIds: z.array(z.string().trim().min(1)).default([]),
+  metadata: metadataSchema.default({})
+});
+
 export type CreateEntryCommand = z.infer<typeof createEntryCommandSchema>;
 export type ListEntriesQuery = z.infer<typeof listEntriesQuerySchema>;
+export type UpdateEntryCommand = z.infer<typeof updateEntryCommandSchema>;
+export type UpdateQuestionCommand = z.infer<typeof updateQuestionCommandSchema>;
 export type LinkObjectsCommand = z.infer<typeof linkObjectsCommandSchema>;
+export type CreateReferenceCommand = z.infer<typeof createReferenceCommandSchema>;
+export type CreateAttachmentCommand = z.infer<typeof createAttachmentCommandSchema>;
+export type CreateThreadCommand = z.infer<typeof createThreadCommandSchema>;
 
 export function slugifyName(value: string): string {
   return value
@@ -121,6 +173,10 @@ export function parseNameList(value: FormDataEntryValue | null): string[] {
       seen.add(key);
       return true;
     });
+}
+
+export function parseIdList(value: FormDataEntryValue | null): string[] {
+  return parseNameList(value);
 }
 
 export function parseOptionalString(value: FormDataEntryValue | null): string | undefined {

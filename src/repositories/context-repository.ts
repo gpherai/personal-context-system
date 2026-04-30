@@ -1,10 +1,20 @@
 import type {
+  CreateAttachmentCommand,
   CreateEntryCommand,
+  CreateReferenceCommand,
+  CreateThreadCommand,
   EntryStatus,
   EntryType,
   ListEntriesQuery,
+  LinkObjectsCommand,
   PrivacyLevel,
-  QuestionStatus
+  QuestionStatus,
+  RecordStatus,
+  ReferenceKind,
+  RelationType,
+  ObjectType,
+  UpdateEntryCommand,
+  UpdateQuestionCommand
 } from "@/domain/context";
 
 export interface LinkedName {
@@ -17,6 +27,45 @@ export interface LinkedQuestion {
   id: string;
   prompt: string;
   status: QuestionStatus;
+}
+
+export interface LinkedThread {
+  id: string;
+  slug: string;
+  title: string;
+}
+
+export interface ReferenceRecord {
+  id: string;
+  kind: ReferenceKind;
+  title: string;
+  url?: string;
+  description?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface AttachmentRecord {
+  id: string;
+  path: string;
+  mediaType?: string;
+  checksum?: string;
+  sizeBytes?: string;
+  title?: string;
+  description?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface RelationshipRecord {
+  id: string;
+  fromType: ObjectType;
+  fromId: string;
+  toType: ObjectType;
+  toId: string;
+  relationType: RelationType;
+  note?: string;
+  createdAt: Date;
 }
 
 export interface EntryRecord {
@@ -37,6 +86,11 @@ export interface EntryRecord {
   themes: LinkedName[];
   projects: LinkedName[];
   questions: LinkedQuestion[];
+  threads: LinkedThread[];
+  references: ReferenceRecord[];
+  attachments: AttachmentRecord[];
+  outgoingRelationships: RelationshipRecord[];
+  incomingRelationships: RelationshipRecord[];
 }
 
 export interface QuestionRecord {
@@ -74,6 +128,7 @@ export interface ContextMirrorSnapshot {
   openQuestions: QuestionRecord[];
   themes: NamedRecord[];
   projects: NamedRecord[];
+  threads: Omit<ThreadRecord, "entries">[];
 }
 
 export interface NamedRecordContext extends NamedRecord {
@@ -82,15 +137,46 @@ export interface NamedRecordContext extends NamedRecord {
 
 export interface QuestionContext extends QuestionRecord {
   entries: EntryRecord[];
+  outgoingRelationships: RelationshipRecord[];
+  incomingRelationships: RelationshipRecord[];
+}
+
+export interface ThreadRecord {
+  id: string;
+  slug: string;
+  title: string;
+  description?: string;
+  status: RecordStatus;
+  createdAt: Date;
+  updatedAt: Date;
+  entries: EntryRecord[];
+}
+
+export interface GraphSnapshot {
+  entries: EntryRecord[];
+  themes: NamedRecord[];
+  projects: NamedRecord[];
+  questions: QuestionRecord[];
+  threads: Omit<ThreadRecord, "entries">[];
+  relationships: RelationshipRecord[];
 }
 
 export interface ContextRepository {
   createEntry(command: CreateEntryCommand): Promise<EntryRecord>;
+  updateEntry(command: UpdateEntryCommand): Promise<EntryRecord>;
   listEntries(query?: Partial<ListEntriesQuery>): Promise<EntryRecord[]>;
   getEntry(id: string): Promise<EntryRecord | null>;
   getThemeBySlug(slug: string): Promise<NamedRecordContext | null>;
   getProjectBySlug(slug: string): Promise<NamedRecordContext | null>;
   getQuestion(id: string): Promise<QuestionContext | null>;
+  updateQuestion(command: UpdateQuestionCommand): Promise<QuestionRecord>;
+  linkObjects(command: LinkObjectsCommand): Promise<RelationshipRecord>;
+  createReference(command: CreateReferenceCommand): Promise<ReferenceRecord>;
+  createAttachment(command: CreateAttachmentCommand): Promise<AttachmentRecord>;
+  createThread(command: CreateThreadCommand): Promise<ThreadRecord>;
+  listThreads(): Promise<Omit<ThreadRecord, "entries">[]>;
+  getThreadBySlug(slug: string): Promise<ThreadRecord | null>;
+  getGraphSnapshot(): Promise<GraphSnapshot>;
   getDashboardOverview(): Promise<DashboardOverview>;
   getContextMirrorSnapshot(): Promise<ContextMirrorSnapshot>;
 }

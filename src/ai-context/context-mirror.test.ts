@@ -21,12 +21,18 @@ describe("context mirror", () => {
             metadata: {},
             themes: [],
             projects: [],
-            questions: []
+            questions: [],
+            threads: [],
+            references: [],
+            attachments: [],
+            outgoingRelationships: [],
+            incomingRelationships: []
           }
         ],
         openQuestions: [],
         themes: [],
-        projects: []
+        projects: [],
+        threads: []
       },
       generatedAt
     );

@@ -1,6 +1,6 @@
 # UI Information Architecture
 
-Updated: 2026-04-29
+Updated: 2026-04-30
 
 ## Purpose
 
@@ -34,6 +34,7 @@ Routes:
 - `/projects/[slug]` Project detail
 - `/questions/[id]` Question detail
 - `/threads/[slug]` Thread detail
+- `/map` Graph/map view — deferred; built after Cabinet is stable and relationship data exists
 
 First implementation surfaces:
 
@@ -42,8 +43,11 @@ First implementation surfaces:
 - Ledger
 - Cabinet
 - Entry detail
+- Entry edit
+- Question workflow
+- Thread detail
 - Command Center
-- Settings placeholder with local operation cues
+- Settings with local operation, mirror, privacy, and backup cues
 
 ## Dashboard
 
@@ -134,6 +138,8 @@ Content:
 
 Editing can be added after capture and read flows are stable.
 
+Current state: editing is available for entry core fields, status, privacy, themes, and projects. Relationship, reference, attachment, and thread creation start from the entry detail page.
+
 ## Command Center
 
 Purpose: AI/context operations.
@@ -144,6 +150,8 @@ First features:
 - rebuild context mirror
 - show recent generated files if available
 - explain privacy defaults through concise labels, not long in-app prose
+
+Current state: the Command Center can rebuild the mirror, show mirror status, list generated files, and expose preset context filters.
 
 Later features:
 

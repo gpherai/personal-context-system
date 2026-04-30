@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Archive, BookOpen, Boxes, Command, Home, PenLine, Settings } from "lucide-react";
+import { Archive, BookOpen, Boxes, Command, GitBranch, Home, ListTree, PenLine, Settings } from "lucide-react";
 import type { ReactNode } from "react";
 
 const navItems = [
@@ -7,6 +7,8 @@ const navItems = [
   { href: "/capture", label: "Capture", icon: PenLine },
   { href: "/ledger", label: "Ledger", icon: BookOpen },
   { href: "/cabinet", label: "Cabinet", icon: Archive },
+  { href: "/threads", label: "Threads", icon: ListTree },
+  { href: "/map", label: "Map", icon: GitBranch },
   { href: "/command", label: "Command", icon: Command },
   { href: "/settings", label: "Settings", icon: Settings }
 ];
