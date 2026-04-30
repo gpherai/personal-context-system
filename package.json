@@ -15,6 +15,8 @@
     "db:studio": "prisma studio",
     "db:seed": "prisma db seed",
     "mirror:build": "tsx scripts/build-context-mirror.ts",
+    "backup:create": "tsx scripts/create-local-backup.ts",
+    "backup:restore": "tsx scripts/restore-local-backup.ts",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build"
   },
   "dependencies": {

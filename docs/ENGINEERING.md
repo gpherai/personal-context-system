@@ -112,4 +112,4 @@ Current starting stack:
 - Before commit, run at least typecheck, lint, and focused tests.
 - If a change explicitly excludes tests, still run typecheck and lint and state that tests were intentionally not run.
 - Separate generated/private data from source code using `.gitignore`.
-- Do not commit secrets, local `.env`, database dumps, attachments, or generated context mirrors.
+- Do not commit secrets, local `.env`, database dumps, backups, attachments, or generated context mirrors.

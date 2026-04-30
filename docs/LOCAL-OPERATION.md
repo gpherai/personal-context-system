@@ -1,6 +1,6 @@
 # Local Operation
 
-Updated: 2026-04-29
+Updated: 2026-04-30
 
 ## Purpose
 
@@ -109,18 +109,36 @@ Ignored local data:
 - `data/context-mirror/`
 - `data/attachments/`
 - `data/exports/`
+- `data/backups/`
 - database dumps
 
 ## Backup
 
-Before depending on the app daily, add a backup routine for:
+Create a local backup:
 
-- PostgreSQL dump
-- `data/attachments`
-- `.env` stored securely outside git
-- committed schema and migrations
+```bash
+npm run backup:create
+```
 
-Generated context mirror can be rebuilt and is not a primary backup target.
+The backup is written under `data/backups/<timestamp>/` and includes:
+
+- `database.dump`: PostgreSQL custom-format dump from the local Docker Compose database
+- `attachments.tar.gz`: only when `data/attachments` exists
+- `README.md`: backup notes and exclusions
+
+The backup deliberately does not include `.env`. Store `.env` separately in a password manager or another secure location outside git. The generated context mirror is not backed up because it can be rebuilt:
+
+```bash
+npm run mirror:build
+```
+
+Restore a backup into the local database:
+
+```bash
+npm run backup:restore -- data/backups/<timestamp>
+```
+
+Restore is destructive for the local database because it runs `pg_restore --clean --if-exists`. Confirm the target database before using it. Migrations remain tracked in git and are the schema history; backups are for local data recovery.
 
 ## Troubleshooting
 

@@ -24,6 +24,7 @@ playwright-report/
 data/context-mirror/
 data/attachments/
 data/exports/
+data/backups/
 
 # Logs and OS/editor noise
 *.log

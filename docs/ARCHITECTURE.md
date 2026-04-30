@@ -535,11 +535,13 @@ Last updated: 2026-04-30
 - Relationship creation from entry and question detail pages uses selectable targets for entries, questions, projects, themes, threads, references, and attachments instead of requiring pasted object IDs.
 - Ledger filters can be persisted as named saved filters and reused from both Ledger and Command Center. System filters remain available as starter shortcuts.
 - Context mirror generation for `manifest.json`, `ai-index.md`, `today.md`, `ai-bundle.md`, context bundle variants, `recent.md`, `question-queue.md`, project/theme indexes and pages, thread detail pages, timeline pages, `entries/index.json`, and per-entry Markdown/JSON files.
+- Local backup and restore scripts for the Docker Compose PostgreSQL database and `data/attachments`.
 
 **Not yet built:**
 
 - Richer relationship validation and resolved relationship labels in read views.
 - Richer privacy/export policies beyond the current shareable-only bundle and timeline.
+- Automated backup scheduling and off-machine backup storage.
 - CLI adapter.
 - Graph/map visual layout beyond the current text-first relationship map.
 - MCP adapter.
