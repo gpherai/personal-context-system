@@ -75,6 +75,8 @@ Run development server:
 npm run dev
 ```
 
+When opening the dev server through the Incus VM network address, Next.js needs that host in `allowedDevOrigins`. The current VM address is configured in `next.config.ts`.
+
 Quality checks:
 
 ```bash
