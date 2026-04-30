@@ -40,11 +40,11 @@ Fields:
 Initial types:
 
 - `observation`
-- `question`
+- `question` — captured question that creates or repairs a first-class `Question`
 - `insight`
-- `suspicion`
+- `suspicion` — weak hypothesis or hunch
 - `reflection`
-- `open_loop`
+- `open_loop` — unresolved thought/action that needs closure but is not yet a tracked `Question`
 - `decision`
 - `project_note`
 - `media_note`
@@ -107,12 +107,19 @@ Fields:
 
 Question statuses:
 
-- `open`
-- `active`
-- `parked`
-- `answered`
-- `reframed`
-- `abandoned`
+- `open` — captured and worth tracking, but not currently being worked
+- `active` — currently being investigated, answered, or used to drive work
+- `parked` — still valid, intentionally deferred
+- `answered` — resolved enough to serve as settled context
+- `reframed` — superseded by a clearer question
+- `abandoned` — no longer useful enough to keep active
+
+Question origin rule:
+
+- A question entry is the capture-side representation of a tracked `Question`.
+- Creating an entry with `type = "question"` creates and links a `Question` with a unique `originEntryId`.
+- Promoting an existing entry to a question sets the entry type to `question`, creates or repairs the unique origin `Question`, and links it through `EntryQuestion`.
+- `open_loop` does not create a `Question`; it is for unresolved thoughts or actions that have not been framed as a tracked question.
 
 ### Thread
 

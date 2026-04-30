@@ -114,11 +114,11 @@ Likely fields:
 Suggested types:
 
 - `observation`
-- `question`
+- `question` — a captured question that is also promoted into a first-class `Question`
 - `insight`
-- `suspicion`
+- `suspicion` — a weak hypothesis or hunch, less settled than an `insight`
 - `reflection`
-- `open_loop`
+- `open_loop` — an unresolved thought or action that needs closure but is not yet a tracked `Question`
 - `decision`
 - `project_note`
 - `media_note`
@@ -156,14 +156,16 @@ Projects connect entries, decisions, questions, references, and summaries. Examp
 
 Statuses:
 
-- `open`
-- `active`
-- `parked`
-- `answered`
-- `reframed`
-- `abandoned`
+- `open` — captured and worth tracking, but not currently being worked
+- `active` — currently being investigated, answered, or used to drive work
+- `parked` — still valid, intentionally deferred
+- `answered` — resolved enough to serve as settled context
+- `reframed` — superseded by a clearer question
+- `abandoned` — no longer useful enough to keep active
 
 A question can originate from an entry, belong to themes/projects, and link to entries that answer, complicate, or reframe it.
+
+Question workflow rule: `Entry.type = "question"` is the capture form of a tracked `Question`. Creating a question entry creates and links one first-class `Question` through a unique origin relation. Existing entries can be promoted explicitly from the entry detail page; promotion changes the entry type to `question`, creates or repairs the origin `Question`, and keeps the origin entry linked. `open_loop` stays separate: it is for unresolved thoughts or actions that need closure but are not yet framed as tracked questions.
 
 ### Thread
 
@@ -277,7 +279,7 @@ data/context-mirror/
   ai-index.md
   today.md
   recent.md
-  open-questions.md
+  question-queue.md
   projects/
   themes/
   entries/
@@ -320,7 +322,7 @@ Possible MCP resources:
 - `pcs://today`
 - `pcs://theme/{slug}`
 - `pcs://project/{slug}`
-- `pcs://open-questions`
+- `pcs://question-queue`
 - `pcs://entry/{id}`
 
 Possible MCP tools:
@@ -517,9 +519,10 @@ Last updated: 2026-04-30
 - Layered source structure: `src/domain`, `src/application`, `src/repositories`, `src/infrastructure`, `src/ai-context`, `src/app`, `src/components`.
 - Domain validation and application services for entry capture/update, question status update, object linking, reference/attachment metadata, thread creation, list/query reads, graph reads, and context mirror snapshots.
 - UI routes for Dashboard, Capture, Ledger, Cabinet, Entry detail/edit, Command Center, Settings, Map, and detail views for themes, projects, questions, and threads.
+- Entry capture/edit fields use centralized taxonomy labels for entry types. Question entries create tracked Questions automatically, and entry detail can promote an existing entry into the question workflow.
 - Relationship creation from entry and question detail pages uses selectable targets for entries, questions, projects, and themes instead of requiring pasted object IDs. Thread, reference, and attachment targets are still future relationship-picker scope.
 - Ledger filters can be persisted as named saved filters and reused from both Ledger and Command Center. System filters remain available as starter shortcuts.
-- Context mirror generation for `manifest.json`, `ai-index.md`, `today.md`, `ai-bundle.md`, `recent.md`, `open-questions.md`, project/theme indexes and pages, `threads/index.md`, `entries/index.json`, and per-entry Markdown/JSON files.
+- Context mirror generation for `manifest.json`, `ai-index.md`, `today.md`, `ai-bundle.md`, `recent.md`, `question-queue.md`, project/theme indexes and pages, `threads/index.md`, `entries/index.json`, and per-entry Markdown/JSON files.
 
 **Not yet built:**
 

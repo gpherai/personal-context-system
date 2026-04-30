@@ -13,6 +13,7 @@ import {
   parseOptionalDate,
   parseOptionalNumber,
   parseOptionalString,
+  promoteEntryToQuestionCommandSchema,
   titleFromBody,
   updateEntryCommandSchema,
   updateQuestionCommandSchema
@@ -85,6 +86,10 @@ export function parseUpdateQuestionFormData(id: string, formData: FormData) {
     status: parseOptionalString(formData.get("status")) ?? "open",
     summary: parseOptionalString(formData.get("summary"))
   });
+}
+
+export function parsePromoteEntryToQuestion(id: string) {
+  return promoteEntryToQuestionCommandSchema.safeParse({ id });
 }
 
 export function parseLinkObjectsFormData(formData: FormData) {
@@ -166,7 +171,7 @@ export async function captureEntry(formData: FormData, repository: ContextReposi
       ok: false as const,
       state: {
         status: "error" as const,
-        message: "Controleer de gemarkeerde velden.",
+        message: "Check the highlighted fields.",
         fieldErrors: z.flattenError(parsed.error).fieldErrors
       }
     };
@@ -188,7 +193,7 @@ export async function updateEntryFromForm(id: string, formData: FormData, reposi
   const parsed = parseUpdateEntryFormData(id, formData);
 
   if (!parsed.success) {
-    return { ok: false as const, state: errorState("Controleer de gemarkeerde velden.", parsed.error) };
+    return { ok: false as const, state: errorState("Check the highlighted fields.", parsed.error) };
   }
 
   const entry = await repository.updateEntry(parsed.data);
@@ -199,7 +204,7 @@ export async function updateQuestionFromForm(id: string, formData: FormData, rep
   const parsed = parseUpdateQuestionFormData(id, formData);
 
   if (!parsed.success) {
-    return { ok: false as const, state: errorState("Controleer de gemarkeerde velden.", parsed.error) };
+    return { ok: false as const, state: errorState("Check the highlighted fields.", parsed.error) };
   }
 
   const question = await repository.updateQuestion(parsed.data);
@@ -210,7 +215,7 @@ export async function linkObjectsFromForm(formData: FormData, repository: Contex
   const parsed = parseLinkObjectsFormData(formData);
 
   if (!parsed.success) {
-    return { ok: false as const, state: errorState("Controleer de linkvelden.", parsed.error) };
+    return { ok: false as const, state: errorState("Check the relationship fields.", parsed.error) };
   }
 
   const relationship = await repository.linkObjects(parsed.data);
@@ -221,7 +226,7 @@ export async function createReferenceFromForm(entryId: string, formData: FormDat
   const parsed = parseCreateReferenceFormData(entryId, formData);
 
   if (!parsed.success) {
-    return { ok: false as const, state: errorState("Controleer de referencevelden.", parsed.error) };
+    return { ok: false as const, state: errorState("Check the reference fields.", parsed.error) };
   }
 
   const reference = await repository.createReference(parsed.data);
@@ -232,7 +237,7 @@ export async function createAttachmentFromForm(entryId: string, formData: FormDa
   const parsed = parseCreateAttachmentFormData(entryId, formData);
 
   if (!parsed.success) {
-    return { ok: false as const, state: errorState("Controleer de attachmentvelden.", parsed.error) };
+    return { ok: false as const, state: errorState("Check the attachment fields.", parsed.error) };
   }
 
   const attachment = await repository.createAttachment(parsed.data);
@@ -243,7 +248,7 @@ export async function createThreadFromForm(formData: FormData, repository: Conte
   const parsed = parseCreateThreadFormData(formData);
 
   if (!parsed.success) {
-    return { ok: false as const, state: errorState("Controleer de threadvelden.", parsed.error) };
+    return { ok: false as const, state: errorState("Check the thread fields.", parsed.error) };
   }
 
   const thread = await repository.createThread(parsed.data);
@@ -254,11 +259,22 @@ export async function createSavedFilterFromForm(formData: FormData, repository: 
   const parsed = parseCreateSavedFilterFormData(formData);
 
   if (!parsed.success) {
-    return { ok: false as const, state: errorState("Controleer de filtervelden.", parsed.error) };
+    return { ok: false as const, state: errorState("Check the filter fields.", parsed.error) };
   }
 
   const savedFilter = await repository.createSavedFilter(parsed.data);
   return { ok: true as const, savedFilter };
+}
+
+export async function promoteEntryToQuestion(id: string, repository: ContextRepository) {
+  const parsed = parsePromoteEntryToQuestion(id);
+
+  if (!parsed.success) {
+    return { ok: false as const, state: errorState("This entry could not be promoted.", parsed.error) };
+  }
+
+  const question = await repository.promoteEntryToQuestion(parsed.data);
+  return { ok: true as const, question };
 }
 
 export async function listEntries(repository: ContextRepository, params?: URLSearchParams) {

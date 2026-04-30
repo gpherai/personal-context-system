@@ -105,7 +105,7 @@ model Entry {
   threads             EntryThread[]
   references          EntryReference[]
   attachments         EntryAttachment[]
-  originatedQuestions Question[]        @relation("QuestionOrigin")
+  originatedQuestion Question?         @relation("QuestionOrigin")
 
   @@index([type])
   @@index([status])
@@ -153,7 +153,7 @@ model Question {
   prompt        String         @db.Text
   status        QuestionStatus @default(open)
   summary       String?        @db.Text
-  originEntryId String?
+  originEntryId String?         @unique
   metadata      Json           @default("{}")
   createdAt     DateTime       @default(now()) @db.Timestamptz(6)
   updatedAt     DateTime       @updatedAt @db.Timestamptz(6)
@@ -162,7 +162,6 @@ model Question {
   entries     EntryQuestion[]
 
   @@index([status])
-  @@index([originEntryId])
 }
 
 model Thread {

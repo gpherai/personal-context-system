@@ -2,9 +2,9 @@
 
 import { useActionState } from "react";
 
+import { EntryTypeField } from "@/components/entry-type-field";
 import { Button } from "@/components/ui/button";
-import { entryStatuses, entryTypes, privacyLevels } from "@/domain/context";
-import { labelize } from "@/lib/format";
+import { entryStatuses, privacyLevels } from "@/domain/context";
 import type { EntryRecord } from "@/repositories/context-repository";
 
 import { initialMutationState, updateEntryAction } from "./actions";
@@ -38,20 +38,7 @@ export function EditEntryForm({ entry }: { entry: EntryRecord }) {
       )}
 
       <div className="grid gap-4 md:grid-cols-3">
-        <label className="grid gap-2 text-sm font-medium">
-          Type
-          <select
-            className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
-            name="type"
-            defaultValue={entry.type}
-          >
-            {entryTypes.map((type) => (
-              <option key={type} value={type}>
-                {labelize(type)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <EntryTypeField defaultValue={entry.type} />
 
         <label className="grid gap-2 text-sm font-medium">
           Status

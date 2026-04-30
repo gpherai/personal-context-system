@@ -43,6 +43,9 @@ Updated: 2026-04-30
 - Full-text search and structured filtering come before any vector search or embeddings.
 - Use PostgreSQL native full-text search with a GIN index for entry text search. Prisma raw SQL is acceptable for this query path when Prisma's high-level API is too limited.
 - User-defined saved filters are modeled as database records with JSONB query params. Stable system filters remain static UI shortcuts so a fresh install has useful starting points before any user-defined filter exists.
+- `Entry.type = "question"` is the capture-side representation of a first-class `Question`. Creating a question entry auto-creates and links the tracked Question. Existing entries can be promoted explicitly from entry detail.
+- `open_loop` remains separate from `question`: use it for unresolved thoughts or actions that need closure but are not yet framed as tracked Questions.
+- Question status semantics are fixed as: `open` = captured but not currently worked, `active` = currently worked, `parked` = intentionally deferred, `answered` = resolved, `reframed` = superseded by a clearer question, `abandoned` = no longer useful enough to keep active.
 
 ### Technology choices
 - Use npm as the package manager for this repository. Node and npm are already installed in the Fedora/Incus environment; pnpm is not installed.

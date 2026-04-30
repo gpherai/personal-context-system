@@ -156,7 +156,7 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
       "## Current Counts",
       "",
       `- entries: ${snapshot.entries.length}`,
-      `- open questions: ${snapshot.openQuestions.length}`,
+      `- question queue: ${snapshot.openQuestions.length}`,
       `- themes: ${snapshot.themes.length}`,
       `- projects: ${snapshot.projects.length}`,
       `- threads: ${snapshot.threads.length}`,
@@ -165,7 +165,7 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
       "",
       recentList(snapshot.entries),
       "",
-      "## Open Questions",
+      "## Question Queue",
       "",
       questionList(snapshot.openQuestions),
       ""
@@ -188,7 +188,7 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
       "",
       recentList(snapshot.entries.slice(0, 12)),
       "",
-      "## Open Questions",
+      "## Question Queue",
       "",
       questionList(snapshot.openQuestions),
       ""
@@ -196,8 +196,8 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
   });
 
   files.push({
-    path: "open-questions.md",
-    contents: ["# Open Questions", "", `Generated: ${generatedAtIso}`, "", questionList(snapshot.openQuestions), ""].join("\n")
+    path: "question-queue.md",
+    contents: ["# Question Queue", "", `Generated: ${generatedAtIso}`, "", questionList(snapshot.openQuestions), ""].join("\n")
   });
 
   files.push({
@@ -212,12 +212,12 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
       "## Current Counts",
       "",
       `- entries: ${snapshot.entries.length}`,
-      `- open questions: ${snapshot.openQuestions.length}`,
+      `- question queue: ${snapshot.openQuestions.length}`,
       `- themes: ${snapshot.themes.length}`,
       `- projects: ${snapshot.projects.length}`,
       `- threads: ${snapshot.threads.length}`,
       "",
-      "## Open Questions",
+      "## Question Queue",
       "",
       questionList(snapshot.openQuestions.slice(0, 12)),
       "",

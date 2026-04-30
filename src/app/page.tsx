@@ -67,7 +67,7 @@ export default async function DashboardPage() {
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="System counts">
         <Stat label="Entries" value={overview.counts.entries} />
-        <Stat label="Open questions" value={overview.counts.openQuestions} />
+        <Stat label="Question queue" value={overview.counts.openQuestions} />
         <Stat label="Themes" value={overview.counts.themes} />
         <Stat label="Projects" value={overview.counts.projects} />
       </section>
@@ -90,7 +90,7 @@ export default async function DashboardPage() {
           <section className="border border-border bg-surface p-4">
             <div className="mb-3 flex items-center gap-2">
               <CircleHelp className="h-4 w-4 text-primary" aria-hidden="true" />
-              <h2 className="text-sm font-semibold">Open questions</h2>
+              <h2 className="text-sm font-semibold">Question queue</h2>
             </div>
             <div className="space-y-3">
               {overview.openQuestions.length ? (
@@ -101,7 +101,7 @@ export default async function DashboardPage() {
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground">No open questions yet.</p>
+                <p className="text-sm text-muted-foreground">No tracked questions yet.</p>
               )}
             </div>
           </section>

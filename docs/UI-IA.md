@@ -57,7 +57,7 @@ Content:
 
 - quick capture link
 - recent entries
-- active/open questions
+- question queue
 - active projects
 - active themes
 - context mirror status
@@ -89,6 +89,8 @@ Behavior:
 - keep fields stable and keyboard-friendly
 - redirect to entry detail after successful creation
 - create missing themes/projects by slug where appropriate
+- selecting `Question` creates a tracked Question automatically
+- selecting `Open loop` keeps the entry as an unresolved thought/action without creating a tracked Question
 
 ## Ledger
 
@@ -139,6 +141,23 @@ Content:
 Editing can be added after capture and read flows are stable.
 
 Current state: editing is available for entry core fields, status, privacy, themes, and projects. Relationship, reference, attachment, and thread creation start from the entry detail page. Relationship creation uses selectable targets for entries, questions, projects, and themes. Thread, reference, and attachment relationship targets are still future picker scope.
+
+Entry detail exposes a promote action for entries that should become tracked questions. Question entries link back to their tracked Question, and Question detail links back to the origin entry when available.
+
+## Question Workflow
+
+Purpose: track questions that deserve lifecycle state, linked evidence, and AI context.
+
+Status meanings:
+
+- `open`: captured and worth tracking, but not currently being worked
+- `active`: currently being investigated, answered, or used to drive work
+- `parked`: still valid, intentionally deferred
+- `answered`: resolved enough to serve as settled context
+- `reframed`: superseded by a clearer question
+- `abandoned`: no longer useful enough to keep active
+
+UI rule: use concise helper text near the type/status controls, not long explanatory prose. Dashboard and map surfaces should refer to the mixed open/active/parked set as the question queue rather than only "open questions".
 
 ## Command Center
 

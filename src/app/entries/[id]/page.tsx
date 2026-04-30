@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatDateTime, labelize } from "@/lib/format";
 
 import { AttachmentForm, ReferenceForm, RelationshipForm, ThreadForm } from "./entry-related-forms";
+import { PromoteQuestionForm } from "./promote-question-form";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,8 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
       notFound();
     }
 
+    const trackedQuestion = entry.type === "question" ? entry.questions[0] : undefined;
+
     return (
       <article className="mx-auto grid max-w-4xl gap-6">
         <header className="border-b border-border pb-5">
@@ -33,12 +36,24 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
               </div>
               <h1 className="mt-3 text-3xl font-semibold">{entry.title}</h1>
             </div>
-            <Link
-              href={`/entries/${entry.id}/edit`}
-              className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-surface px-4 text-sm font-medium text-foreground transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
-            >
-              Edit
-            </Link>
+            <div className="flex flex-col gap-2 sm:items-end">
+              {trackedQuestion ? (
+                <Link
+                  href={`/questions/${trackedQuestion.id}`}
+                  className="inline-flex h-10 items-center justify-center rounded-md border border-amber-300 bg-amber-50 px-4 text-sm font-medium text-amber-900 transition-colors duration-200 hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-200"
+                >
+                  Tracked question
+                </Link>
+              ) : (
+                <PromoteQuestionForm entryId={entry.id} />
+              )}
+              <Link
+                href={`/entries/${entry.id}/edit`}
+                className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-surface px-4 text-sm font-medium text-foreground transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+              >
+                Edit
+              </Link>
+            </div>
           </div>
           <dl className="mt-4 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
             <div>

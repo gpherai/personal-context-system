@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import {
   createAttachmentFromForm,
@@ -8,6 +9,7 @@ import {
   createThreadFromForm,
   initialMutationState,
   linkObjectsFromForm,
+  promoteEntryToQuestion,
   type MutationState
 } from "@/application/context-service";
 import { DATABASE_UNAVAILABLE_MESSAGE, isRecoverableReadError } from "@/application/errors";
@@ -97,6 +99,31 @@ export async function linkFromEntryAction(
 
   revalidatePath(`/entries/${entryId}`);
   return successState("Relationship created.");
+}
+
+export async function promoteEntryToQuestionAction(
+  entryId: string,
+  _previousState: MutationState
+): Promise<MutationState> {
+  void _previousState;
+
+  const result = await promoteEntryToQuestion(entryId, createPrismaContextRepository()).catch((error: unknown) => {
+    if (isRecoverableReadError(error)) {
+      return { ok: false as const, state: databaseErrorState() };
+    }
+
+    throw error;
+  });
+
+  if (!result.ok) {
+    return result.state;
+  }
+
+  revalidatePath("/");
+  revalidatePath("/cabinet");
+  revalidatePath(`/entries/${entryId}`);
+  revalidatePath(`/questions/${result.question.id}`);
+  redirect(`/questions/${result.question.id}`);
 }
 
 export async function createThreadWithEntryAction(

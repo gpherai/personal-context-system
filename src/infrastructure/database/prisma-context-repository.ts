@@ -10,6 +10,7 @@ import {
   type CreateThreadCommand,
   type ListEntriesQuery,
   type LinkObjectsCommand,
+  type PromoteEntryToQuestionCommand,
   type UpdateEntryCommand,
   type UpdateQuestionCommand
 } from "@/domain/context";
@@ -195,6 +196,7 @@ function mapQuestion(question: {
   prompt: string;
   status: QuestionRecord["status"];
   summary: string | null;
+  originEntryId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }): QuestionRecord {
@@ -203,6 +205,7 @@ function mapQuestion(question: {
     prompt: question.prompt,
     status: question.status,
     summary: optional(question.summary),
+    originEntryId: optional(question.originEntryId),
     createdAt: question.createdAt,
     updatedAt: question.updatedAt
   };
@@ -420,6 +423,46 @@ export class PrismaContextRepository implements ContextRepository {
     return candidate;
   }
 
+  private async ensureOriginQuestion(
+    tx: Prisma.TransactionClient,
+    entry: { id: string; title: string; summary: string | null }
+  ) {
+    const existingQuestion = await tx.question.findUnique({
+      where: { originEntryId: entry.id },
+      select: { id: true }
+    });
+
+    const question = existingQuestion
+      ? await tx.question.update({
+          where: { id: existingQuestion.id },
+          data: { prompt: entry.title }
+        })
+      : await tx.question.create({
+          data: {
+            prompt: entry.title,
+            summary: entry.summary,
+            originEntryId: entry.id,
+            status: "open"
+          }
+        });
+
+    await tx.entryQuestion.upsert({
+      where: {
+        entryId_questionId: {
+          entryId: entry.id,
+          questionId: question.id
+        }
+      },
+      update: {},
+      create: {
+        entryId: entry.id,
+        questionId: question.id
+      }
+    });
+
+    return question;
+  }
+
   async createEntry(command: CreateEntryCommand): Promise<EntryRecord> {
     const entry = await this.prisma.$transaction(async (tx) => {
       const created = await tx.entry.create({
@@ -440,21 +483,7 @@ export class PrismaContextRepository implements ContextRepository {
       await this.syncEntryNames(tx, created.id, command.themeNames, command.projectNames);
 
       if (command.type === "question") {
-        const question = await tx.question.create({
-          data: {
-            prompt: command.title,
-            summary: command.summary,
-            originEntryId: created.id,
-            status: "open"
-          }
-        });
-
-        await tx.entryQuestion.create({
-          data: {
-            entryId: created.id,
-            questionId: question.id
-          }
-        });
+        await this.ensureOriginQuestion(tx, created);
       }
 
       return tx.entry.findUniqueOrThrow({
@@ -487,28 +516,11 @@ export class PrismaContextRepository implements ContextRepository {
       await this.syncEntryNames(tx, command.id, command.themeNames, command.projectNames);
 
       if (command.type === "question") {
-        const existingQuestion = await tx.question.findFirst({
-          where: { originEntryId: command.id },
-          select: { id: true }
+        await this.ensureOriginQuestion(tx, {
+          id: command.id,
+          title: command.title,
+          summary: command.summary ?? null
         });
-
-        if (!existingQuestion) {
-          const question = await tx.question.create({
-            data: {
-              prompt: command.title,
-              summary: command.summary,
-              originEntryId: command.id,
-              status: "open"
-            }
-          });
-
-          await tx.entryQuestion.create({
-            data: {
-              entryId: command.id,
-              questionId: question.id
-            }
-          });
-        }
       }
 
       return tx.entry.findUniqueOrThrow({
@@ -718,6 +730,24 @@ export class PrismaContextRepository implements ContextRepository {
         status: command.status,
         summary: command.summary ?? null
       }
+    });
+
+    return mapQuestion(question);
+  }
+
+  async promoteEntryToQuestion(command: PromoteEntryToQuestionCommand): Promise<QuestionRecord> {
+    const question = await this.prisma.$transaction(async (tx) => {
+      const entry = await tx.entry.update({
+        where: { id: command.id },
+        data: { type: "question" },
+        select: {
+          id: true,
+          title: true,
+          summary: true
+        }
+      });
+
+      return this.ensureOriginQuestion(tx, entry);
     });
 
     return mapQuestion(question);

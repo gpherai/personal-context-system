@@ -9,6 +9,7 @@ import type {
   ListEntriesQuery,
   LinkObjectsCommand,
   PrivacyLevel,
+  PromoteEntryToQuestionCommand,
   QuestionStatus,
   RecordStatus,
   ReferenceKind,
@@ -119,6 +120,7 @@ export interface QuestionRecord {
   prompt: string;
   status: QuestionStatus;
   summary?: string;
+  originEntryId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -194,6 +196,7 @@ export interface ContextRepository {
   createSavedFilter(command: CreateSavedFilterCommand): Promise<SavedFilterRecord>;
   listSavedFilters(): Promise<SavedFilterRecord[]>;
   updateQuestion(command: UpdateQuestionCommand): Promise<QuestionRecord>;
+  promoteEntryToQuestion(command: PromoteEntryToQuestionCommand): Promise<QuestionRecord>;
   linkObjects(command: LinkObjectsCommand): Promise<RelationshipRecord>;
   createReference(command: CreateReferenceCommand): Promise<ReferenceRecord>;
   createAttachment(command: CreateAttachmentCommand): Promise<AttachmentRecord>;

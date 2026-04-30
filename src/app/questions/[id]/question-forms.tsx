@@ -2,9 +2,10 @@
 
 import { useActionState } from "react";
 
+import { QuestionStatusField } from "@/components/question-status-field";
 import { RelationshipTargetSelect } from "@/components/relationship-target-select";
 import { Button } from "@/components/ui/button";
-import { questionStatuses, relationTypes } from "@/domain/context";
+import { relationTypes } from "@/domain/context";
 import { labelize } from "@/lib/format";
 import type { QuestionContext, RelationshipTarget } from "@/repositories/context-repository";
 
@@ -24,20 +25,7 @@ export function QuestionUpdateForm({ question }: { question: QuestionContext }) 
 
   return (
     <form action={action} className="grid gap-3">
-      <label className="grid gap-2 text-sm font-medium">
-        Status
-        <select
-          className="h-10 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
-          name="status"
-          defaultValue={question.status}
-        >
-          {questionStatuses.map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
-          ))}
-        </select>
-      </label>
+      <QuestionStatusField defaultValue={question.status} />
       <label className="grid gap-2 text-sm font-medium">
         Summary
         <textarea

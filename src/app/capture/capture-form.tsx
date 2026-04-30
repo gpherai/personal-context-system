@@ -3,8 +3,8 @@
 import { useActionState } from "react";
 
 import { initialCaptureEntryState } from "@/application/context-service";
-import { entryStatuses, entryTypes, privacyLevels } from "@/domain/context";
-import { labelize } from "@/lib/format";
+import { EntryTypeField } from "@/components/entry-type-field";
+import { entryStatuses, privacyLevels } from "@/domain/context";
 import { Button } from "@/components/ui/button";
 
 import { createEntryAction } from "./actions";
@@ -29,20 +29,7 @@ export function CaptureForm() {
       )}
 
       <div className="grid gap-4 md:grid-cols-3">
-        <label className="grid gap-2 text-sm font-medium">
-          Type
-          <select
-            className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
-            name="type"
-            defaultValue="observation"
-          >
-            {entryTypes.map((type) => (
-              <option key={type} value={type}>
-                {labelize(type)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <EntryTypeField />
 
         <label className="grid gap-2 text-sm font-medium">
           Status

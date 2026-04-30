@@ -110,7 +110,7 @@ export default async function MapPage() {
             <section className="border border-border bg-surface p-4">
               <div className="mb-3 flex items-center gap-2">
                 <MessageSquareText className="h-4 w-4 text-caution" aria-hidden="true" />
-                <h2 className="text-sm font-semibold">Open questions</h2>
+                <h2 className="text-sm font-semibold">Question queue</h2>
               </div>
               <div className="grid gap-2">
                 {snapshot.questions.length ? (

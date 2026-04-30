@@ -114,6 +114,10 @@ export const updateQuestionCommandSchema = z.object({
   summary: z.string().trim().max(4000).optional()
 });
 
+export const promoteEntryToQuestionCommandSchema = z.object({
+  id: z.string().min(1)
+});
+
 export const linkObjectsCommandSchema = z.object({
   fromType: objectTypeSchema,
   fromId: z.string().min(1),
@@ -157,6 +161,7 @@ export type SavedFilterParams = z.infer<typeof savedFilterParamsSchema>;
 export type CreateSavedFilterCommand = z.infer<typeof createSavedFilterCommandSchema>;
 export type UpdateEntryCommand = z.infer<typeof updateEntryCommandSchema>;
 export type UpdateQuestionCommand = z.infer<typeof updateQuestionCommandSchema>;
+export type PromoteEntryToQuestionCommand = z.infer<typeof promoteEntryToQuestionCommandSchema>;
 export type LinkObjectsCommand = z.infer<typeof linkObjectsCommandSchema>;
 export type CreateReferenceCommand = z.infer<typeof createReferenceCommandSchema>;
 export type CreateAttachmentCommand = z.infer<typeof createAttachmentCommandSchema>;

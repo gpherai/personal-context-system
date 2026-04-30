@@ -27,7 +27,7 @@ Initial target files:
 - `today.md`
 - `ai-bundle.md`
 - `recent.md`
-- `open-questions.md`
+- `question-queue.md`
 - `projects/index.md`
 - `projects/{slug}.md`
 - `themes/index.md`
@@ -73,7 +73,7 @@ Builders should produce specific views:
 
 - today/current context
 - recent entries
-- open questions
+- question queue
 - project context
 - theme context
 - entry detail
@@ -106,7 +106,7 @@ Resources:
 
 - `pcs://today`
 - `pcs://recent`
-- `pcs://open-questions`
+- `pcs://question-queue`
 - `pcs://project/{slug}`
 - `pcs://theme/{slug}`
 - `pcs://entry/{id}`
