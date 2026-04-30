@@ -32,7 +32,7 @@ export function EditEntryForm({ entry }: { entry: EntryRecord }) {
   return (
     <form action={formAction} className="grid gap-5">
       {state.status === "error" && (
-        <div className="border-l-4 border-danger bg-red-50 px-4 py-3 text-sm text-red-900">
+        <div className="border-l-4 border-danger bg-danger/8 px-4 py-3 text-sm text-danger">
           {state.message ?? "The entry could not be saved."}
         </div>
       )}

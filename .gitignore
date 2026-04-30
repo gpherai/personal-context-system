@@ -1,5 +1,7 @@
 # Local assistant/config state
+.claude/
 .codex/
+.gemini/
 
 # Environment
 .env

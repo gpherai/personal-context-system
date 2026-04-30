@@ -70,7 +70,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
             <div className="mt-3 flex flex-wrap gap-2">
               {entry.themes.length ? (
                 entry.themes.map((theme) => (
-                  <Link key={theme.id} href={`/themes/${theme.slug}`}>
+                  <Link key={theme.id} href={`/themes/${theme.slug}`} className="transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 rounded-md">
                     <Badge>{theme.name}</Badge>
                   </Link>
                 ))
@@ -84,7 +84,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
             <div className="mt-3 flex flex-wrap gap-2">
               {entry.projects.length ? (
                 entry.projects.map((project) => (
-                  <Link key={project.id} href={`/projects/${project.slug}`}>
+                  <Link key={project.id} href={`/projects/${project.slug}`} className="transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 rounded-md">
                     <Badge tone="blue">{project.name}</Badge>
                   </Link>
                 ))

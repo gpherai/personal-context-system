@@ -22,7 +22,7 @@ export default async function ThreadPage({ params }: { params: Promise<{ slug: s
     return (
       <div className="mx-auto grid max-w-5xl gap-5">
         <header className="border-b border-border pb-5">
-          <Badge>Thread</Badge>
+          <Badge>{thread.status}</Badge>
           <h1 className="mt-3 text-3xl font-semibold">{thread.title}</h1>
           <p className="mt-2 text-sm text-muted-foreground">Updated {formatDateTime(thread.updatedAt)}</p>
           {thread.description && <p className="mt-3 text-sm leading-6 text-muted-foreground">{thread.description}</p>}

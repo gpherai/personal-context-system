@@ -75,7 +75,7 @@ export default async function MapPage() {
               <div className="flex flex-wrap gap-2">
                 {snapshot.themes.length ? (
                   snapshot.themes.map((theme) => (
-                    <Link key={theme.id} href={`/themes/${theme.slug}`}>
+                    <Link key={theme.id} href={`/themes/${theme.slug}`} className="transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 rounded-md">
                       <Badge tone="teal">{theme.name}</Badge>
                     </Link>
                   ))
