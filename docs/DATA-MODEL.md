@@ -174,6 +174,11 @@ Relation types:
 - `inspired_by`
 - `external_reference`
 
+Reference rule:
+
+- Use `Reference` records as the primary representation for URLs, books, articles, repositories, external records, and other external material.
+- Use `external_reference` only as a relationship type when an internal object must point at an external app/database record and a full `Reference` record would be misleading.
+
 ### SavedFilter
 
 Purpose: reusable user-defined Ledger/context query definition stored in the database.

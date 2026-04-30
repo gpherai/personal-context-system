@@ -199,6 +199,8 @@ Suggested relation types:
 - `inspired_by`
 - `external_reference`
 
+`Reference` records are the primary way to store external material. The `external_reference` relation type is reserved for explicit links from internal objects to external app/database records when the richer `Reference` object is not the right fit.
+
 The graph/map view should emerge from explicit links; it should not become the primary editing model too early.
 
 ### Attachment
@@ -521,7 +523,7 @@ Last updated: 2026-04-30
 - UI routes for Dashboard, Capture, Ledger, Cabinet, Entry detail/edit, Command Center, Settings, Map, and detail views for themes, projects, questions, and threads.
 - Entry capture/edit fields use centralized taxonomy labels for entry types. Question entries create tracked Questions automatically, and entry detail can promote an existing entry into the question workflow.
 - Dashboard and Cabinet use different read models: Dashboard stays focused on current context, while Cabinet is the structured archive with entry type/status counts and truly archived entries.
-- Relationship creation from entry and question detail pages uses selectable targets for entries, questions, projects, and themes instead of requiring pasted object IDs. Thread, reference, and attachment targets are still future relationship-picker scope.
+- Relationship creation from entry and question detail pages uses selectable targets for entries, questions, projects, themes, threads, references, and attachments instead of requiring pasted object IDs.
 - Ledger filters can be persisted as named saved filters and reused from both Ledger and Command Center. System filters remain available as starter shortcuts.
 - Context mirror generation for `manifest.json`, `ai-index.md`, `today.md`, `ai-bundle.md`, `recent.md`, `question-queue.md`, project/theme indexes and pages, `threads/index.md`, `entries/index.json`, and per-entry Markdown/JSON files.
 

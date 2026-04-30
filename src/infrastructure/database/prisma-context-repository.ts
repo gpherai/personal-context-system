@@ -640,7 +640,7 @@ export class PrismaContextRepository implements ContextRepository {
   }
 
   async listRelationshipTargets(): Promise<RelationshipTarget[]> {
-    const [entries, themes, projects, questions] = await Promise.all([
+    const [entries, themes, projects, questions, threads, references, attachments] = await Promise.all([
       this.prisma.entry.findMany({
         orderBy: [{ capturedAt: "desc" }, { createdAt: "desc" }],
         select: {
@@ -672,6 +672,35 @@ export class PrismaContextRepository implements ContextRepository {
           status: true
         },
         take: 80
+      }),
+      this.prisma.thread.findMany({
+        orderBy: [{ updatedAt: "desc" }],
+        select: {
+          id: true,
+          title: true,
+          status: true
+        },
+        take: 80
+      }),
+      this.prisma.reference.findMany({
+        orderBy: [{ updatedAt: "desc" }],
+        select: {
+          id: true,
+          kind: true,
+          title: true,
+          url: true
+        },
+        take: 80
+      }),
+      this.prisma.attachment.findMany({
+        orderBy: [{ updatedAt: "desc" }],
+        select: {
+          id: true,
+          path: true,
+          mediaType: true,
+          title: true
+        },
+        take: 80
       })
     ]);
 
@@ -699,6 +728,24 @@ export class PrismaContextRepository implements ContextRepository {
         objectId: question.id,
         label: question.prompt,
         detail: question.status
+      })),
+      ...threads.map((thread) => ({
+        objectType: "thread" as const,
+        objectId: thread.id,
+        label: thread.title,
+        detail: thread.status
+      })),
+      ...references.map((reference) => ({
+        objectType: "reference" as const,
+        objectId: reference.id,
+        label: reference.title,
+        detail: [reference.kind, reference.url].filter(Boolean).join(" / ")
+      })),
+      ...attachments.map((attachment) => ({
+        objectType: "attachment" as const,
+        objectId: attachment.id,
+        label: attachment.title ?? attachment.path,
+        detail: [attachment.mediaType, attachment.path].filter(Boolean).join(" / ")
       }))
     ];
   }

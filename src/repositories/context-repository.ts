@@ -71,7 +71,7 @@ export interface RelationshipRecord {
   createdAt: Date;
 }
 
-export type RelationshipTargetType = Extract<ObjectType, "entry" | "theme" | "project" | "question">;
+export type RelationshipTargetType = ObjectType;
 
 export interface RelationshipTarget {
   objectType: RelationshipTargetType;

@@ -8,10 +8,21 @@ const targetGroupLabels: Record<RelationshipTargetType, string> = {
   entry: "Entries",
   theme: "Themes",
   project: "Projects",
-  question: "Questions"
+  question: "Questions",
+  thread: "Threads",
+  reference: "References",
+  attachment: "Attachments"
 };
 
-const targetOrder: RelationshipTargetType[] = ["entry", "question", "project", "theme"];
+const targetOrder: RelationshipTargetType[] = [
+  "entry",
+  "question",
+  "project",
+  "theme",
+  "thread",
+  "reference",
+  "attachment"
+];
 
 function targetValue(target: RelationshipTarget) {
   return `${target.objectType}:${target.objectId}`;
@@ -56,7 +67,7 @@ export function RelationshipTargetSelect({
         <input
           className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search entries, questions, projects, themes"
+          placeholder="Search entries, questions, projects, themes, threads, references"
           type="search"
           value={query}
         />
@@ -72,7 +83,7 @@ export function RelationshipTargetSelect({
           value={value}
         >
           <option value="" disabled>
-            {visibleTargets.length ? "Choose entry, question, project, or theme" : "No matching targets"}
+            {visibleTargets.length ? "Choose a target" : "No matching targets"}
           </option>
           {targetOrder.map((type) => {
             const groupTargets = visibleTargets.filter((target) => target.objectType === type);

@@ -140,7 +140,7 @@ Content:
 
 Editing can be added after capture and read flows are stable.
 
-Current state: editing is available for entry core fields, status, privacy, themes, and projects. Relationship, reference, attachment, and thread creation start from the entry detail page. Relationship creation uses selectable targets for entries, questions, projects, and themes. Thread, reference, and attachment relationship targets are still future picker scope.
+Current state: editing is available for entry core fields, status, privacy, themes, and projects. Relationship, reference, attachment, and thread creation start from the entry detail page. Relationship creation uses selectable targets for entries, questions, projects, themes, threads, references, and attachments.
 
 Entry detail exposes a promote action for entries that should become tracked questions. Question entries link back to their tracked Question, and Question detail links back to the origin entry when available.
 
