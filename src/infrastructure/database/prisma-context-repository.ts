@@ -24,6 +24,7 @@ import type {
   QuestionRecord,
   ReferenceRecord,
   RelationshipRecord,
+  RelationshipTarget,
   ThreadRecord
 } from "@/repositories/context-repository";
 
@@ -583,6 +584,70 @@ export class PrismaContextRepository implements ContextRepository {
       outgoingRelationships: relationships.outgoing,
       incomingRelationships: relationships.incoming
     };
+  }
+
+  async listRelationshipTargets(): Promise<RelationshipTarget[]> {
+    const [entries, themes, projects, questions] = await Promise.all([
+      this.prisma.entry.findMany({
+        orderBy: [{ capturedAt: "desc" }, { createdAt: "desc" }],
+        select: {
+          id: true,
+          title: true,
+          type: true,
+          status: true,
+          privacyLevel: true
+        },
+        take: 80
+      }),
+      this.prisma.theme.findMany({
+        where: { status: "active" },
+        include: { _count: { select: { entries: true } } },
+        orderBy: [{ updatedAt: "desc" }],
+        take: 80
+      }),
+      this.prisma.project.findMany({
+        where: { status: "active" },
+        include: { _count: { select: { entries: true } } },
+        orderBy: [{ updatedAt: "desc" }],
+        take: 80
+      }),
+      this.prisma.question.findMany({
+        orderBy: [{ updatedAt: "desc" }],
+        select: {
+          id: true,
+          prompt: true,
+          status: true
+        },
+        take: 80
+      })
+    ]);
+
+    return [
+      ...entries.map((entry) => ({
+        objectType: "entry" as const,
+        objectId: entry.id,
+        label: entry.title,
+        detail: `${entry.type} / ${entry.status} / ${entry.privacyLevel}`
+      })),
+      ...themes.map((theme) => ({
+        objectType: "theme" as const,
+        objectId: theme.id,
+        label: theme.name,
+        detail: `${theme._count.entries} entries`
+      })),
+      ...projects.map((project) => ({
+        objectType: "project" as const,
+        objectId: project.id,
+        label: project.name,
+        detail: `${project._count.entries} entries`
+      })),
+      ...questions.map((question) => ({
+        objectType: "question" as const,
+        objectId: question.id,
+        label: question.prompt,
+        detail: question.status
+      }))
+    ];
   }
 
   async updateQuestion(command: UpdateQuestionCommand): Promise<QuestionRecord> {

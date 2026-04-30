@@ -68,6 +68,15 @@ export interface RelationshipRecord {
   createdAt: Date;
 }
 
+export type RelationshipTargetType = Extract<ObjectType, "entry" | "theme" | "project" | "question">;
+
+export interface RelationshipTarget {
+  objectType: RelationshipTargetType;
+  objectId: string;
+  label: string;
+  detail?: string;
+}
+
 export interface EntryRecord {
   id: string;
   type: EntryType;
@@ -169,6 +178,7 @@ export interface ContextRepository {
   getThemeBySlug(slug: string): Promise<NamedRecordContext | null>;
   getProjectBySlug(slug: string): Promise<NamedRecordContext | null>;
   getQuestion(id: string): Promise<QuestionContext | null>;
+  listRelationshipTargets(): Promise<RelationshipTarget[]>;
   updateQuestion(command: UpdateQuestionCommand): Promise<QuestionRecord>;
   linkObjects(command: LinkObjectsCommand): Promise<RelationshipRecord>;
   createReference(command: CreateReferenceCommand): Promise<ReferenceRecord>;

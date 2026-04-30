@@ -20,6 +20,10 @@ export async function getQuestionById(id: string) {
   return createPrismaContextRepository().getQuestion(id);
 }
 
+export async function getRelationshipTargets() {
+  return createPrismaContextRepository().listRelationshipTargets();
+}
+
 export async function getThreads() {
   return createPrismaContextRepository().listThreads();
 }

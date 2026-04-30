@@ -87,11 +87,16 @@ export function parseUpdateQuestionFormData(id: string, formData: FormData) {
 }
 
 export function parseLinkObjectsFormData(formData: FormData) {
+  const target = parseOptionalString(formData.get("target"));
+  const separatorIndex = target?.indexOf(":") ?? -1;
+  const targetType = separatorIndex > 0 ? target?.slice(0, separatorIndex) : undefined;
+  const targetId = separatorIndex > 0 ? target?.slice(separatorIndex + 1) : undefined;
+
   return linkObjectsCommandSchema.safeParse({
     fromType: parseOptionalString(formData.get("fromType")),
     fromId: parseOptionalString(formData.get("fromId")),
-    toType: parseOptionalString(formData.get("toType")),
-    toId: parseOptionalString(formData.get("toId")),
+    toType: targetType,
+    toId: targetId,
     relationType: parseOptionalString(formData.get("relationType")) ?? "relates_to",
     note: parseOptionalString(formData.get("note"))
   });

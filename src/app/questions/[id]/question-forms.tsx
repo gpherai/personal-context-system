@@ -2,10 +2,11 @@
 
 import { useActionState } from "react";
 
+import { RelationshipTargetSelect } from "@/components/relationship-target-select";
 import { Button } from "@/components/ui/button";
-import { objectTypes, questionStatuses, relationTypes } from "@/domain/context";
+import { questionStatuses, relationTypes } from "@/domain/context";
 import { labelize } from "@/lib/format";
-import type { QuestionContext } from "@/repositories/context-repository";
+import type { QuestionContext, RelationshipTarget } from "@/repositories/context-repository";
 
 import { initialMutationState, linkFromQuestionAction, updateQuestionAction } from "./actions";
 
@@ -55,35 +56,14 @@ export function QuestionUpdateForm({ question }: { question: QuestionContext }) 
   );
 }
 
-export function QuestionRelationshipForm({ questionId }: { questionId: string }) {
+export function QuestionRelationshipForm({ questionId, targets }: { questionId: string; targets: RelationshipTarget[] }) {
   const actionWithQuestion = linkFromQuestionAction.bind(null, questionId);
   const [state, action, pending] = useActionState(actionWithQuestion, initialMutationState);
 
   return (
     <form action={action} className="grid gap-3">
-      <div className="grid gap-3 md:grid-cols-[150px_1fr_180px]">
-        <label className="grid gap-2 text-sm font-medium">
-          Target type
-          <select
-            className="h-10 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
-            name="toType"
-            defaultValue="entry"
-          >
-            {objectTypes.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="grid gap-2 text-sm font-medium">
-          Target id
-          <input
-            className="h-10 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
-            name="toId"
-            placeholder="entry, project, theme, thread, reference, attachment id"
-          />
-        </label>
+      <div className="grid gap-3 md:grid-cols-[1fr_180px]">
+        <RelationshipTargetSelect targets={targets} source={{ objectType: "question", objectId: questionId }} />
         <label className="grid gap-2 text-sm font-medium">
           Relation
           <select

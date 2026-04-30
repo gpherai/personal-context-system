@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { isRecoverableReadError } from "@/application/errors";
-import { getQuestionById } from "@/application/query-service";
+import { getQuestionById, getRelationshipTargets } from "@/application/query-service";
 import { EntryList } from "@/components/entry-list";
 import { SetupNotice } from "@/components/setup-notice";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,7 @@ export default async function QuestionPage({ params }: { params: Promise<{ id: s
   const { id } = await params;
 
   try {
-    const question = await getQuestionById(id);
+    const [question, relationshipTargets] = await Promise.all([getQuestionById(id), getRelationshipTargets()]);
 
     if (!question) {
       notFound();
@@ -42,7 +42,7 @@ export default async function QuestionPage({ params }: { params: Promise<{ id: s
             </div>
             <div className="border border-border bg-surface p-5">
               <h2 className="mb-3 text-sm font-semibold">Create relationship</h2>
-              <QuestionRelationshipForm questionId={question.id} />
+              <QuestionRelationshipForm questionId={question.id} targets={relationshipTargets} />
             </div>
           </aside>
         </section>

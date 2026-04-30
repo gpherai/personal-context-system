@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { isRecoverableReadError } from "@/application/errors";
-import { getEntryById } from "@/application/query-service";
+import { getEntryById, getRelationshipTargets } from "@/application/query-service";
 import { SetupNotice } from "@/components/setup-notice";
 import { Badge } from "@/components/ui/badge";
 import { formatDateTime, labelize } from "@/lib/format";
@@ -15,7 +15,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
   const { id } = await params;
 
   try {
-    const entry = await getEntryById(id);
+    const [entry, relationshipTargets] = await Promise.all([getEntryById(id), getRelationshipTargets()]);
 
     if (!entry) {
       notFound();
@@ -237,7 +237,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
         <section className="grid gap-4">
           <div className="border border-border bg-surface p-5">
             <h2 className="mb-3 text-sm font-semibold">Create relationship</h2>
-            <RelationshipForm entryId={entry.id} />
+            <RelationshipForm entryId={entry.id} targets={relationshipTargets} />
           </div>
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="border border-border bg-surface p-5">

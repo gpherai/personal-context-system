@@ -138,7 +138,7 @@ Content:
 
 Editing can be added after capture and read flows are stable.
 
-Current state: editing is available for entry core fields, status, privacy, themes, and projects. Relationship, reference, attachment, and thread creation start from the entry detail page.
+Current state: editing is available for entry core fields, status, privacy, themes, and projects. Relationship, reference, attachment, and thread creation start from the entry detail page. Relationship creation uses selectable targets for entries, questions, projects, and themes.
 
 ## Command Center
 

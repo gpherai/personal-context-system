@@ -2,9 +2,11 @@
 
 import { useActionState } from "react";
 
+import { RelationshipTargetSelect } from "@/components/relationship-target-select";
 import { Button } from "@/components/ui/button";
-import { objectTypes, referenceKinds, relationTypes } from "@/domain/context";
+import { referenceKinds, relationTypes } from "@/domain/context";
 import { labelize } from "@/lib/format";
+import type { RelationshipTarget } from "@/repositories/context-repository";
 
 import {
   addAttachmentAction,
@@ -22,35 +24,14 @@ function Message({ state }: { state: typeof initialMutationState }) {
   return <p className={state.status === "error" ? "text-sm text-danger" : "text-sm text-accent"}>{state.message}</p>;
 }
 
-export function RelationshipForm({ entryId }: { entryId: string }) {
+export function RelationshipForm({ entryId, targets }: { entryId: string; targets: RelationshipTarget[] }) {
   const actionWithEntry = linkFromEntryAction.bind(null, entryId);
   const [state, action, pending] = useActionState(actionWithEntry, initialMutationState);
 
   return (
     <form action={action} className="grid gap-3">
-      <div className="grid gap-3 md:grid-cols-[150px_1fr_180px]">
-        <label className="grid gap-2 text-sm font-medium">
-          Target type
-          <select
-            className="h-10 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
-            name="toType"
-            defaultValue="entry"
-          >
-            {objectTypes.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="grid gap-2 text-sm font-medium">
-          Target id
-          <input
-            className="h-10 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
-            name="toId"
-            placeholder="entry, question, project, theme, thread, reference, attachment id"
-          />
-        </label>
+      <div className="grid gap-3 md:grid-cols-[1fr_180px]">
+        <RelationshipTargetSelect targets={targets} source={{ objectType: "entry", objectId: entryId }} />
         <label className="grid gap-2 text-sm font-medium">
           Relation
           <select
