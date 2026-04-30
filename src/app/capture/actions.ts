@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { captureEntry, type CaptureEntryState } from "@/application/context-service";
-import { DATABASE_UNAVAILABLE_MESSAGE, isRecoverableReadError } from "@/application/errors";
+import { databaseMutationErrorState, isRecoverableReadError } from "@/application/errors";
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
 
 export async function createEntryAction(
@@ -13,13 +13,7 @@ export async function createEntryAction(
 ): Promise<CaptureEntryState> {
   const result = await captureEntry(formData, createPrismaContextRepository()).catch((error: unknown) => {
     if (isRecoverableReadError(error)) {
-      return {
-        ok: false as const,
-        state: {
-          status: "error" as const,
-          message: DATABASE_UNAVAILABLE_MESSAGE
-        }
-      };
+      return { ok: false as const, state: databaseMutationErrorState() };
     }
 
     throw error;

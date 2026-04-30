@@ -21,7 +21,8 @@ export function NavLinks() {
   const pathname = usePathname();
 
   return (
-    <nav className="mt-4 flex gap-1 overflow-x-auto lg:block lg:space-y-1" aria-label="Primary navigation">
+    <div className="relative mt-4 lg:mt-0">
+      <nav className="flex gap-1 overflow-x-auto lg:mt-4 lg:block lg:space-y-1 lg:overflow-x-visible" aria-label="Primary navigation">
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
@@ -42,7 +43,9 @@ export function NavLinks() {
           </Link>
         );
       })}
-    </nav>
+      </nav>
+      <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-surface to-transparent lg:hidden" aria-hidden="true" />
+    </div>
   );
 }
 

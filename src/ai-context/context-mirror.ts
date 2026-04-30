@@ -1,3 +1,4 @@
+import { slugifyName } from "@/domain/context";
 import type {
   ContextMirrorSnapshot,
   EntryRecord,
@@ -365,7 +366,7 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
         "",
         "## Entries",
         "",
-        recentList(entries),
+        entryList(entries),
         ""
       ].join("\n")
     });
@@ -393,7 +394,7 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
         "",
         "## Entries",
         "",
-        recentList(entries),
+        entryList(entries),
         ""
       ].join("\n")
     });
@@ -454,9 +455,10 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
     const entries = snapshot.entries.filter((entry) =>
       entry.questions.some((entryQuestion) => entryQuestion.id === question.id)
     );
+    const questionSlug = `${slugifyName(question.prompt).slice(0, 48)}-${question.id.slice(0, 8)}`;
 
     files.push({
-      path: `bundles/questions/${question.id}.md`,
+      path: `bundles/questions/${questionSlug}.md`,
       contents: bundleMarkdown({
         title: "Question Context Bundle",
         generatedAtIso,

@@ -67,7 +67,7 @@ export function RelationshipTargetSelect({
         <input
           className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search entries, questions, projects, themes, threads, references"
+          placeholder="Search by name or type…"
           type="search"
           value={query}
         />

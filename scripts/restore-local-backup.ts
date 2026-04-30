@@ -57,6 +57,10 @@ if (!(await pathExists(databaseDump))) {
   throw new Error(`Missing database dump: ${databaseDump}`);
 }
 
+console.warn(
+  "WARNING: This will drop and recreate all database objects. The current database contents will be lost."
+);
+
 await pipeFileToCommand(databaseDump, "docker", [
   "compose",
   "exec",
@@ -78,3 +82,4 @@ if (await pathExists(attachmentArchive)) {
 }
 
 console.log(`Backup restored from ${backupDir}`);
+console.log("Run `npm run mirror:build` to regenerate the AI context mirror from the restored data.");

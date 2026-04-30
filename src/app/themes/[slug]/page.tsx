@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { isRecoverableReadError } from "@/application/errors";
@@ -21,7 +22,15 @@ export default async function ThemePage({ params }: { params: Promise<{ slug: st
     return (
       <div className="mx-auto grid max-w-5xl gap-5">
         <header className="border-b border-border pb-5">
-          <Badge tone="teal">Theme</Badge>
+          <Link
+            href="/cabinet"
+            className="text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+          >
+            ← Cabinet
+          </Link>
+          <div className="mt-3">
+            <Badge tone="teal">Theme</Badge>
+          </div>
           <h1 className="mt-3 text-3xl font-semibold">{theme.name}</h1>
           {theme.description && <p className="mt-2 text-sm leading-6 text-muted-foreground">{theme.description}</p>}
         </header>

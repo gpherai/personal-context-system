@@ -1,5 +1,5 @@
 import { createWriteStream } from "node:fs";
-import { mkdir, stat, writeFile } from "node:fs/promises";
+import { mkdir, rm, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { spawn } from "node:child_process";
 
@@ -51,48 +51,53 @@ async function pathExists(path: string): Promise<boolean> {
 
 await mkdir(backupDir, { recursive: true });
 
-await writeCommandOutput(
-  "docker",
-  [
-    "compose",
-    "exec",
-    "-T",
-    "db",
-    "pg_dump",
-    "-U",
-    "pcs",
-    "-d",
-    "personal_context_system",
-    "--format=custom",
-    "--no-owner",
-    "--no-privileges"
-  ],
-  join(backupDir, "database.dump")
-);
+try {
+  await writeCommandOutput(
+    "docker",
+    [
+      "compose",
+      "exec",
+      "-T",
+      "db",
+      "pg_dump",
+      "-U",
+      "pcs",
+      "-d",
+      "personal_context_system",
+      "--format=custom",
+      "--no-owner",
+      "--no-privileges"
+    ],
+    join(backupDir, "database.dump")
+  );
 
-if (await pathExists("data/attachments")) {
-  await run("tar", ["-czf", join(backupDir, "attachments.tar.gz"), "-C", "data", "attachments"]);
+  if (await pathExists("data/attachments")) {
+    await run("tar", ["-czf", join(backupDir, "attachments.tar.gz"), "-C", "data", "attachments"]);
+  }
+
+  await writeFile(
+    join(backupDir, "README.md"),
+    [
+      "# Personal Context System Backup",
+      "",
+      `Created: ${new Date().toISOString()}`,
+      "",
+      "Contents:",
+      "",
+      "- `database.dump`: PostgreSQL custom-format dump from the local Docker Compose database.",
+      "- `attachments.tar.gz`: present only when `data/attachments` existed.",
+      "",
+      "Not included:",
+      "",
+      "- `.env`; store it separately in your password manager or another secure location.",
+      "- `data/context-mirror`; rebuild it with `npm run mirror:build`.",
+      ""
+    ].join("\n"),
+    "utf8"
+  );
+
+  console.log(`Backup written to ${backupDir}`);
+} catch (error) {
+  await rm(backupDir, { recursive: true, force: true });
+  throw error;
 }
-
-await writeFile(
-  join(backupDir, "README.md"),
-  [
-    "# Personal Context System Backup",
-    "",
-    `Created: ${new Date().toISOString()}`,
-    "",
-    "Contents:",
-    "",
-    "- `database.dump`: PostgreSQL custom-format dump from the local Docker Compose database.",
-    "- `attachments.tar.gz`: present only when `data/attachments` existed.",
-    "",
-    "Not included:",
-    "",
-    "- `.env`; store it separately in your password manager or another secure location.",
-    "- `data/context-mirror`; rebuild it with `npm run mirror:build`.",
-    ""
-  ].join("\n"),
-  "utf8"
-);
-
-console.log(`Backup written to ${backupDir}`);

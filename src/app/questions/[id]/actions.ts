@@ -8,17 +8,10 @@ import {
   updateQuestionFromForm,
   type MutationState
 } from "@/application/context-service";
-import { DATABASE_UNAVAILABLE_MESSAGE, isRecoverableReadError } from "@/application/errors";
+import { databaseMutationErrorState, isRecoverableReadError } from "@/application/errors";
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
 
 export { initialMutationState };
-
-function databaseErrorState(): MutationState {
-  return {
-    status: "error",
-    message: DATABASE_UNAVAILABLE_MESSAGE
-  };
-}
 
 export async function updateQuestionAction(
   questionId: string,
@@ -28,7 +21,7 @@ export async function updateQuestionAction(
   const result = await updateQuestionFromForm(questionId, formData, createPrismaContextRepository()).catch(
     (error: unknown) => {
       if (isRecoverableReadError(error)) {
-        return { ok: false as const, state: databaseErrorState() };
+        return { ok: false as const, state: databaseMutationErrorState() };
       }
 
       throw error;
@@ -55,7 +48,7 @@ export async function linkFromQuestionAction(
 
   const result = await linkObjectsFromForm(formData, createPrismaContextRepository()).catch((error: unknown) => {
     if (isRecoverableReadError(error)) {
-      return { ok: false as const, state: databaseErrorState() };
+      return { ok: false as const, state: databaseMutationErrorState() };
     }
 
     throw error;

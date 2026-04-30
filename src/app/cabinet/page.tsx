@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Archive, CircleHelp, Layers, Library, Rows3 } from "lucide-react";
+import { Archive, BookOpen, CircleHelp, Layers, Library, Rows3 } from "lucide-react";
 
 import { isRecoverableReadError } from "@/application/errors";
 import { getCabinetOverview } from "@/application/query-service";
@@ -146,7 +146,7 @@ export default async function CabinetPage() {
 
           <div className="border border-border bg-surface p-4">
             <div className="mb-3 flex items-center gap-2">
-              <Archive className="h-4 w-4 text-primary" aria-hidden="true" />
+              <BookOpen className="h-4 w-4 text-primary" aria-hidden="true" />
               <h2 className="text-sm font-semibold">Threads</h2>
             </div>
             <div className="grid gap-2">

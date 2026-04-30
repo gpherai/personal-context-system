@@ -24,12 +24,15 @@ async function loadDashboard(): Promise<DashboardLoad> {
   }
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
+function Stat({ label, value, href }: { label: string; value: number; href: string }) {
   return (
-    <div className="border border-border bg-surface px-4 py-3">
+    <Link
+      href={href}
+      className="border border-border bg-surface px-4 py-3 transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+    >
       <div className="text-2xl font-semibold text-foreground">{value}</div>
       <div className="mt-1 text-sm text-muted-foreground">{label}</div>
-    </div>
+    </Link>
   );
 }
 
@@ -66,10 +69,10 @@ export default async function DashboardPage() {
       </header>
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="System counts">
-        <Stat label="Entries" value={overview.counts.entries} />
-        <Stat label="Question queue" value={overview.counts.openQuestions} />
-        <Stat label="Themes" value={overview.counts.themes} />
-        <Stat label="Projects" value={overview.counts.projects} />
+        <Stat label="Entries" value={overview.counts.entries} href="/ledger" />
+        <Stat label="Question queue" value={overview.counts.openQuestions} href="/cabinet" />
+        <Stat label="Themes" value={overview.counts.themes} href="/cabinet" />
+        <Stat label="Projects" value={overview.counts.projects} href="/cabinet" />
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
@@ -95,10 +98,14 @@ export default async function DashboardPage() {
             <div className="space-y-3">
               {overview.openQuestions.length ? (
                 overview.openQuestions.map((question) => (
-                  <div key={question.id} className="border-t border-border pt-3 first:border-t-0 first:pt-0">
+                  <Link
+                    key={question.id}
+                    href={`/questions/${question.id}`}
+                    className="block border-t border-border pt-3 transition-colors duration-200 first:border-t-0 first:pt-0 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 rounded-md"
+                  >
                     <Badge tone="amber">{question.status}</Badge>
                     <p className="mt-2 text-sm leading-6">{question.prompt}</p>
-                  </div>
+                  </Link>
                 ))
               ) : (
                 <p className="text-sm text-muted-foreground">No tracked questions yet.</p>
@@ -114,10 +121,14 @@ export default async function DashboardPage() {
             <div className="space-y-2">
               {overview.activeProjects.length ? (
                 overview.activeProjects.map((project) => (
-                  <div key={project.id} className="flex items-center justify-between gap-3 text-sm">
+                  <Link
+                    key={project.id}
+                    href={`/projects/${project.slug}`}
+                    className="flex items-center justify-between gap-3 rounded-md px-2 py-1 text-sm transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                  >
                     <span>{project.name}</span>
                     <span className="text-muted-foreground">{project.count ?? 0}</span>
-                  </div>
+                  </Link>
                 ))
               ) : (
                 <p className="text-sm text-muted-foreground">No projects yet.</p>

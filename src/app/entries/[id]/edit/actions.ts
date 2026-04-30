@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { DATABASE_UNAVAILABLE_MESSAGE, isRecoverableReadError } from "@/application/errors";
+import { databaseMutationErrorState, isRecoverableReadError } from "@/application/errors";
 import {
   initialMutationState,
   updateEntryFromForm,
@@ -20,13 +20,7 @@ export async function updateEntryAction(
 ): Promise<MutationState> {
   const result = await updateEntryFromForm(id, formData, createPrismaContextRepository()).catch((error: unknown) => {
     if (isRecoverableReadError(error)) {
-      return {
-        ok: false as const,
-        state: {
-          status: "error" as const,
-          message: DATABASE_UNAVAILABLE_MESSAGE
-        }
-      };
+      return { ok: false as const, state: databaseMutationErrorState() };
     }
 
     throw error;

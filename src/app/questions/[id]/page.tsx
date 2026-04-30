@@ -17,6 +17,9 @@ export default async function QuestionPage({ params }: { params: Promise<{ id: s
 
   try {
     const [question, relationshipTargets] = await Promise.all([getQuestionById(id), getRelationshipTargets()]);
+    const targetLabelMap = new Map(
+      relationshipTargets.map((t) => [`${t.objectType}:${t.objectId}`, t.label])
+    );
 
     if (!question) {
       notFound();
@@ -68,7 +71,7 @@ export default async function QuestionPage({ params }: { params: Promise<{ id: s
                   question.outgoingRelationships.map((relationship) => (
                     <p key={relationship.id} className="text-sm text-muted-foreground">
                       <span className="font-medium text-foreground">{labelize(relationship.relationType)}</span>{" "}
-                      {relationship.toType}:{relationship.toId}
+                      {targetLabelMap.get(`${relationship.toType}:${relationship.toId}`) ?? `${relationship.toType}:${relationship.toId}`}
                     </p>
                   ))
                 ) : (
@@ -82,7 +85,7 @@ export default async function QuestionPage({ params }: { params: Promise<{ id: s
                 {question.incomingRelationships.length ? (
                   question.incomingRelationships.map((relationship) => (
                     <p key={relationship.id} className="text-sm text-muted-foreground">
-                      {relationship.fromType}:{relationship.fromId}{" "}
+                      {targetLabelMap.get(`${relationship.fromType}:${relationship.fromId}`) ?? `${relationship.fromType}:${relationship.fromId}`}{" "}
                       <span className="font-medium text-foreground">{labelize(relationship.relationType)}</span>
                     </p>
                   ))

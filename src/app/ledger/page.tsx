@@ -108,7 +108,7 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
           {hasCurrentFilter ? <SaveFilterForm params={currentFilterParams} /> : null}
         </section>
 
-        <form className="grid gap-3 border border-border bg-surface p-4 md:grid-cols-2 xl:grid-cols-[1fr_180px_160px_160px_180px_180px]">
+        <form aria-label="Filter entries" className="grid gap-3 border border-border bg-surface p-4 md:grid-cols-2 xl:grid-cols-[1fr_180px_160px_160px_180px_180px]">
           <label className="grid gap-2 text-sm font-medium">
             Search
             <span className="relative">

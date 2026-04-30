@@ -12,14 +12,16 @@ import { RebuildMirrorForm } from "./rebuild-form";
 export const dynamic = "force-dynamic";
 
 export default async function CommandPage() {
-  const mirrorStatus = await getContextMirrorStatus();
-  const savedFilters = await getSavedFilters().catch((error: unknown) => {
-    if (isRecoverableReadError(error)) {
-      return [];
-    }
+  const [mirrorStatus, savedFilters] = await Promise.all([
+    getContextMirrorStatus(),
+    getSavedFilters().catch((error: unknown) => {
+      if (isRecoverableReadError(error)) {
+        return [];
+      }
 
-    throw error;
-  });
+      throw error;
+    })
+  ]);
   const projectBundleCount = mirrorStatus.files.filter((file) => file.startsWith("bundles/projects/")).length;
   const questionBundleCount = mirrorStatus.files.filter((file) => file.startsWith("bundles/questions/")).length;
 

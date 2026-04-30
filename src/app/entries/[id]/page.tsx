@@ -23,6 +23,10 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
     }
 
     const trackedQuestion = entry.type === "question" ? entry.questions[0] : undefined;
+    const canPromoteToQuestion = !trackedQuestion && entry.questions.length === 0;
+    const targetLabelMap = new Map(
+      relationshipTargets.map((t) => [`${t.objectType}:${t.objectId}`, t.label])
+    );
 
     return (
       <article className="mx-auto grid max-w-4xl gap-6">
@@ -40,13 +44,13 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
               {trackedQuestion ? (
                 <Link
                   href={`/questions/${trackedQuestion.id}`}
-                  className="inline-flex h-10 items-center justify-center rounded-md border border-amber-300 bg-amber-50 px-4 text-sm font-medium text-amber-900 transition-colors duration-200 hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-200"
+                  className="inline-flex h-10 items-center justify-center rounded-md border border-caution/30 bg-caution/8 px-4 text-sm font-medium text-caution transition-colors duration-200 hover:bg-caution/12 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-caution/20"
                 >
                   Tracked question
                 </Link>
-              ) : (
+              ) : canPromoteToQuestion ? (
                 <PromoteQuestionForm entryId={entry.id} />
-              )}
+              ) : null}
               <Link
                 href={`/entries/${entry.id}/edit`}
                 className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-surface px-4 text-sm font-medium text-foreground transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
@@ -223,7 +227,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
                   entry.outgoingRelationships.map((relationship) => (
                     <p key={relationship.id} className="text-sm text-muted-foreground">
                       <span className="font-medium text-foreground">{labelize(relationship.relationType)}</span>{" "}
-                      {relationship.toType}:{relationship.toId}
+                      {targetLabelMap.get(`${relationship.toType}:${relationship.toId}`) ?? `${relationship.toType}:${relationship.toId}`}
                     </p>
                   ))
                 ) : (
@@ -237,7 +241,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
                 {entry.incomingRelationships.length ? (
                   entry.incomingRelationships.map((relationship) => (
                     <p key={relationship.id} className="text-sm text-muted-foreground">
-                      {relationship.fromType}:{relationship.fromId}{" "}
+                      {targetLabelMap.get(`${relationship.fromType}:${relationship.fromId}`) ?? `${relationship.fromType}:${relationship.fromId}`}{" "}
                       <span className="font-medium text-foreground">{labelize(relationship.relationType)}</span>
                     </p>
                   ))

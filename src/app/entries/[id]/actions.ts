@@ -12,17 +12,10 @@ import {
   promoteEntryToQuestion,
   type MutationState
 } from "@/application/context-service";
-import { DATABASE_UNAVAILABLE_MESSAGE, isRecoverableReadError } from "@/application/errors";
+import { databaseMutationErrorState, isRecoverableReadError } from "@/application/errors";
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
 
 export { initialMutationState };
-
-function databaseErrorState(): MutationState {
-  return {
-    status: "error",
-    message: DATABASE_UNAVAILABLE_MESSAGE
-  };
-}
 
 function successState(message: string): MutationState {
   return {
@@ -39,7 +32,7 @@ export async function addReferenceAction(
   const result = await createReferenceFromForm(entryId, formData, createPrismaContextRepository()).catch(
     (error: unknown) => {
       if (isRecoverableReadError(error)) {
-        return { ok: false as const, state: databaseErrorState() };
+        return { ok: false as const, state: databaseMutationErrorState() };
       }
 
       throw error;
@@ -62,7 +55,7 @@ export async function addAttachmentAction(
   const result = await createAttachmentFromForm(entryId, formData, createPrismaContextRepository()).catch(
     (error: unknown) => {
       if (isRecoverableReadError(error)) {
-        return { ok: false as const, state: databaseErrorState() };
+        return { ok: false as const, state: databaseMutationErrorState() };
       }
 
       throw error;
@@ -87,7 +80,7 @@ export async function linkFromEntryAction(
 
   const result = await linkObjectsFromForm(formData, createPrismaContextRepository()).catch((error: unknown) => {
     if (isRecoverableReadError(error)) {
-      return { ok: false as const, state: databaseErrorState() };
+      return { ok: false as const, state: databaseMutationErrorState() };
     }
 
     throw error;
@@ -109,7 +102,7 @@ export async function promoteEntryToQuestionAction(
 
   const result = await promoteEntryToQuestion(entryId, createPrismaContextRepository()).catch((error: unknown) => {
     if (isRecoverableReadError(error)) {
-      return { ok: false as const, state: databaseErrorState() };
+      return { ok: false as const, state: databaseMutationErrorState() };
     }
 
     throw error;
@@ -135,7 +128,7 @@ export async function createThreadWithEntryAction(
 
   const result = await createThreadFromForm(formData, createPrismaContextRepository()).catch((error: unknown) => {
     if (isRecoverableReadError(error)) {
-      return { ok: false as const, state: databaseErrorState() };
+      return { ok: false as const, state: databaseMutationErrorState() };
     }
 
     throw error;
