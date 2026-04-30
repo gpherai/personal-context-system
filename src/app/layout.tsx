@@ -1,15 +1,8 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
 
 import { AppShell } from "@/components/app-shell";
 
 import "./globals.css";
-
-const plusJakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  variable: "--font-plus-jakarta",
-  display: "swap"
-});
 
 export const metadata: Metadata = {
   title: "Personal Context System",
@@ -18,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={plusJakarta.variable}>
+    <html lang="en">
       <body>
         <AppShell>{children}</AppShell>
       </body>

@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans", "Aptos", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
   --color-background: #f7f7f4;
   --color-surface: #ffffff;
   --color-surface-muted: #f1f5f4;
