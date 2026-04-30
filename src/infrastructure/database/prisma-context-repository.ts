@@ -436,12 +436,12 @@ export class PrismaContextRepository implements ContextRepository {
           status: command.status,
           title: command.title,
           body: command.body,
-          summary: command.summary,
-          source: command.source,
-          confidence: command.confidence,
+          summary: command.summary ?? null,
+          source: command.source ?? null,
+          confidence: command.confidence ?? null,
           privacyLevel: command.privacyLevel,
-          occurredAt: command.occurredAt,
-          metadata: command.metadata as Prisma.InputJsonValue
+          occurredAt: command.occurredAt ?? null,
+          ...(command.metadata !== undefined ? { metadata: command.metadata as Prisma.InputJsonValue } : {})
         }
       });
 

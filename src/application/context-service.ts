@@ -71,7 +71,6 @@ export function parseUpdateEntryFormData(id: string, formData: FormData) {
     confidence: parseOptionalNumber(formData.get("confidence")),
     privacyLevel: parseOptionalString(formData.get("privacyLevel")) ?? "private",
     occurredAt: parseOptionalDate(formData.get("occurredAt")),
-    metadata: {},
     themeNames: parseNameList(formData.get("themes")),
     projectNames: parseNameList(formData.get("projects"))
   };

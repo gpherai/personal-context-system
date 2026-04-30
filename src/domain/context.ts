@@ -83,8 +83,9 @@ export const listEntriesQuerySchema = z.object({
   limit: z.number().int().min(1).max(200).default(50)
 });
 
-export const updateEntryCommandSchema = createEntryCommandSchema.extend({
-  id: z.string().min(1)
+export const updateEntryCommandSchema = createEntryCommandSchema.omit({ metadata: true }).extend({
+  id: z.string().min(1),
+  metadata: metadataSchema.optional()
 });
 
 export const updateQuestionCommandSchema = z.object({
