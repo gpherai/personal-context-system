@@ -227,6 +227,18 @@ model Relationship {
   @@index([relationType])
 }
 
+model SavedFilter {
+  id          String   @id @default(cuid())
+  name        String   @db.VarChar(120)
+  slug        String   @unique @db.VarChar(120)
+  description String?  @db.Text
+  params      Json     @default("{}")
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(6)
+
+  @@index([updatedAt])
+}
+
 model EntryTheme {
   entryId   String
   themeId   String

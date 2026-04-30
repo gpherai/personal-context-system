@@ -2,6 +2,7 @@ import type {
   CreateAttachmentCommand,
   CreateEntryCommand,
   CreateReferenceCommand,
+  CreateSavedFilterCommand,
   CreateThreadCommand,
   EntryStatus,
   EntryType,
@@ -13,6 +14,7 @@ import type {
   ReferenceKind,
   RelationType,
   ObjectType,
+  SavedFilterParams,
   UpdateEntryCommand,
   UpdateQuestionCommand
 } from "@/domain/context";
@@ -75,6 +77,16 @@ export interface RelationshipTarget {
   objectId: string;
   label: string;
   detail?: string;
+}
+
+export interface SavedFilterRecord {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string;
+  params: SavedFilterParams;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface EntryRecord {
@@ -179,6 +191,8 @@ export interface ContextRepository {
   getProjectBySlug(slug: string): Promise<NamedRecordContext | null>;
   getQuestion(id: string): Promise<QuestionContext | null>;
   listRelationshipTargets(): Promise<RelationshipTarget[]>;
+  createSavedFilter(command: CreateSavedFilterCommand): Promise<SavedFilterRecord>;
+  listSavedFilters(): Promise<SavedFilterRecord[]>;
   updateQuestion(command: UpdateQuestionCommand): Promise<QuestionRecord>;
   linkObjects(command: LinkObjectsCommand): Promise<RelationshipRecord>;
   createReference(command: CreateReferenceCommand): Promise<ReferenceRecord>;

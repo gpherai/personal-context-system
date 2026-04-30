@@ -4,11 +4,15 @@ import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { isRecoverableReadError } from "@/application/errors";
-import { getDashboardOverview, getLedgerEntries } from "@/application/query-service";
+import { getDashboardOverview, getLedgerEntries, getSavedFilters } from "@/application/query-service";
 import { EntryList } from "@/components/entry-list";
 import { SetupNotice } from "@/components/setup-notice";
-import { entryStatuses, entryTypes, privacyLevels } from "@/domain/context";
+import type { SavedFilterParams } from "@/domain/context";
+import { entryStatuses, entryTypes, privacyLevels, savedFilterParamsSchema } from "@/domain/context";
 import { labelize } from "@/lib/format";
+import { savedFilterHref } from "@/lib/saved-filter-url";
+
+import { SaveFilterForm } from "./save-filter-form";
 
 export const dynamic = "force-dynamic";
 
@@ -28,12 +32,37 @@ function toUrlSearchParams(raw: SearchParams): URLSearchParams {
   return params;
 }
 
+function toSavedFilterParams(params: URLSearchParams): SavedFilterParams {
+  const filterParams = {
+    search: params.get("search") || undefined,
+    type: params.get("type") || undefined,
+    status: params.get("status") || undefined,
+    privacyLevel: params.get("privacyLevel") || undefined,
+    themeSlug: params.get("themeSlug") || undefined,
+    projectSlug: params.get("projectSlug") || undefined,
+    questionId: params.get("questionId") || undefined,
+    occurredFrom: params.get("occurredFrom") || undefined,
+    occurredTo: params.get("occurredTo") || undefined
+  };
+
+  const parsed = savedFilterParamsSchema.safeParse(
+    Object.fromEntries(Object.entries(filterParams).filter(([, value]) => value !== undefined))
+  );
+
+  return parsed.success ? parsed.data : {};
+}
+
 export default async function LedgerPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const rawSearchParams = await searchParams;
   const params = toUrlSearchParams(rawSearchParams);
 
   try {
-    const [entries, overview] = await Promise.all([getLedgerEntries(params), getDashboardOverview()]);
+    const [entries, overview, savedFilters] = await Promise.all([
+      getLedgerEntries(params),
+      getDashboardOverview(),
+      getSavedFilters()
+    ]);
+    const currentFilterParams = toSavedFilterParams(params);
 
     return (
       <div className="mx-auto grid max-w-6xl gap-5">
@@ -44,6 +73,28 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
             Chronological stream with structured filters.
           </p>
         </header>
+
+        <section className="grid gap-4 lg:grid-cols-[1fr_340px]">
+          <div className="border border-border bg-surface p-4">
+            <h2 className="text-sm font-semibold">Saved filters</h2>
+            {savedFilters.length ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {savedFilters.map((filter) => (
+                  <Link
+                    key={filter.id}
+                    href={savedFilterHref(filter.params)}
+                    className="inline-flex h-9 items-center rounded-md border border-border bg-surface px-3 text-sm font-medium transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                  >
+                    {filter.name}
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-3 text-sm text-muted-foreground">No saved filters yet.</p>
+            )}
+          </div>
+          <SaveFilterForm params={currentFilterParams} />
+        </section>
 
         <form className="grid gap-3 border border-border bg-surface p-4 md:grid-cols-2 xl:grid-cols-[1fr_180px_160px_160px_180px_180px]">
           <label className="grid gap-2 text-sm font-medium">

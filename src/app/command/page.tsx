@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { Bot, FolderTree, ShieldCheck, Terminal } from "lucide-react";
 
+import { isRecoverableReadError } from "@/application/errors";
+import { getSavedFilters } from "@/application/query-service";
 import { getContextMirrorStatus } from "@/infrastructure/files/context-mirror-writer";
 import { formatDateTime } from "@/lib/format";
+import { savedFilterHref } from "@/lib/saved-filter-url";
 
 import { RebuildMirrorForm } from "./rebuild-form";
 
@@ -10,6 +13,13 @@ export const dynamic = "force-dynamic";
 
 export default async function CommandPage() {
   const mirrorStatus = await getContextMirrorStatus();
+  const savedFilters = await getSavedFilters().catch((error: unknown) => {
+    if (isRecoverableReadError(error)) {
+      return [];
+    }
+
+    throw error;
+  });
 
   return (
     <div className="mx-auto grid max-w-5xl gap-6">
@@ -110,23 +120,21 @@ export default async function CommandPage() {
 
       <section className="border border-border bg-surface p-5">
         <h2 className="text-sm font-semibold">Saved context filters</h2>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {[
-            { href: "/ledger?status=active", label: "Active entries" },
-            { href: "/ledger?type=question", label: "Question entries" },
-            { href: "/ledger?privacyLevel=sensitive", label: "Sensitive records" },
-            { href: "/ledger?type=decision", label: "Decisions" },
-            { href: "/ledger?type=open_loop", label: "Open loops" }
-          ].map((filter) => (
-            <Link
-              key={filter.href}
-              href={filter.href}
-              className="inline-flex h-9 items-center rounded-md border border-border bg-surface px-3 text-sm font-medium transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
-            >
-              {filter.label}
-            </Link>
-          ))}
-        </div>
+        {savedFilters.length ? (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {savedFilters.map((filter) => (
+              <Link
+                key={filter.id}
+                href={savedFilterHref(filter.params)}
+                className="inline-flex h-9 items-center rounded-md border border-border bg-surface px-3 text-sm font-medium transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+              >
+                {filter.name}
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-3 text-sm text-muted-foreground">No saved filters yet. Save one from the Ledger.</p>
+        )}
       </section>
     </div>
   );

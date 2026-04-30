@@ -152,10 +152,10 @@ First features:
 - explain privacy defaults through concise labels, not long in-app prose
 
 Current state: the Command Center can rebuild the mirror, show mirror status, list generated files, and expose preset context filters.
+Saved context filters are persisted from the Ledger and shown in Command Center.
 
 Later features:
 
-- saved context filters
 - compact bundle generation
 - CLI status
 - future MCP resource inspection

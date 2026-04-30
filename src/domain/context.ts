@@ -83,6 +83,26 @@ export const listEntriesQuerySchema = z.object({
   limit: z.number().int().min(1).max(200).default(50)
 });
 
+export const savedFilterParamsSchema = z
+  .object({
+    search: z.string().trim().max(240).optional(),
+    type: entryTypeSchema.optional(),
+    status: entryStatusSchema.optional(),
+    privacyLevel: privacyLevelSchema.optional(),
+    themeSlug: z.string().trim().max(120).optional(),
+    projectSlug: z.string().trim().max(120).optional(),
+    questionId: z.string().trim().max(120).optional(),
+    occurredFrom: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    occurredTo: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/).optional()
+  })
+  .strict();
+
+export const createSavedFilterCommandSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(120),
+  description: z.string().trim().max(2000).optional(),
+  params: savedFilterParamsSchema.default({})
+});
+
 export const updateEntryCommandSchema = createEntryCommandSchema.omit({ metadata: true }).extend({
   id: z.string().min(1),
   metadata: metadataSchema.optional()
@@ -133,6 +153,8 @@ export const createThreadCommandSchema = z.object({
 
 export type CreateEntryCommand = z.infer<typeof createEntryCommandSchema>;
 export type ListEntriesQuery = z.infer<typeof listEntriesQuerySchema>;
+export type SavedFilterParams = z.infer<typeof savedFilterParamsSchema>;
+export type CreateSavedFilterCommand = z.infer<typeof createSavedFilterCommandSchema>;
 export type UpdateEntryCommand = z.infer<typeof updateEntryCommandSchema>;
 export type UpdateQuestionCommand = z.infer<typeof updateQuestionCommandSchema>;
 export type LinkObjectsCommand = z.infer<typeof linkObjectsCommandSchema>;

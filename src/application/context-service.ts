@@ -4,6 +4,7 @@ import {
   createAttachmentCommandSchema,
   createEntryCommandSchema,
   createReferenceCommandSchema,
+  createSavedFilterCommandSchema,
   createThreadCommandSchema,
   linkObjectsCommandSchema,
   listEntriesQuerySchema,
@@ -136,6 +137,27 @@ export function parseCreateThreadFormData(formData: FormData) {
   });
 }
 
+export function parseCreateSavedFilterFormData(formData: FormData) {
+  const rawParams = {
+    search: parseOptionalString(formData.get("search")),
+    type: parseOptionalString(formData.get("type")),
+    status: parseOptionalString(formData.get("status")),
+    privacyLevel: parseOptionalString(formData.get("privacyLevel")),
+    themeSlug: parseOptionalString(formData.get("themeSlug")),
+    projectSlug: parseOptionalString(formData.get("projectSlug")),
+    questionId: parseOptionalString(formData.get("questionId")),
+    occurredFrom: parseOptionalString(formData.get("occurredFrom")),
+    occurredTo: parseOptionalString(formData.get("occurredTo"))
+  };
+  const params = Object.fromEntries(Object.entries(rawParams).filter(([, value]) => value !== undefined));
+
+  return createSavedFilterCommandSchema.safeParse({
+    name: parseOptionalString(formData.get("name")),
+    description: parseOptionalString(formData.get("description")),
+    params
+  });
+}
+
 export async function captureEntry(formData: FormData, repository: ContextRepository) {
   const parsed = parseCreateEntryFormData(formData);
 
@@ -226,6 +248,17 @@ export async function createThreadFromForm(formData: FormData, repository: Conte
 
   const thread = await repository.createThread(parsed.data);
   return { ok: true as const, thread };
+}
+
+export async function createSavedFilterFromForm(formData: FormData, repository: ContextRepository) {
+  const parsed = parseCreateSavedFilterFormData(formData);
+
+  if (!parsed.success) {
+    return { ok: false as const, state: errorState("Controleer de filtervelden.", parsed.error) };
+  }
+
+  const savedFilter = await repository.createSavedFilter(parsed.data);
+  return { ok: true as const, savedFilter };
 }
 
 export async function listEntries(repository: ContextRepository, params?: URLSearchParams) {

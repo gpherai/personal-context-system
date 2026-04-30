@@ -24,6 +24,10 @@ export async function getRelationshipTargets() {
   return createPrismaContextRepository().listRelationshipTargets();
 }
 
+export async function getSavedFilters() {
+  return createPrismaContextRepository().listSavedFilters();
+}
+
 export async function getThreads() {
   return createPrismaContextRepository().listThreads();
 }

@@ -167,6 +167,33 @@ Relation types:
 - `inspired_by`
 - `external_reference`
 
+### SavedFilter
+
+Purpose: reusable Ledger/context query definition stored in the database instead of hardcoded UI links.
+
+Fields:
+
+- `id`
+- `slug`
+- `name`
+- `description`
+- `params`
+- timestamps
+
+`params` is JSONB and stores the same URL-oriented filter keys used by the Ledger:
+
+- `search`
+- `type`
+- `status`
+- `privacyLevel`
+- `themeSlug`
+- `projectSlug`
+- `questionId`
+- `occurredFrom`
+- `occurredTo`
+
+The database is authoritative for saved filters. The Command Center reads persisted filters and links back to Ledger query URLs.
+
 ### Reference
 
 Purpose: lightweight pointer to external material.

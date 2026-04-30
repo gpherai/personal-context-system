@@ -501,7 +501,7 @@ This is not an MVP-only design, but implementation still needs order.
 4. [done] Build Dashboard, Capture, Ledger, and Entry detail.
 5. [done] Add Cabinet views for themes, projects, and questions.
 6. [done] Add context mirror generation with markdown and JSON projections.
-7. [in progress] Add search and saved filters. Full-text search, structured filters, and command-center preset links exist; persisted user-defined saved filters are not yet modeled.
+7. [done] Add search and saved filters. Full-text search, structured filters, persisted saved filters, and Command Center saved-filter links exist.
 8. [in progress] Complete Command Center for context building and mirror inspection.
 9. [todo] Add CLI adapter over context/query services.
 10. [todo] Add graph/map view once relationship data exists.
@@ -513,16 +513,16 @@ Last updated: 2026-04-30
 
 **Built:**
 
-- Full Prisma schema including Entry, Theme, Project, Question, Thread, Reference, Attachment, Relationship, and all explicit join tables.
+- Full Prisma schema including Entry, Theme, Project, Question, Thread, Reference, Attachment, Relationship, SavedFilter, and all explicit join tables.
 - Layered source structure: `src/domain`, `src/application`, `src/repositories`, `src/infrastructure`, `src/ai-context`, `src/app`, `src/components`.
 - Domain validation and application services for entry capture/update, question status update, object linking, reference/attachment metadata, thread creation, list/query reads, graph reads, and context mirror snapshots.
 - UI routes for Dashboard, Capture, Ledger, Cabinet, Entry detail/edit, Command Center, Settings, Map, and detail views for themes, projects, questions, and threads.
 - Relationship creation from entry and question detail pages uses selectable targets for entries, questions, projects, and themes instead of requiring pasted object IDs.
+- Ledger filters can be persisted as named saved filters and reused from both Ledger and Command Center.
 - Context mirror generation for `manifest.json`, `ai-index.md`, `today.md`, `ai-bundle.md`, `recent.md`, `open-questions.md`, project/theme indexes and pages, `threads/index.md`, `entries/index.json`, and per-entry Markdown/JSON files.
 
 **Not yet built:**
 
-- Persisted user-defined saved filters.
 - Richer relationship validation and resolved relationship labels in read views.
 - Per-thread context mirror detail projections, timeline views, and alternate privacy export modes.
 - Command Center context bundle variants beyond the generated compact bundle.

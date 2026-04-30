@@ -1,10 +1,12 @@
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 
 import {
+  savedFilterParamsSchema,
   slugifyName,
   type CreateAttachmentCommand,
   type CreateEntryCommand,
   type CreateReferenceCommand,
+  type CreateSavedFilterCommand,
   type CreateThreadCommand,
   type ListEntriesQuery,
   type LinkObjectsCommand,
@@ -25,6 +27,7 @@ import type {
   ReferenceRecord,
   RelationshipRecord,
   RelationshipTarget,
+  SavedFilterRecord,
   ThreadRecord
 } from "@/repositories/context-repository";
 
@@ -245,6 +248,28 @@ function mapThread(
   };
 }
 
+function mapSavedFilter(filter: {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  params: unknown;
+  createdAt: Date;
+  updatedAt: Date;
+}): SavedFilterRecord {
+  const parsedParams = savedFilterParamsSchema.safeParse(asRecord(filter.params));
+
+  return {
+    id: filter.id,
+    slug: filter.slug,
+    name: filter.name,
+    description: optional(filter.description),
+    params: parsedParams.success ? parsedParams.data : {},
+    createdAt: filter.createdAt,
+    updatedAt: filter.updatedAt
+  };
+}
+
 function entryWhere(query?: Partial<ListEntriesQuery>, searchIds?: string[]): Prisma.EntryWhereInput {
   const where: Prisma.EntryWhereInput = {};
 
@@ -375,6 +400,19 @@ export class PrismaContextRepository implements ContextRepository {
     let suffix = 2;
 
     while (await this.prisma.thread.findUnique({ where: { slug: candidate }, select: { id: true } })) {
+      candidate = `${baseSlug}-${suffix}`;
+      suffix += 1;
+    }
+
+    return candidate;
+  }
+
+  private async uniqueSavedFilterSlug(name: string): Promise<string> {
+    const baseSlug = slugifyName(name) || "saved-filter";
+    let candidate = baseSlug;
+    let suffix = 2;
+
+    while (await this.prisma.savedFilter.findUnique({ where: { slug: candidate }, select: { id: true } })) {
       candidate = `${baseSlug}-${suffix}`;
       suffix += 1;
     }
@@ -648,6 +686,29 @@ export class PrismaContextRepository implements ContextRepository {
         detail: question.status
       }))
     ];
+  }
+
+  async createSavedFilter(command: CreateSavedFilterCommand): Promise<SavedFilterRecord> {
+    const slug = await this.uniqueSavedFilterSlug(command.name);
+    const filter = await this.prisma.savedFilter.create({
+      data: {
+        name: command.name,
+        slug,
+        description: command.description ?? null,
+        params: command.params as Prisma.InputJsonValue
+      }
+    });
+
+    return mapSavedFilter(filter);
+  }
+
+  async listSavedFilters(): Promise<SavedFilterRecord[]> {
+    const filters = await this.prisma.savedFilter.findMany({
+      orderBy: [{ updatedAt: "desc" }],
+      take: 50
+    });
+
+    return filters.map(mapSavedFilter);
   }
 
   async updateQuestion(command: UpdateQuestionCommand): Promise<QuestionRecord> {
