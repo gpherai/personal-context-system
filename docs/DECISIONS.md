@@ -2,7 +2,7 @@
 
 This file is the authoritative record of architecture decisions and open questions for the Personal Context System.
 
-Updated: 2026-04-30
+Updated: 2026-05-26
 
 ## Accepted
 
@@ -14,7 +14,8 @@ Updated: 2026-04-30
 - UI/UX quality is a first-class concern.
 - The project should be designed broadly and completely up front; avoid reducing the planning document to an MVP-only scope.
 - Gerald understands IT architecture and tradeoffs, but wants AI-assisted implementation and documentation that stays approachable for someone who does not program independently.
-- `detective`, `knowledge-base`, and `sanatana-kalender` remain separate canonical systems with their own data models.
+- The `knowledge-base` project is being consolidated into PCS. PCS is the canonical system for all Sanatana Dharma knowledge sources. The Knowledge Base app will be deleted once the deletion gate is satisfied: all items, taxonomy, metadata, and seed data must be importable and fully usable in PCS without any dependency on the old app.
+- `detective` and `sanatana-kalender` remain separate systems.
 
 ### Identity and naming
 - The repository and application name is `personal-context-system` / Personal Context System.
@@ -64,6 +65,27 @@ Updated: 2026-04-30
 - Use Context7 or official documentation lookup for up-to-date framework/library guidance when implementation decisions depend on current APIs.
 - Use the local `ui-ux-pro-max` skill for UI/UX direction when building or revising interface surfaces.
 - When building or revising interface surfaces, follow the design principles in `docs/UI-IA.md` and verify current framework API patterns before implementation.
+
+### Sanatana knowledge sources (Knowledge Base consolidation)
+
+- A new first-class `Source` model is added to PCS. It represents curated Sanatana knowledge objects: videos, books, posts, images, sadhanas, upadeshas, stotras, and deity concepts. This is distinct from `Entry` (personal context) and from `Reference` (a simple external link attached to an entry).
+- `SourceType` is a new enum covering the 8 content types from the Knowledge Base: `video`, `book`, `post`, `image`, `sadhana`, `upadesha`, `stotra`, `deity_concept`. The type is immutable after creation to prevent metadata-shape drift.
+- `Source` metadata is typed per `SourceType` using a discriminated Zod union, matching the KB validators. Metadata is stored as `Json` in Postgres and validated at the domain layer.
+- `Source` is added to the `ObjectType` enum so it can participate in generic `Relationship` links.
+- Sanatana taxonomy (Deity, Tradition, Topic, Tag from KB) maps to PCS `Theme` records with `metadata.category` discriminating the kind (`deity`, `tradition`, `topic`, `tag`). Theme hierarchy (`parentThemeId`) covers both deity avatars/forms and tradition sub-traditions.
+- Deity aliases (`otherNames` in KB) are stored as `Theme.metadata.aliases: string[]` and included in full-text search.
+- A `SourceTheme` junction table links `Source` records to `Theme` taxonomy records, replacing KB's `ItemDeity`, `ItemTradition`, `ItemTopic`, `ItemTag` tables.
+- `DeityTradition` links from KB are migrated as PCS `Relationship` records (`fromType: theme`, `toType: theme`, `relationType: relates_to`) or, if needed for structured taxonomy queries, as a dedicated `ThemeRelation` join. Decision deferred to implementation: use `Relationship` first; add `ThemeRelation` only if query complexity requires it.
+- Tags are modeled as `Theme` records with `metadata.category = "tag"` and a `slug` field (already on Theme). No separate Tag table is added.
+- `Source` can be linked to `Entry` records via a new `EntrySource` junction, enabling personal annotations and reflections on knowledge sources.
+- Metadata FTS: source metadata is flattened recursively to a `metadataText` tsvector column (or computed at query time) so stotra texts, mantras, teacher names, and chapter notes are searchable via Postgres FTS.
+- Cycle guards are added for `Theme.parentThemeId` before the seed/import runs: inserting or updating a theme with a parent must not create a cycle.
+- Taxonomy deletion semantics: archiving or deleting a Theme must not cascade-delete linked Sources or Entries. Only the link is removed.
+- The Knowledge Base seed data (traditions, deities, topics, deity-tradition links) is ported to a PCS seed script and run once against the canonical database.
+- An import script migrates existing KB `Item` records to PCS `Source` records, preserving content type, metadata, and taxonomy links.
+- `Reference` remains unchanged as the simple external-link-attached-to-entry model. It is not expanded to cover Sanatana source types.
+- MeiliSearch is not adopted. Postgres FTS with a `metadataText` column covers all required search scenarios.
+- No backward compatibility layers, fallbacks, or migration shims are maintained. PCS is built clean; the KB app is deleted when the deletion gate is satisfied.
 
 ## Needs Discussion
 
