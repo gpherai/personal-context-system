@@ -127,12 +127,12 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
                 <Badge tone="blue">{typeDetail.label}</Badge>
                 <Badge tone={source.status === "archived" ? "neutral" : "teal"}>{source.status}</Badge>
               </div>
-              <h1 className="mt-3 text-3xl font-semibold">{source.title}</h1>
+              <h1 className="mt-3 text-3xl font-bold tracking-tight">{source.title}</h1>
             </div>
             <div className="flex flex-col gap-2 sm:items-end">
               <Link
                 href={`/sources/${source.id}/edit`}
-                className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-surface px-4 text-sm font-medium transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-surface px-4 text-sm font-medium transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               >
                 Bewerken
               </Link>
@@ -159,7 +159,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
                 <Link
                   key={theme.id}
                   href={`/themes/${theme.slug}`}
-                  className="inline-flex h-8 items-center rounded-md border border-border bg-surface px-3 text-sm transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                  className="inline-flex h-8 items-center rounded-md border border-border bg-surface px-3 text-sm transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                 >
                   {theme.name}
                 </Link>
@@ -176,7 +176,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
                 <Link
                   key={entry.id}
                   href={`/entries/${entry.id}`}
-                  className="rounded-md px-2 py-2 text-sm transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                  className="rounded-md px-2 py-2 text-sm transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                 >
                   {entry.title}
                 </Link>

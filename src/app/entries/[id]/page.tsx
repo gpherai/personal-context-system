@@ -38,7 +38,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
                 <Badge>{entry.status}</Badge>
                 <Badge tone={entry.privacyLevel === "sensitive" ? "amber" : "neutral"}>{entry.privacyLevel}</Badge>
               </div>
-              <h1 className="mt-3 text-3xl font-semibold">{entry.title}</h1>
+              <h1 className="mt-3 text-3xl font-bold tracking-tight">{entry.title}</h1>
             </div>
             <div className="flex flex-col gap-2 sm:items-end">
               {trackedQuestion ? (
@@ -53,7 +53,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
               ) : null}
               <Link
                 href={`/entries/${entry.id}/edit`}
-                className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-surface px-4 text-sm font-medium text-foreground transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-surface px-4 text-sm font-medium text-foreground transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               >
                 Edit
               </Link>
@@ -72,24 +72,24 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
         </header>
 
         {entry.summary && (
-          <section className="border border-border bg-surface p-5">
+          <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
             <h2 className="text-sm font-semibold">Summary</h2>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">{entry.summary}</p>
           </section>
         )}
 
-        <section className="border border-border bg-surface p-5">
+        <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
           <h2 className="text-sm font-semibold">Body</h2>
           <div className="mt-3 whitespace-pre-wrap text-sm leading-7">{entry.body}</div>
         </section>
 
         <section className="grid gap-4 md:grid-cols-2">
-          <div className="border border-border bg-surface p-5">
+          <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
             <h2 className="text-sm font-semibold">Themes</h2>
             <div className="mt-3 flex flex-wrap gap-2">
               {entry.themes.length ? (
                 entry.themes.map((theme) => (
-                  <Link key={theme.id} href={`/themes/${theme.slug}`} className="transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 rounded-md">
+                  <Link key={theme.id} href={`/themes/${theme.slug}`} className="transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded-md">
                     <Badge>{theme.name}</Badge>
                   </Link>
                 ))
@@ -98,12 +98,12 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
               )}
             </div>
           </div>
-          <div className="border border-border bg-surface p-5">
+          <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
             <h2 className="text-sm font-semibold">Projects</h2>
             <div className="mt-3 flex flex-wrap gap-2">
               {entry.projects.length ? (
                 entry.projects.map((project) => (
-                  <Link key={project.id} href={`/projects/${project.slug}`} className="transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 rounded-md">
+                  <Link key={project.id} href={`/projects/${project.slug}`} className="transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded-md">
                     <Badge tone="blue">{project.name}</Badge>
                   </Link>
                 ))
@@ -114,7 +114,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
           </div>
         </section>
 
-        <section className="border border-border bg-surface p-5">
+        <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
           <h2 className="text-sm font-semibold">Provenance</h2>
           <dl className="mt-3 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
             <div>
@@ -129,7 +129,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
         </section>
 
         <section className="grid gap-4 md:grid-cols-2">
-          <div className="border border-border bg-surface p-5">
+          <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
             <h2 className="text-sm font-semibold">Questions</h2>
             <div className="mt-3 grid gap-2">
               {entry.questions.length ? (
@@ -137,7 +137,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
                   <Link
                     key={question.id}
                     href={`/questions/${question.id}`}
-                    className="rounded-md px-2 py-2 text-sm transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                    className="rounded-md px-2 py-2 text-sm transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   >
                     <Badge tone="amber">{question.status}</Badge>
                     <span className="ml-2">{question.prompt}</span>
@@ -149,7 +149,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
             </div>
           </div>
 
-          <div className="border border-border bg-surface p-5">
+          <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
             <h2 className="text-sm font-semibold">Threads</h2>
             <div className="mt-3 grid gap-2">
               {entry.threads.length ? (
@@ -157,7 +157,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
                   <Link
                     key={thread.id}
                     href={`/threads/${thread.slug}`}
-                    className="rounded-md px-2 py-2 text-sm transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                    className="rounded-md px-2 py-2 text-sm transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   >
                     {thread.title}
                   </Link>
@@ -170,7 +170,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
         </section>
 
         <section className="grid gap-4 md:grid-cols-2">
-          <div className="border border-border bg-surface p-5">
+          <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
             <h2 className="text-sm font-semibold">References</h2>
             <div className="mt-3 grid gap-3">
               {entry.references.length ? (
@@ -190,7 +190,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
             </div>
           </div>
 
-          <div className="border border-border bg-surface p-5">
+          <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
             <h2 className="text-sm font-semibold">Attachments</h2>
             <div className="mt-3 grid gap-3">
               {entry.attachments.length ? (
@@ -217,7 +217,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
           </div>
         </section>
 
-        <section className="border border-border bg-surface p-5">
+        <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
           <h2 className="text-sm font-semibold">Relationships</h2>
           <div className="mt-3 grid gap-3 md:grid-cols-2">
             <div>
@@ -254,21 +254,21 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
         </section>
 
         <section className="grid gap-4">
-          <div className="border border-border bg-surface p-5">
+          <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
             <h2 className="mb-3 text-sm font-semibold">Create relationship</h2>
             <RelationshipForm entryId={entry.id} targets={relationshipTargets} />
           </div>
           <div className="grid gap-4 lg:grid-cols-2">
-            <div className="border border-border bg-surface p-5">
+            <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
               <h2 className="mb-3 text-sm font-semibold">Add reference</h2>
               <ReferenceForm entryId={entry.id} />
             </div>
-            <div className="border border-border bg-surface p-5">
+            <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
               <h2 className="mb-3 text-sm font-semibold">Add attachment metadata</h2>
               <AttachmentForm entryId={entry.id} />
             </div>
           </div>
-          <div className="border border-border bg-surface p-5">
+          <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
             <h2 className="mb-3 text-sm font-semibold">Create thread</h2>
             <ThreadForm entryId={entry.id} />
           </div>

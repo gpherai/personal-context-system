@@ -25,14 +25,14 @@ export default async function ThreadPage({ params }: { params: Promise<{ slug: s
         <header className="border-b border-border pb-5">
           <Link
             href="/threads"
-            className="text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+            className="text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
           >
             ← Threads
           </Link>
           <div className="mt-3">
             <Badge>{thread.status}</Badge>
           </div>
-          <h1 className="mt-3 text-3xl font-semibold">{thread.title}</h1>
+          <h1 className="mt-3 text-3xl font-bold tracking-tight">{thread.title}</h1>
           <p className="mt-2 text-sm text-muted-foreground">Updated {formatDateTime(thread.updatedAt)}</p>
           {thread.description && <p className="mt-3 text-sm leading-6 text-muted-foreground">{thread.description}</p>}
         </header>

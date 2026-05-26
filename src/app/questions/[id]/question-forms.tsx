@@ -26,10 +26,10 @@ export function QuestionUpdateForm({ question }: { question: QuestionContext }) 
   return (
     <form action={action} className="grid gap-3">
       <QuestionStatusField defaultValue={question.status} />
-      <label className="grid gap-2 text-sm font-medium">
+      <label className="grid gap-1.5 text-sm font-medium">
         Summary
         <textarea
-          className="min-h-24 rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+          className="min-h-24 rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
           name="summary"
           defaultValue={question.summary ?? ""}
         />
@@ -52,10 +52,10 @@ export function QuestionRelationshipForm({ questionId, targets }: { questionId: 
     <form action={action} className="grid gap-3">
       <div className="grid gap-3 md:grid-cols-[1fr_180px]">
         <RelationshipTargetSelect targets={targets} source={{ objectType: "question", objectId: questionId }} />
-        <label className="grid gap-2 text-sm font-medium">
+        <label className="grid gap-1.5 text-sm font-medium">
           Relation
           <select
-            className="h-10 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+            className="field-select"
             name="relationType"
             defaultValue="relates_to"
           >
@@ -67,10 +67,10 @@ export function QuestionRelationshipForm({ questionId, targets }: { questionId: 
           </select>
         </label>
       </div>
-      <label className="grid gap-2 text-sm font-medium">
+      <label className="grid gap-1.5 text-sm font-medium">
         Note
         <input
-          className="h-10 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+          className="field-select"
           name="note"
         />
       </label>

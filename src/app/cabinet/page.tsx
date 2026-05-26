@@ -16,7 +16,7 @@ function CountLink({ href, label, count }: { href: string; label: string; count:
   return (
     <Link
       href={href}
-      className="flex min-h-11 items-center justify-between gap-3 rounded-md px-2 py-2 text-sm transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+      className="flex min-h-10 cursor-pointer items-center justify-between gap-3 rounded-md px-2 py-2 text-sm transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
     >
       <span>{label}</span>
       <Badge>{count}</Badge>
@@ -29,17 +29,17 @@ export default async function CabinetPage() {
     const cabinet = await getCabinetOverview();
 
     return (
-      <div className="mx-auto grid max-w-7xl gap-6">
-        <header className="border-b border-border pb-5">
-          <p className="text-sm font-medium text-primary">Cabinet</p>
-          <h1 className="mt-1 text-3xl font-semibold">Structured archive</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+      <div className="mx-auto grid max-w-7xl gap-8">
+        <header className="border-b border-border pb-6">
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary">Cabinet</p>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">Structured archive</h1>
+          <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-muted-foreground">
             Browse context by records that have become durable enough to navigate.
           </p>
         </header>
 
         <section className="grid gap-5 xl:grid-cols-[1.4fr_1fr]">
-          <div className="border border-border bg-surface p-4">
+          <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
             <div className="mb-3 flex items-center gap-2">
               <Rows3 className="h-4 w-4 text-primary" aria-hidden="true" />
               <h2 className="text-sm font-semibold">Entries by type</h2>
@@ -56,7 +56,7 @@ export default async function CabinetPage() {
             </div>
           </div>
 
-          <div className="border border-border bg-surface p-4">
+          <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
             <div className="mb-3 flex items-center gap-2">
               <Archive className="h-4 w-4 text-accent" aria-hidden="true" />
               <h2 className="text-sm font-semibold">Entries by status</h2>
@@ -75,18 +75,18 @@ export default async function CabinetPage() {
         </section>
 
         <section className="grid gap-5 lg:grid-cols-4">
-          <div className="border border-border bg-surface p-4">
+          <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
             <div className="mb-3 flex items-center gap-2">
               <Library className="h-4 w-4 text-accent" aria-hidden="true" />
               <h2 className="text-sm font-semibold">Themes</h2>
             </div>
-            <div className="grid gap-2">
+            <div className="grid gap-1">
               {cabinet.themes.length ? (
                 cabinet.themes.map((theme) => (
                   <Link
                     key={theme.id}
                     href={`/themes/${theme.slug}`}
-                    className="flex items-center justify-between rounded-md px-2 py-2 text-sm transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                    className="flex items-center justify-between rounded-md px-2 py-2 text-sm transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   >
                     <span>{theme.name}</span>
                     <Badge>{theme.count ?? 0}</Badge>
@@ -98,18 +98,18 @@ export default async function CabinetPage() {
             </div>
           </div>
 
-          <div className="border border-border bg-surface p-4">
+          <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
             <div className="mb-3 flex items-center gap-2">
               <Layers className="h-4 w-4 text-primary" aria-hidden="true" />
               <h2 className="text-sm font-semibold">Projects</h2>
             </div>
-            <div className="grid gap-2">
+            <div className="grid gap-1">
               {cabinet.projects.length ? (
                 cabinet.projects.map((project) => (
                   <Link
                     key={project.id}
                     href={`/projects/${project.slug}`}
-                    className="flex items-center justify-between rounded-md px-2 py-2 text-sm transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                    className="flex items-center justify-between rounded-md px-2 py-2 text-sm transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   >
                     <span>{project.name}</span>
                     <Badge>{project.count ?? 0}</Badge>
@@ -121,7 +121,7 @@ export default async function CabinetPage() {
             </div>
           </div>
 
-          <div className="border border-border bg-surface p-4">
+          <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
             <div className="mb-3 flex items-center gap-2">
               <CircleHelp className="h-4 w-4 text-caution" aria-hidden="true" />
               <h2 className="text-sm font-semibold">Questions</h2>
@@ -132,10 +132,10 @@ export default async function CabinetPage() {
                   <Link
                     key={question.id}
                     href={`/questions/${question.id}`}
-                    className="block border-t border-border pt-3 transition-colors duration-200 first:border-t-0 first:pt-0 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                    className="block border-t border-border pt-3 transition-colors first:border-t-0 first:pt-0 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded"
                   >
                     <Badge tone="amber">{question.status}</Badge>
-                    <p className="mt-2 text-sm leading-6">{question.prompt}</p>
+                    <p className="mt-1.5 text-sm leading-relaxed">{question.prompt}</p>
                   </Link>
                 ))
               ) : (
@@ -144,18 +144,18 @@ export default async function CabinetPage() {
             </div>
           </div>
 
-          <div className="border border-border bg-surface p-4">
+          <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
             <div className="mb-3 flex items-center gap-2">
               <BookOpen className="h-4 w-4 text-primary" aria-hidden="true" />
               <h2 className="text-sm font-semibold">Threads</h2>
             </div>
-            <div className="grid gap-2">
+            <div className="grid gap-1">
               {cabinet.threads.length ? (
                 cabinet.threads.map((thread) => (
                   <Link
                     key={thread.id}
                     href={`/threads/${thread.slug}`}
-                    className="rounded-md px-2 py-2 text-sm transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                    className="block rounded-md px-2 py-2 text-sm transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   >
                     {thread.title}
                   </Link>
@@ -167,7 +167,7 @@ export default async function CabinetPage() {
           </div>
         </section>
 
-        <section className="border border-border bg-surface p-4">
+        <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
           <div className="mb-3 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <BookMarked className="h-4 w-4 text-primary" aria-hidden="true" />
@@ -175,7 +175,7 @@ export default async function CabinetPage() {
             </div>
             <Link
               href="/sources"
-              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+              className="text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded"
             >
               {cabinet.sourceCount} totaal →
             </Link>
@@ -200,8 +200,8 @@ export default async function CabinetPage() {
 
         <section className="grid gap-3">
           <div className="flex items-center gap-2">
-            <Archive className="h-4 w-4 text-primary" aria-hidden="true" />
-            <h2 className="text-lg font-semibold">Archived entries</h2>
+            <Archive className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            <h2 className="text-base font-semibold text-foreground">Archived entries</h2>
           </div>
           {cabinet.archivedEntries.length ? (
             <EntryList entries={cabinet.archivedEntries} />
@@ -214,12 +214,11 @@ export default async function CabinetPage() {
   } catch (error) {
     if (isRecoverableReadError(error)) {
       return (
-        <div className="mx-auto max-w-4xl">
+        <div className="mx-auto max-w-xl">
           <SetupNotice />
         </div>
       );
     }
-
     throw error;
   }
 }

@@ -40,10 +40,10 @@ export function EditEntryForm({ entry }: { entry: EntryRecord }) {
       <div className="grid gap-4 md:grid-cols-3">
         <EntryTypeField defaultValue={entry.type} />
 
-        <label className="grid gap-2 text-sm font-medium">
+        <label className="grid gap-1.5 text-sm font-medium">
           Status
           <select
-            className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+            className="field-input"
             name="status"
             defaultValue={entry.status}
           >
@@ -55,10 +55,10 @@ export function EditEntryForm({ entry }: { entry: EntryRecord }) {
           </select>
         </label>
 
-        <label className="grid gap-2 text-sm font-medium">
+        <label className="grid gap-1.5 text-sm font-medium">
           Privacy
           <select
-            className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+            className="field-input"
             name="privacyLevel"
             defaultValue={entry.privacyLevel}
           >
@@ -71,20 +71,20 @@ export function EditEntryForm({ entry }: { entry: EntryRecord }) {
         </label>
       </div>
 
-      <label className="grid gap-2 text-sm font-medium">
+      <label className="grid gap-1.5 text-sm font-medium">
         Title
         <input
-          className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+          className="field-input"
           name="title"
           defaultValue={entry.title}
         />
         <FieldError errors={state.fieldErrors?.title} />
       </label>
 
-      <label className="grid gap-2 text-sm font-medium">
+      <label className="grid gap-1.5 text-sm font-medium">
         Body
         <textarea
-          className="min-h-52 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+          className="min-h-52 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
           name="body"
           defaultValue={entry.body}
           required
@@ -92,29 +92,29 @@ export function EditEntryForm({ entry }: { entry: EntryRecord }) {
         <FieldError errors={state.fieldErrors?.body} />
       </label>
 
-      <label className="grid gap-2 text-sm font-medium">
+      <label className="grid gap-1.5 text-sm font-medium">
         Summary
         <textarea
-          className="min-h-24 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+          className="min-h-24 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
           name="summary"
           defaultValue={entry.summary ?? ""}
         />
       </label>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <label className="grid gap-2 text-sm font-medium">
+        <label className="grid gap-1.5 text-sm font-medium">
           Themes
           <input
-            className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+            className="field-input"
             name="themes"
             defaultValue={namesValue(entry.themes)}
           />
         </label>
 
-        <label className="grid gap-2 text-sm font-medium">
+        <label className="grid gap-1.5 text-sm font-medium">
           Projects
           <input
-            className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+            className="field-input"
             name="projects"
             defaultValue={namesValue(entry.projects)}
           />
@@ -122,29 +122,29 @@ export function EditEntryForm({ entry }: { entry: EntryRecord }) {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <label className="grid gap-2 text-sm font-medium">
+        <label className="grid gap-1.5 text-sm font-medium">
           Occurred at
           <input
-            className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+            className="field-input"
             name="occurredAt"
             type="date"
             defaultValue={dateInputValue(entry.occurredAt)}
           />
         </label>
 
-        <label className="grid gap-2 text-sm font-medium">
+        <label className="grid gap-1.5 text-sm font-medium">
           Source
           <input
-            className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+            className="field-input"
             name="source"
             defaultValue={entry.source ?? ""}
           />
         </label>
 
-        <label className="grid gap-2 text-sm font-medium">
+        <label className="grid gap-1.5 text-sm font-medium">
           Confidence
           <input
-            className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+            className="field-input"
             inputMode="decimal"
             max="1"
             min="0"

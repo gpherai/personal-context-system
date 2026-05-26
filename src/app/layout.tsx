@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { Plus_Jakarta_Sans } from "next/font/google";
 
 import { AppShell } from "@/components/app-shell";
@@ -8,17 +9,26 @@ import "./globals.css";
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-plus-jakarta",
-  display: "swap"
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
   title: "Personal Context System",
-  description: "Private local-first context layer for Gerald's thinking and AI workflows."
+  description: "Private local-first context layer for Gerald's thinking and AI workflows.",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const cookieStore = await cookies();
+  const theme = cookieStore.get("pcs-theme")?.value ?? "ink";
+  const mode = cookieStore.get("pcs-mode")?.value ?? "light";
+
   return (
-    <html lang="en" className={plusJakartaSans.variable}>
+    <html
+      lang="en"
+      className={`${plusJakartaSans.variable}${mode === "dark" ? " dark" : ""}`}
+      data-theme={theme}
+    >
       <body>
         <AppShell>{children}</AppShell>
       </body>

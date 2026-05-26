@@ -2,14 +2,15 @@ import type { HTMLAttributes } from "react";
 
 import { cn } from "@/lib/cn";
 
-type BadgeTone = "neutral" | "blue" | "teal" | "amber" | "red";
+type BadgeTone = "neutral" | "blue" | "teal" | "amber" | "red" | "green";
 
 const tones: Record<BadgeTone, string> = {
   neutral: "border-border bg-surface-muted text-muted-foreground",
-  blue: "border-blue-200 bg-blue-50 text-blue-800",
-  teal: "border-teal-200 bg-teal-50 text-teal-800",
-  amber: "border-amber-200 bg-amber-50 text-amber-900",
-  red: "border-red-200 bg-red-50 text-red-800"
+  blue:    "border-primary/25 bg-primary/10 text-primary",
+  teal:    "border-accent/25 bg-accent/10 text-accent",
+  amber:   "border-caution/30 bg-caution/10 text-caution",
+  red:     "border-danger/30 bg-danger/10 text-danger",
+  green:   "border-success/30 bg-success/10 text-success",
 };
 
 export function Badge({
@@ -20,7 +21,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex h-6 items-center rounded-md border px-2 text-xs font-medium capitalize",
+        "inline-flex h-5 items-center rounded-full border px-2 text-xs font-medium capitalize tracking-wide",
         tones[tone],
         className
       )}

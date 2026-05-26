@@ -64,20 +64,20 @@ export function RelationshipTargetSelect({
 
   return (
     <div className="grid gap-3">
-      <label className="grid gap-2 text-sm font-medium">
+      <label className="grid gap-1.5 text-sm font-medium">
         Find target
         <input
-          className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+          className="field-input"
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search by name or type…"
           type="search"
           value={query}
         />
       </label>
-      <label className="grid gap-2 text-sm font-medium">
+      <label className="grid gap-1.5 text-sm font-medium">
         Target
         <select
-          className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+          className="field-input"
           disabled={availableTargets.length === 0}
           name="target"
           onChange={(event) => setValue(event.target.value)}

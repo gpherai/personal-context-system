@@ -32,10 +32,10 @@ export function RelationshipForm({ entryId, targets }: { entryId: string; target
     <form action={action} className="grid gap-3">
       <div className="grid gap-3 md:grid-cols-[1fr_180px]">
         <RelationshipTargetSelect targets={targets} source={{ objectType: "entry", objectId: entryId }} />
-        <label className="grid gap-2 text-sm font-medium">
+        <label className="grid gap-1.5 text-sm font-medium">
           Relation
           <select
-            className="h-10 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+            className="field-select"
             name="relationType"
             defaultValue="relates_to"
           >
@@ -47,10 +47,10 @@ export function RelationshipForm({ entryId, targets }: { entryId: string; target
           </select>
         </label>
       </div>
-      <label className="grid gap-2 text-sm font-medium">
+      <label className="grid gap-1.5 text-sm font-medium">
         Note
         <input
-          className="h-10 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+          className="field-select"
           name="note"
           placeholder="Why these objects are connected"
         />
@@ -72,10 +72,10 @@ export function ReferenceForm({ entryId }: { entryId: string }) {
   return (
     <form action={action} className="grid gap-3">
       <div className="grid gap-3 md:grid-cols-[160px_1fr]">
-        <label className="grid gap-2 text-sm font-medium">
+        <label className="grid gap-1.5 text-sm font-medium">
           Kind
           <select
-            className="h-10 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+            className="field-select"
             name="kind"
             defaultValue="url"
           >
@@ -86,27 +86,27 @@ export function ReferenceForm({ entryId }: { entryId: string }) {
             ))}
           </select>
         </label>
-        <label className="grid gap-2 text-sm font-medium">
+        <label className="grid gap-1.5 text-sm font-medium">
           Title
           <input
-            className="h-10 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+            className="field-select"
             name="title"
             placeholder="Reference title"
           />
         </label>
       </div>
-      <label className="grid gap-2 text-sm font-medium">
+      <label className="grid gap-1.5 text-sm font-medium">
         URL or identifier
         <input
-          className="h-10 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+          className="field-select"
           name="url"
           placeholder="https://, book ISBN, repo path, external record id"
         />
       </label>
-      <label className="grid gap-2 text-sm font-medium">
+      <label className="grid gap-1.5 text-sm font-medium">
         Description
         <textarea
-          className="min-h-20 rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+          className="min-h-20 rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
           name="description"
         />
       </label>
@@ -126,34 +126,34 @@ export function AttachmentForm({ entryId }: { entryId: string }) {
 
   return (
     <form action={action} className="grid gap-3">
-      <label className="grid gap-2 text-sm font-medium">
+      <label className="grid gap-1.5 text-sm font-medium">
         File path
         <input
-          className="h-10 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+          className="field-select"
           name="path"
           placeholder="data/attachments/example.pdf"
         />
       </label>
       <div className="grid gap-3 md:grid-cols-3">
-        <label className="grid gap-2 text-sm font-medium">
+        <label className="grid gap-1.5 text-sm font-medium">
           Title
           <input
-            className="h-10 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+            className="field-select"
             name="title"
           />
         </label>
-        <label className="grid gap-2 text-sm font-medium">
+        <label className="grid gap-1.5 text-sm font-medium">
           Media type
           <input
-            className="h-10 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+            className="field-select"
             name="mediaType"
             placeholder="application/pdf"
           />
         </label>
-        <label className="grid gap-2 text-sm font-medium">
+        <label className="grid gap-1.5 text-sm font-medium">
           Size bytes
           <input
-            className="h-10 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+            className="field-select"
             inputMode="numeric"
             min="0"
             name="sizeBytes"
@@ -161,10 +161,10 @@ export function AttachmentForm({ entryId }: { entryId: string }) {
           />
         </label>
       </div>
-      <label className="grid gap-2 text-sm font-medium">
+      <label className="grid gap-1.5 text-sm font-medium">
         Description
         <textarea
-          className="min-h-20 rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+          className="min-h-20 rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
           name="description"
         />
       </label>
@@ -184,18 +184,18 @@ export function ThreadForm({ entryId }: { entryId: string }) {
 
   return (
     <form action={action} className="grid gap-3">
-      <label className="grid gap-2 text-sm font-medium">
+      <label className="grid gap-1.5 text-sm font-medium">
         Thread title
         <input
-          className="h-10 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+          className="field-select"
           name="title"
           placeholder="Continuing line of thought"
         />
       </label>
-      <label className="grid gap-2 text-sm font-medium">
+      <label className="grid gap-1.5 text-sm font-medium">
         Description
         <textarea
-          className="min-h-20 rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+          className="min-h-20 rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
           name="description"
         />
       </label>

@@ -36,7 +36,7 @@ function SourceCard({ source }: { source: SourceSummary }) {
   return (
     <Link
       href={`/sources/${source.id}`}
-      className="flex flex-col gap-2 rounded-md border border-border bg-surface p-4 transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 cursor-pointer"
+      className="flex flex-col gap-2 rounded-md border border-border bg-surface p-4 transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 cursor-pointer"
     >
       <div className="flex items-start justify-between gap-3">
         <span className="text-sm font-medium leading-5">{source.title}</span>
@@ -71,8 +71,8 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
     return (
       <div className="mx-auto grid max-w-6xl gap-5">
         <header className="border-b border-border pb-5">
-          <p className="text-sm font-medium text-primary">Bronnen</p>
-          <h1 className="mt-1 text-3xl font-semibold">Sanatana kennisbronnen</h1>
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary">Bronnen</p>
+          <h1 className="mt-1 text-3xl font-bold tracking-tight">Sanatana kennisbronnen</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
             Video&apos;s, boeken, posts, sadhana&apos;s en andere bronnen uit de Sanatana kennisbank.
           </p>
@@ -88,7 +88,7 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
               <span className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
                 <input
-                  className="h-9 w-48 rounded-md border border-border bg-surface pl-9 pr-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                  className="h-9 w-48 rounded-md border border-border bg-surface pl-9 pr-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   defaultValue={urlParams.get("search") ?? ""}
                   name="search"
                   placeholder="titel, metadata…"
@@ -99,7 +99,7 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
             <label className="grid gap-1.5 text-xs font-medium">
               Type
               <select
-                className="h-9 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                className="h-9 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                 defaultValue={activeType}
                 name="type"
               >
@@ -115,7 +115,7 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
             <label className="grid gap-1.5 text-xs font-medium">
               Thema
               <select
-                className="h-9 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                className="h-9 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                 defaultValue={activeTheme}
                 name="themeId"
               >
@@ -132,7 +132,7 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
               <Button type="submit" className="h-9 px-3 text-sm">Filter</Button>
               <Link
                 href="/sources"
-                className="inline-flex h-9 items-center rounded-md border border-border bg-surface px-3 text-sm font-medium transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                className="inline-flex h-9 items-center rounded-md border border-border bg-surface px-3 text-sm font-medium transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               >
                 Reset
               </Link>
@@ -141,7 +141,7 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
 
           <Link
             href="/sources/new"
-            className="inline-flex h-9 shrink-0 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors duration-200 hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+            className="inline-flex h-9 shrink-0 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors duration-200 hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
           >
             <Plus className="h-4 w-4" aria-hidden="true" />
             Nieuwe bron

@@ -14,8 +14,8 @@ export default async function NewSourcePage() {
     return (
       <div className="mx-auto max-w-4xl">
         <header className="border-b border-border pb-5">
-          <p className="text-sm font-medium text-primary">Bronnen</p>
-          <h1 className="mt-1 text-3xl font-semibold">Nieuwe bron</h1>
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary">Bronnen</p>
+          <h1 className="mt-1 text-3xl font-bold tracking-tight">Nieuwe bron</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
             Voeg een nieuwe kennisbron toe aan de Sanatana kennisbank.
           </p>

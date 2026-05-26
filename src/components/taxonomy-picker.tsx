@@ -41,7 +41,7 @@ export function TaxonomyPicker({ themes, selectedIds, name = "themeIds" }: Taxon
       />
       <input
         aria-label="Zoek thema's"
-        className="h-9 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+        className="h-9 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
         onChange={(e) => setSearch(e.target.value)}
         placeholder="Zoeken…"
         type="search"

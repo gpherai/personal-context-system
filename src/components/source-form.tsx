@@ -39,7 +39,7 @@ function Field({ label, error, children }: { label: string; error?: string[]; ch
 }
 
 function inputCls() {
-  return "h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20";
+  return "h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30";
 }
 
 function MetadataFields({ type, initial }: { type: string; initial?: Record<string, unknown> }) {
@@ -200,7 +200,7 @@ export function SourceForm({ action, themes, initial, isEdit = false }: SourceFo
 
       <Field label="Beschrijving">
         <textarea
-          className="min-h-24 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+          className="min-h-24 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
           name="description"
           defaultValue={initial?.description ?? ""}
           placeholder="Optionele beschrijving"

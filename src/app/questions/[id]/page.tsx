@@ -29,13 +29,13 @@ export default async function QuestionPage({ params }: { params: Promise<{ id: s
       <div className="mx-auto grid max-w-5xl gap-5">
         <header className="border-b border-border pb-5">
           <Badge tone="amber">{question.status}</Badge>
-          <h1 className="mt-3 text-3xl font-semibold">{question.prompt}</h1>
+          <h1 className="mt-3 text-3xl font-bold tracking-tight">{question.prompt}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
             <span>Updated {formatDateTime(question.updatedAt)}</span>
             {question.originEntryId && (
               <Link
                 href={`/entries/${question.originEntryId}`}
-                className="font-medium text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                className="font-medium text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               >
                 Origin entry
               </Link>
@@ -50,18 +50,18 @@ export default async function QuestionPage({ params }: { params: Promise<{ id: s
             <EntryList entries={question.entries} />
           </div>
           <aside className="grid content-start gap-4">
-            <div className="border border-border bg-surface p-5">
+            <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
               <h2 className="mb-3 text-sm font-semibold">Question workflow</h2>
               <QuestionUpdateForm question={question} />
             </div>
-            <div className="border border-border bg-surface p-5">
+            <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
               <h2 className="mb-3 text-sm font-semibold">Create relationship</h2>
               <QuestionRelationshipForm questionId={question.id} targets={relationshipTargets} />
             </div>
           </aside>
         </section>
 
-        <section className="border border-border bg-surface p-5">
+        <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
           <h2 className="text-sm font-semibold">Relationships</h2>
           <div className="mt-3 grid gap-3 md:grid-cols-2">
             <div>

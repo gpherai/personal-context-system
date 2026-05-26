@@ -11,11 +11,11 @@ export function EntryTypeField({ defaultValue = "observation" }: { defaultValue?
   const selectedDetail = entryTypeDetails[value];
 
   return (
-    <label className="grid gap-2 text-sm font-medium">
+    <label className="grid gap-1.5 text-sm font-medium">
       Type
       <select
         aria-describedby={descriptionId}
-        className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+        className="field-select"
         name="type"
         value={value}
         onChange={(event) => setValue(event.target.value as EntryType)}

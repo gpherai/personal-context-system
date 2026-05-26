@@ -16,8 +16,8 @@ export default async function ThreadsPage() {
     return (
       <div className="mx-auto grid max-w-5xl gap-6">
         <header className="border-b border-border pb-5">
-          <p className="text-sm font-medium text-primary">Threads</p>
-          <h1 className="mt-1 text-3xl font-semibold">Curated thought sequences</h1>
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary">Threads</p>
+          <h1 className="mt-1 text-3xl font-bold tracking-tight">Curated thought sequences</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
             Threads collect entries into a deliberate sequence once a line of thought becomes durable.
           </p>
@@ -29,7 +29,7 @@ export default async function ThreadsPage() {
               <Link
                 key={thread.id}
                 href={`/threads/${thread.slug}`}
-                className="grid gap-2 px-5 py-4 transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                className="grid gap-2 px-5 py-4 transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge>{thread.status}</Badge>

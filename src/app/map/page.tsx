@@ -42,8 +42,8 @@ export default async function MapPage() {
     return (
       <div className="mx-auto grid max-w-7xl gap-6">
         <header className="border-b border-border pb-5">
-          <p className="text-sm font-medium text-primary">Map</p>
-          <h1 className="mt-1 text-3xl font-semibold">Relationship map</h1>
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary">Map</p>
+          <h1 className="mt-1 text-3xl font-bold tracking-tight">Relationship map</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
             A structured map of explicit links. It stays text-first until enough relationship data exists for a visual graph.
           </p>
@@ -71,7 +71,7 @@ export default async function MapPage() {
                   <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tradities</h3>
                   <div className="flex flex-wrap gap-1.5">
                     {traditions.map((t) => (
-                      <Link key={t.id} href={`/themes/${t.slug}`} className="rounded-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
+                      <Link key={t.id} href={`/themes/${t.slug}`} className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30">
                         <Badge tone="teal">{t.name}</Badge>
                       </Link>
                     ))}
@@ -84,7 +84,7 @@ export default async function MapPage() {
                   <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Godheden</h3>
                   <div className="flex flex-wrap gap-1.5">
                     {deities.map((t) => (
-                      <Link key={t.id} href={`/themes/${t.slug}`} className="rounded-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
+                      <Link key={t.id} href={`/themes/${t.slug}`} className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30">
                         <Badge tone="blue">{t.name}</Badge>
                       </Link>
                     ))}
@@ -97,7 +97,7 @@ export default async function MapPage() {
                   <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Onderwerpen</h3>
                   <div className="flex flex-wrap gap-1.5">
                     {topics.map((t) => (
-                      <Link key={t.id} href={`/themes/${t.slug}`} className="rounded-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
+                      <Link key={t.id} href={`/themes/${t.slug}`} className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30">
                         <Badge tone="amber">{t.name}</Badge>
                       </Link>
                     ))}
@@ -114,7 +114,7 @@ export default async function MapPage() {
                     <Link
                       key={type}
                       href={`/sources?type=${type}`}
-                      className="inline-flex h-8 items-center gap-2 rounded-md border border-border bg-surface px-3 text-xs font-medium transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                      className="inline-flex h-8 items-center gap-2 rounded-md border border-border bg-surface px-3 text-xs font-medium transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                     >
                       {sourceTypeDetails[type as keyof typeof sourceTypeDetails]?.label ?? type}
                       <Badge tone="neutral">{count}</Badge>
@@ -127,7 +127,7 @@ export default async function MapPage() {
         )}
 
         <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
-          <div className="border border-border bg-surface p-5">
+          <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
             <div className="mb-4 flex items-center gap-2">
               <GitBranch className="h-4 w-4 text-primary" aria-hidden="true" />
               <h2 className="text-sm font-semibold">Explicit relationships</h2>
@@ -153,14 +153,14 @@ export default async function MapPage() {
 
           <aside className="grid content-start gap-4">
             {otherThemes.length > 0 && (
-              <section className="border border-border bg-surface p-4">
+              <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
                 <div className="mb-3 flex items-center gap-2">
                   <Library className="h-4 w-4 text-accent" aria-hidden="true" />
                   <h2 className="text-sm font-semibold">Themes</h2>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {otherThemes.map((theme) => (
-                    <Link key={theme.id} href={`/themes/${theme.slug}`} className="transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 rounded-md">
+                    <Link key={theme.id} href={`/themes/${theme.slug}`} className="transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded-md">
                       <Badge tone="teal">{theme.name}</Badge>
                     </Link>
                   ))}
@@ -168,7 +168,7 @@ export default async function MapPage() {
               </section>
             )}
 
-            <section className="border border-border bg-surface p-4">
+            <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
               <div className="mb-3 flex items-center gap-2">
                 <Layers className="h-4 w-4 text-primary" aria-hidden="true" />
                 <h2 className="text-sm font-semibold">Projects</h2>
@@ -179,7 +179,7 @@ export default async function MapPage() {
                     <Link
                       key={project.id}
                       href={`/projects/${project.slug}`}
-                      className="text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                      className="text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                     >
                       {project.name}
                     </Link>
@@ -190,7 +190,7 @@ export default async function MapPage() {
               </div>
             </section>
 
-            <section className="border border-border bg-surface p-4">
+            <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
               <div className="mb-3 flex items-center gap-2">
                 <MessageSquareText className="h-4 w-4 text-caution" aria-hidden="true" />
                 <h2 className="text-sm font-semibold">Question queue</h2>
@@ -201,7 +201,7 @@ export default async function MapPage() {
                     <Link
                       key={question.id}
                       href={`/questions/${question.id}`}
-                      className="text-sm leading-6 text-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                      className="text-sm leading-6 text-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                     >
                       {question.prompt}
                     </Link>
