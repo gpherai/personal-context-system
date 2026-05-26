@@ -515,9 +515,9 @@ This is not an MVP-only design, but implementation still needs order.
 5. [done] Add Cabinet views for themes, projects, and questions.
 6. [done] Add context mirror generation with markdown and JSON projections.
 7. [done] Add search and saved filters. Full-text search, structured filters, persisted saved filters, and Command Center saved-filter links exist.
-8. [in progress] Complete Command Center for context building and mirror inspection.
+8. [done] Complete Command Center for context building and mirror inspection.
 9. [todo] Add CLI adapter over context/query services.
-10. [todo] Add graph/map view once relationship data exists.
+10. [done] Add graph/map view once relationship data exists.
 11. [todo] Add MCP adapter when the core domain and context services are stable.
 
 ## Current State

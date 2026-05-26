@@ -2,6 +2,8 @@
 .claude/
 .codex/
 .gemini/
+.project/
+PROJECT.md.bak
 
 # Environment
 .env

@@ -178,7 +178,7 @@ export function slugifyName(value: string): string {
     .slice(0, 120);
 }
 
-export function parseNameList(value: FormDataEntryValue | null): string[] {
+export function parseNameList(value: string | null | undefined): string[] {
   if (typeof value !== "string") {
     return [];
   }
@@ -203,11 +203,11 @@ export function parseNameList(value: FormDataEntryValue | null): string[] {
     });
 }
 
-export function parseIdList(value: FormDataEntryValue | null): string[] {
+export function parseIdList(value: string | null | undefined): string[] {
   return parseNameList(value);
 }
 
-export function parseOptionalString(value: FormDataEntryValue | null): string | undefined {
+export function parseOptionalString(value: string | null | undefined): string | undefined {
   if (typeof value !== "string") {
     return undefined;
   }
@@ -216,7 +216,7 @@ export function parseOptionalString(value: FormDataEntryValue | null): string | 
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
-export function parseOptionalDate(value: FormDataEntryValue | null): Date | undefined {
+export function parseOptionalDate(value: string | null | undefined): Date | undefined {
   const text = parseOptionalString(value);
   if (!text) {
     return undefined;
@@ -226,7 +226,7 @@ export function parseOptionalDate(value: FormDataEntryValue | null): Date | unde
   return Number.isNaN(date.getTime()) ? undefined : date;
 }
 
-export function parseOptionalNumber(value: FormDataEntryValue | null): number | undefined {
+export function parseOptionalNumber(value: string | null | undefined): number | undefined {
   const text = parseOptionalString(value);
   if (!text) {
     return undefined;

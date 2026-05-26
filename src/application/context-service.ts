@@ -20,6 +20,11 @@ import {
 } from "@/domain/context";
 import type { ContextRepository } from "@/repositories/context-repository";
 
+function formStr(formData: FormData, key: string): string | null {
+  const value = formData.get(key);
+  return typeof value === "string" ? value : null;
+}
+
 export type CaptureEntryState = {
   status: "idle" | "error";
   message?: string;
@@ -41,40 +46,40 @@ export const initialMutationState: MutationState = {
 };
 
 export function parseCreateEntryFormData(formData: FormData) {
-  const body = parseOptionalString(formData.get("body")) ?? "";
+  const body = parseOptionalString(formStr(formData, "body")) ?? "";
   const raw = {
-    type: parseOptionalString(formData.get("type")) ?? "observation",
-    status: parseOptionalString(formData.get("status")) ?? "active",
-    title: parseOptionalString(formData.get("title")) ?? titleFromBody(body),
+    type: parseOptionalString(formStr(formData, "type")) ?? "observation",
+    status: parseOptionalString(formStr(formData, "status")) ?? "active",
+    title: parseOptionalString(formStr(formData, "title")) ?? titleFromBody(body),
     body,
-    summary: parseOptionalString(formData.get("summary")),
-    source: parseOptionalString(formData.get("source")),
-    confidence: parseOptionalNumber(formData.get("confidence")),
-    privacyLevel: parseOptionalString(formData.get("privacyLevel")) ?? "private",
-    occurredAt: parseOptionalDate(formData.get("occurredAt")),
+    summary: parseOptionalString(formStr(formData, "summary")),
+    source: parseOptionalString(formStr(formData, "source")),
+    confidence: parseOptionalNumber(formStr(formData, "confidence")),
+    privacyLevel: parseOptionalString(formStr(formData, "privacyLevel")) ?? "private",
+    occurredAt: parseOptionalDate(formStr(formData, "occurredAt")),
     metadata: {},
-    themeNames: parseNameList(formData.get("themes")),
-    projectNames: parseNameList(formData.get("projects"))
+    themeNames: parseNameList(formStr(formData, "themes")),
+    projectNames: parseNameList(formStr(formData, "projects"))
   };
 
   return createEntryCommandSchema.safeParse(raw);
 }
 
 export function parseUpdateEntryFormData(id: string, formData: FormData) {
-  const body = parseOptionalString(formData.get("body")) ?? "";
+  const body = parseOptionalString(formStr(formData, "body")) ?? "";
   const raw = {
     id,
-    type: parseOptionalString(formData.get("type")) ?? "observation",
-    status: parseOptionalString(formData.get("status")) ?? "active",
-    title: parseOptionalString(formData.get("title")) ?? titleFromBody(body),
+    type: parseOptionalString(formStr(formData, "type")) ?? "observation",
+    status: parseOptionalString(formStr(formData, "status")) ?? "active",
+    title: parseOptionalString(formStr(formData, "title")) ?? titleFromBody(body),
     body,
-    summary: parseOptionalString(formData.get("summary")),
-    source: parseOptionalString(formData.get("source")),
-    confidence: parseOptionalNumber(formData.get("confidence")),
-    privacyLevel: parseOptionalString(formData.get("privacyLevel")) ?? "private",
-    occurredAt: parseOptionalDate(formData.get("occurredAt")),
-    themeNames: parseNameList(formData.get("themes")),
-    projectNames: parseNameList(formData.get("projects"))
+    summary: parseOptionalString(formStr(formData, "summary")),
+    source: parseOptionalString(formStr(formData, "source")),
+    confidence: parseOptionalNumber(formStr(formData, "confidence")),
+    privacyLevel: parseOptionalString(formStr(formData, "privacyLevel")) ?? "private",
+    occurredAt: parseOptionalDate(formStr(formData, "occurredAt")),
+    themeNames: parseNameList(formStr(formData, "themes")),
+    projectNames: parseNameList(formStr(formData, "projects"))
   };
 
   return updateEntryCommandSchema.safeParse(raw);
@@ -83,8 +88,8 @@ export function parseUpdateEntryFormData(id: string, formData: FormData) {
 export function parseUpdateQuestionFormData(id: string, formData: FormData) {
   return updateQuestionCommandSchema.safeParse({
     id,
-    status: parseOptionalString(formData.get("status")) ?? "open",
-    summary: parseOptionalString(formData.get("summary"))
+    status: parseOptionalString(formStr(formData, "status")) ?? "open",
+    summary: parseOptionalString(formStr(formData, "summary"))
   });
 }
 
@@ -93,28 +98,28 @@ export function parsePromoteEntryToQuestion(id: string) {
 }
 
 export function parseLinkObjectsFormData(formData: FormData) {
-  const target = parseOptionalString(formData.get("target"));
+  const target = parseOptionalString(formStr(formData, "target"));
   const separatorIndex = target?.indexOf(":") ?? -1;
   const targetType = separatorIndex > 0 ? target?.slice(0, separatorIndex) : undefined;
   const targetId = separatorIndex > 0 ? target?.slice(separatorIndex + 1) : undefined;
 
   return linkObjectsCommandSchema.safeParse({
-    fromType: parseOptionalString(formData.get("fromType")),
-    fromId: parseOptionalString(formData.get("fromId")),
+    fromType: parseOptionalString(formStr(formData, "fromType")),
+    fromId: parseOptionalString(formStr(formData, "fromId")),
     toType: targetType,
     toId: targetId,
-    relationType: parseOptionalString(formData.get("relationType")) ?? "relates_to",
-    note: parseOptionalString(formData.get("note"))
+    relationType: parseOptionalString(formStr(formData, "relationType")) ?? "relates_to",
+    note: parseOptionalString(formStr(formData, "note"))
   });
 }
 
 export function parseCreateReferenceFormData(entryId: string, formData: FormData) {
   return createReferenceCommandSchema.safeParse({
     entryId,
-    kind: parseOptionalString(formData.get("kind")) ?? "url",
-    title: parseOptionalString(formData.get("title")),
-    url: parseOptionalString(formData.get("url")),
-    description: parseOptionalString(formData.get("description")),
+    kind: parseOptionalString(formStr(formData, "kind")) ?? "url",
+    title: parseOptionalString(formStr(formData, "title")),
+    url: parseOptionalString(formStr(formData, "url")),
+    description: parseOptionalString(formStr(formData, "description")),
     metadata: {}
   });
 }
@@ -122,43 +127,43 @@ export function parseCreateReferenceFormData(entryId: string, formData: FormData
 export function parseCreateAttachmentFormData(entryId: string, formData: FormData) {
   return createAttachmentCommandSchema.safeParse({
     entryId,
-    path: parseOptionalString(formData.get("path")),
-    mediaType: parseOptionalString(formData.get("mediaType")),
-    checksum: parseOptionalString(formData.get("checksum")),
-    sizeBytes: parseOptionalNumber(formData.get("sizeBytes")),
-    title: parseOptionalString(formData.get("title")),
-    description: parseOptionalString(formData.get("description")),
+    path: parseOptionalString(formStr(formData, "path")),
+    mediaType: parseOptionalString(formStr(formData, "mediaType")),
+    checksum: parseOptionalString(formStr(formData, "checksum")),
+    sizeBytes: parseOptionalNumber(formStr(formData, "sizeBytes")),
+    title: parseOptionalString(formStr(formData, "title")),
+    description: parseOptionalString(formStr(formData, "description")),
     metadata: {}
   });
 }
 
 export function parseCreateThreadFormData(formData: FormData) {
   return createThreadCommandSchema.safeParse({
-    title: parseOptionalString(formData.get("title")),
-    description: parseOptionalString(formData.get("description")),
-    status: parseOptionalString(formData.get("status")) ?? "active",
-    entryIds: parseIdList(formData.get("entryIds")),
+    title: parseOptionalString(formStr(formData, "title")),
+    description: parseOptionalString(formStr(formData, "description")),
+    status: parseOptionalString(formStr(formData, "status")) ?? "active",
+    entryIds: parseIdList(formStr(formData, "entryIds")),
     metadata: {}
   });
 }
 
 export function parseCreateSavedFilterFormData(formData: FormData) {
   const rawParams = {
-    search: parseOptionalString(formData.get("search")),
-    type: parseOptionalString(formData.get("type")),
-    status: parseOptionalString(formData.get("status")),
-    privacyLevel: parseOptionalString(formData.get("privacyLevel")),
-    themeSlug: parseOptionalString(formData.get("themeSlug")),
-    projectSlug: parseOptionalString(formData.get("projectSlug")),
-    questionId: parseOptionalString(formData.get("questionId")),
-    occurredFrom: parseOptionalString(formData.get("occurredFrom")),
-    occurredTo: parseOptionalString(formData.get("occurredTo"))
+    search: parseOptionalString(formStr(formData, "search")),
+    type: parseOptionalString(formStr(formData, "type")),
+    status: parseOptionalString(formStr(formData, "status")),
+    privacyLevel: parseOptionalString(formStr(formData, "privacyLevel")),
+    themeSlug: parseOptionalString(formStr(formData, "themeSlug")),
+    projectSlug: parseOptionalString(formStr(formData, "projectSlug")),
+    questionId: parseOptionalString(formStr(formData, "questionId")),
+    occurredFrom: parseOptionalString(formStr(formData, "occurredFrom")),
+    occurredTo: parseOptionalString(formStr(formData, "occurredTo"))
   };
   const params = Object.fromEntries(Object.entries(rawParams).filter(([, value]) => value !== undefined));
 
   return createSavedFilterCommandSchema.safeParse({
-    name: parseOptionalString(formData.get("name")),
-    description: parseOptionalString(formData.get("description")),
+    name: parseOptionalString(formStr(formData, "name")),
+    description: parseOptionalString(formStr(formData, "description")),
     params
   });
 }

@@ -8,10 +8,7 @@ describe("context domain validation", () => {
   });
 
   it("parses comma separated names", () => {
-    const form = new FormData();
-    form.set("themes", "AI, Architecture, , Daily use, ai");
-
-    expect(parseNameList(form.get("themes"))).toEqual(["AI", "Architecture", "Daily use"]);
+    expect(parseNameList("AI, Architecture, , Daily use, ai")).toEqual(["AI", "Architecture", "Daily use"]);
   });
 
   it("requires a title and body for captured entries", () => {
