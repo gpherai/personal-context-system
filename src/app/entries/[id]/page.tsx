@@ -5,7 +5,7 @@ import { isRecoverableReadError } from "@/application/errors";
 import { getEntryById, getRelationshipTargets } from "@/application/query-service";
 import { SetupNotice } from "@/components/setup-notice";
 import { Badge } from "@/components/ui/badge";
-import { formatDateTime, labelize } from "@/lib/format";
+import { formatDateTime, isValidId, labelize } from "@/lib/format";
 
 import { AttachmentForm, ReferenceForm, RelationshipForm, ThreadForm } from "./entry-related-forms";
 import { PromoteQuestionForm } from "./promote-question-form";
@@ -14,6 +14,8 @@ export const dynamic = "force-dynamic";
 
 export default async function EntryDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+
+  if (!isValidId(id)) notFound();
 
   try {
     const [entry, relationshipTargets] = await Promise.all([getEntryById(id), getRelationshipTargets()]);

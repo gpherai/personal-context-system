@@ -26,5 +26,6 @@ export async function createEntryAction(
   revalidatePath("/");
   revalidatePath("/ledger");
   revalidatePath("/cabinet");
+  revalidatePath("/map");
   redirect(`/entries/${result.entry.id}`);
 }

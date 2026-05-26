@@ -2,6 +2,8 @@ import "server-only";
 
 import { z } from "zod";
 
+import { rebuildContextMirror } from "@/infrastructure/files/context-mirror-writer";
+
 import {
   createAttachmentCommandSchema,
   createEntryCommandSchema,
@@ -396,4 +398,8 @@ export async function listEntries(repository: ContextRepository, params?: URLSea
   });
 
   return repository.listEntries(parsed);
+}
+
+export function rebuildMirror() {
+  return rebuildContextMirror();
 }

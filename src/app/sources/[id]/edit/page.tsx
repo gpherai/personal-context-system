@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { isRecoverableReadError } from "@/application/errors";
 import { getSourceById, listThemes } from "@/application/query-service";
 import { SetupNotice } from "@/components/setup-notice";
+import { isValidId } from "@/lib/format";
 import { SourceForm } from "@/components/source-form";
 
 import { updateSourceAction } from "../../actions";
@@ -11,6 +12,8 @@ export const dynamic = "force-dynamic";
 
 export default async function EditSourcePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+
+  if (!isValidId(id)) notFound();
 
   try {
     const [source, themes] = await Promise.all([getSourceById(id), listThemes()]);

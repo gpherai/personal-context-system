@@ -1,4 +1,5 @@
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
+import { getContextMirrorStatus as infraGetContextMirrorStatus } from "@/infrastructure/files/context-mirror-writer";
 import { listEntries, listSources } from "./context-service";
 
 export async function getDashboardOverview() {
@@ -67,4 +68,8 @@ export async function getSourcesByTheme(themeId: string) {
 
 export async function getSources(params?: URLSearchParams) {
   return listSources(createPrismaContextRepository(), params);
+}
+
+export function getContextMirrorStatus() {
+  return infraGetContextMirrorStatus();
 }

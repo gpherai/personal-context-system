@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { isRecoverableReadError } from "@/application/errors";
 import { getEntryById } from "@/application/query-service";
 import { SetupNotice } from "@/components/setup-notice";
+import { isValidId } from "@/lib/format";
 
 import { EditEntryForm } from "./edit-entry-form";
 
@@ -11,6 +12,8 @@ export const dynamic = "force-dynamic";
 
 export default async function EditEntryPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+
+  if (!isValidId(id)) notFound();
 
   try {
     const entry = await getEntryById(id);

@@ -5,7 +5,7 @@ import { isRecoverableReadError } from "@/application/errors";
 import { getSourceById } from "@/application/query-service";
 import { SetupNotice } from "@/components/setup-notice";
 import { Badge } from "@/components/ui/badge";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, isValidId } from "@/lib/format";
 import { sourceTypeDetails } from "@/domain/taxonomy";
 import type { SourceMetadata } from "@/domain/context";
 
@@ -108,6 +108,8 @@ function SourceMetadataSection({ metadata }: { metadata: SourceMetadata }) {
 
 export default async function SourceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+
+  if (!isValidId(id)) notFound();
 
   try {
     const source = await getSourceById(id);

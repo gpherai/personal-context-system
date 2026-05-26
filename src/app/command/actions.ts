@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { rebuildContextMirror } from "@/infrastructure/files/context-mirror-writer";
+import { rebuildMirror } from "@/application/context-service";
 
 export type RebuildMirrorState = {
   status: "idle" | "success" | "error";
@@ -15,16 +15,16 @@ export const initialRebuildMirrorState: RebuildMirrorState = {
 
 export async function rebuildMirrorAction(): Promise<RebuildMirrorState> {
   try {
-    const result = await rebuildContextMirror();
+    const result = await rebuildMirror();
     revalidatePath("/command");
     return {
       status: "success",
       message: `Generated ${result.fileCount} files in ${result.outputDir}.`
     };
-  } catch (error) {
+  } catch {
     return {
       status: "error",
-      message: error instanceof Error ? error.message : "Context mirror generation failed."
+      message: "Context mirror generation failed."
     };
   }
 }

@@ -2,8 +2,7 @@ import Link from "next/link";
 import { Bot, FileText, FolderTree, ShieldCheck, Terminal } from "lucide-react";
 
 import { isRecoverableReadError } from "@/application/errors";
-import { getSavedFilters } from "@/application/query-service";
-import { getContextMirrorStatus } from "@/infrastructure/files/context-mirror-writer";
+import { getContextMirrorStatus, getSavedFilters } from "@/application/query-service";
 import { formatDateTime } from "@/lib/format";
 import { savedFilterHref, systemSavedFilters } from "@/lib/saved-filter-url";
 

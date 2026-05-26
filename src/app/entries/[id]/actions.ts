@@ -113,7 +113,9 @@ export async function promoteEntryToQuestionAction(
   }
 
   revalidatePath("/");
+  revalidatePath("/ledger");
   revalidatePath("/cabinet");
+  revalidatePath("/map");
   revalidatePath(`/entries/${entryId}`);
   revalidatePath(`/questions/${result.question.id}`);
   redirect(`/questions/${result.question.id}`);

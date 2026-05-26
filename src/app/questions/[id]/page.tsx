@@ -6,7 +6,7 @@ import { getQuestionById, getRelationshipTargets } from "@/application/query-ser
 import { EntryList } from "@/components/entry-list";
 import { SetupNotice } from "@/components/setup-notice";
 import { Badge } from "@/components/ui/badge";
-import { formatDateTime, labelize } from "@/lib/format";
+import { formatDateTime, isValidId, labelize } from "@/lib/format";
 
 import { QuestionRelationshipForm, QuestionUpdateForm } from "./question-forms";
 
@@ -15,15 +15,18 @@ export const dynamic = "force-dynamic";
 export default async function QuestionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
+  if (!isValidId(id)) notFound();
+
   try {
     const [question, relationshipTargets] = await Promise.all([getQuestionById(id), getRelationshipTargets()]);
-    const targetLabelMap = new Map(
-      relationshipTargets.map((t) => [`${t.objectType}:${t.objectId}`, t.label])
-    );
 
     if (!question) {
       notFound();
     }
+
+    const targetLabelMap = new Map(
+      relationshipTargets.map((t) => [`${t.objectType}:${t.objectId}`, t.label])
+    );
 
     return (
       <div className="mx-auto grid max-w-5xl gap-5">

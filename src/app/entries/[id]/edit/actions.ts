@@ -33,6 +33,7 @@ export async function updateEntryAction(
   revalidatePath("/");
   revalidatePath("/ledger");
   revalidatePath("/cabinet");
+  revalidatePath("/map");
   revalidatePath(`/entries/${id}`);
   redirect(`/entries/${id}`);
 }
