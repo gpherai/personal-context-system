@@ -75,6 +75,13 @@ const entryInclude = {
     include: {
       attachment: true
     }
+  },
+  sources: {
+    include: {
+      source: {
+        select: { id: true, type: true, title: true }
+      }
+    }
   }
 } satisfies Prisma.EntryInclude;
 
@@ -253,6 +260,9 @@ function mapEntry(
     attachments: entry.attachments
       .map(({ attachment }) => mapAttachment(attachment))
       .sort((a, b) => (a.title ?? a.path).localeCompare(b.title ?? b.path)),
+    sources: entry.sources
+      .map(({ source }) => ({ id: source.id, type: source.type, title: source.title }))
+      .sort((a, b) => a.title.localeCompare(b.title)),
     outgoingRelationships: relationships.outgoing ?? [],
     incomingRelationships: relationships.incoming ?? []
   };
@@ -709,7 +719,7 @@ export class PrismaContextRepository implements ContextRepository {
   }
 
   async listRelationshipTargets(): Promise<RelationshipTarget[]> {
-    const [entries, themes, projects, questions, threads, references, attachments] = await Promise.all([
+    const [entries, themes, projects, questions, threads, references, attachments, sources] = await Promise.all([
       this.prisma.entry.findMany({
         orderBy: [{ capturedAt: "desc" }, { createdAt: "desc" }],
         select: {
@@ -770,6 +780,16 @@ export class PrismaContextRepository implements ContextRepository {
           title: true
         },
         take: 80
+      }),
+      this.prisma.source.findMany({
+        orderBy: [{ updatedAt: "desc" }],
+        select: {
+          id: true,
+          type: true,
+          title: true,
+          status: true
+        },
+        take: 80
       })
     ]);
 
@@ -815,6 +835,12 @@ export class PrismaContextRepository implements ContextRepository {
         objectId: attachment.id,
         label: attachment.title ?? attachment.path,
         detail: [attachment.mediaType, attachment.path].filter(Boolean).join(" / ")
+      })),
+      ...sources.map((source) => ({
+        objectType: "source" as const,
+        objectId: source.id,
+        label: source.title,
+        detail: `${source.type} / ${source.status}`
       }))
     ];
   }
@@ -1235,6 +1261,18 @@ export class PrismaContextRepository implements ContextRepository {
   async getSource(id: string): Promise<SourceRecord | null> {
     const source = await this.prisma.source.findUnique({ where: { id }, include: sourceInclude });
     return source ? mapSource(source) : null;
+  }
+
+  async linkEntryToSource(entryId: string, sourceId: string): Promise<void> {
+    await this.prisma.entrySource.upsert({
+      where: { entryId_sourceId: { entryId, sourceId } },
+      update: {},
+      create: { entryId, sourceId }
+    });
+  }
+
+  async unlinkEntryFromSource(entryId: string, sourceId: string): Promise<void> {
+    await this.prisma.entrySource.deleteMany({ where: { entryId, sourceId } });
   }
 
   async linkSourceToTheme(sourceId: string, themeId: string): Promise<void> {

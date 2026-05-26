@@ -132,6 +132,7 @@ export interface EntryRecord {
   threads: LinkedThread[];
   references: ReferenceRecord[];
   attachments: AttachmentRecord[];
+  sources: { id: string; type: SourceType; title: string }[];
   outgoingRelationships: RelationshipRecord[];
   incomingRelationships: RelationshipRecord[];
 }
@@ -263,6 +264,8 @@ export interface ContextRepository {
   deleteSource(id: string): Promise<void>;
   listSources(query?: Partial<ListSourcesQuery>): Promise<SourceSummary[]>;
   getSource(id: string): Promise<SourceRecord | null>;
+  linkEntryToSource(entryId: string, sourceId: string): Promise<void>;
+  unlinkEntryFromSource(entryId: string, sourceId: string): Promise<void>;
   linkSourceToTheme(sourceId: string, themeId: string): Promise<void>;
   unlinkSourceFromTheme(sourceId: string, themeId: string): Promise<void>;
   setThemeParent(themeId: string, parentThemeId: string | null): Promise<void>;
