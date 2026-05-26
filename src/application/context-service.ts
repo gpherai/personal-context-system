@@ -1,3 +1,5 @@
+import "server-only";
+
 import { z } from "zod";
 
 import {
@@ -7,6 +9,8 @@ import {
   createSavedFilterCommandSchema,
   createSourceCommandSchema,
   createThreadCommandSchema,
+  deleteSourceCommandSchema,
+  entryTypeSchema,
   linkObjectsCommandSchema,
   listEntriesQuerySchema,
   listSourcesQuerySchema,
@@ -15,38 +19,25 @@ import {
   parseOptionalDate,
   parseOptionalNumber,
   parseOptionalString,
+  privacyLevelSchema,
   promoteEntryToQuestionCommandSchema,
+  recordStatusSchema,
+  sourceTypeSchema,
   titleFromBody,
   updateEntryCommandSchema,
   updateQuestionCommandSchema,
   updateSourceCommandSchema
 } from "@/domain/context";
 import type { ContextRepository } from "@/repositories/context-repository";
+import type { MutationState } from "./action-states";
+
+export type { CaptureEntryState, MutationState } from "./action-states";
+export { initialCaptureEntryState, initialMutationState } from "./action-states";
 
 function formStr(formData: FormData, key: string): string | null {
   const value = formData.get(key);
   return typeof value === "string" ? value : null;
 }
-
-export type CaptureEntryState = {
-  status: "idle" | "error";
-  message?: string;
-  fieldErrors?: Record<string, string[]>;
-};
-
-export const initialCaptureEntryState: CaptureEntryState = {
-  status: "idle"
-};
-
-export type MutationState = {
-  status: "idle" | "success" | "error";
-  message?: string;
-  fieldErrors?: Record<string, string[]>;
-};
-
-export const initialMutationState: MutationState = {
-  status: "idle"
-};
 
 export function parseCreateEntryFormData(formData: FormData) {
   const body = parseOptionalString(formStr(formData, "body")) ?? "";
@@ -72,13 +63,13 @@ export function parseUpdateEntryFormData(id: string, formData: FormData) {
   const body = parseOptionalString(formStr(formData, "body")) ?? "";
   const raw = {
     id,
-    status: parseOptionalString(formStr(formData, "status")) ?? "active",
+    status: parseOptionalString(formStr(formData, "status")),
     title: parseOptionalString(formStr(formData, "title")) ?? titleFromBody(body),
     body,
     summary: parseOptionalString(formStr(formData, "summary")),
     source: parseOptionalString(formStr(formData, "source")),
     confidence: parseOptionalNumber(formStr(formData, "confidence")),
-    privacyLevel: parseOptionalString(formStr(formData, "privacyLevel")) ?? "private",
+    privacyLevel: parseOptionalString(formStr(formData, "privacyLevel")),
     occurredAt: parseOptionalDate(formStr(formData, "occurredAt")),
     themeNames: parseNameList(formStr(formData, "themes")),
     projectNames: parseNameList(formStr(formData, "projects"))
@@ -90,7 +81,7 @@ export function parseUpdateEntryFormData(id: string, formData: FormData) {
 export function parseUpdateQuestionFormData(id: string, formData: FormData) {
   return updateQuestionCommandSchema.safeParse({
     id,
-    status: parseOptionalString(formStr(formData, "status")) ?? "open",
+    status: parseOptionalString(formStr(formData, "status")),
     summary: parseOptionalString(formStr(formData, "summary"))
   });
 }
@@ -328,7 +319,7 @@ export function parseUpdateSourceFormData(id: string, formData: FormData) {
     id,
     title: parseOptionalString(formStr(formData, "title")),
     description: parseOptionalString(formStr(formData, "description")),
-    status: parseOptionalString(formStr(formData, "status")) ?? "active",
+    status: parseOptionalString(formStr(formData, "status")),
     metadata: buildSourceMetadata(type, formData),
     themeIds: parseIdList(formStr(formData, "themeIds"))
   });
@@ -357,12 +348,23 @@ export async function updateSourceFromForm(id: string, formData: FormData, repos
 }
 
 export async function deleteSource(id: string, repository: ContextRepository) {
-  await repository.deleteSource(id);
+  const parsed = deleteSourceCommandSchema.safeParse({ id });
+
+  if (!parsed.success) {
+    return { ok: false as const, state: errorState("Invalid source id.", parsed.error) };
+  }
+
+  await repository.deleteSource(parsed.data.id);
   return { ok: true as const };
 }
 
+const laxListSourcesQuerySchema = listSourcesQuerySchema.extend({
+  type: sourceTypeSchema.optional().catch(undefined),
+  status: recordStatusSchema.optional().catch(undefined)
+});
+
 export async function listSources(repository: ContextRepository, params?: URLSearchParams) {
-  const parsed = listSourcesQuerySchema.safeParse({
+  const parsed = laxListSourcesQuerySchema.parse({
     search: parseOptionalString(params?.get("search") ?? null),
     type: parseOptionalString(params?.get("type") ?? null),
     themeId: parseOptionalString(params?.get("themeId") ?? null),
@@ -370,11 +372,17 @@ export async function listSources(repository: ContextRepository, params?: URLSea
     limit: 100
   });
 
-  return repository.listSources(parsed.success ? parsed.data : { limit: 100 });
+  return repository.listSources(parsed);
 }
 
+const laxListEntriesQuerySchema = listEntriesQuerySchema.extend({
+  type: entryTypeSchema.optional().catch(undefined),
+  status: recordStatusSchema.optional().catch(undefined),
+  privacyLevel: privacyLevelSchema.optional().catch(undefined)
+});
+
 export async function listEntries(repository: ContextRepository, params?: URLSearchParams) {
-  const parsed = listEntriesQuerySchema.safeParse({
+  const parsed = laxListEntriesQuerySchema.parse({
     search: parseOptionalString(params?.get("search") ?? null),
     type: parseOptionalString(params?.get("type") ?? null),
     status: parseOptionalString(params?.get("status") ?? null),
@@ -387,5 +395,5 @@ export async function listEntries(repository: ContextRepository, params?: URLSea
     limit: 100
   });
 
-  return repository.listEntries(parsed.success ? parsed.data : { limit: 100 });
+  return repository.listEntries(parsed);
 }

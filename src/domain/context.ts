@@ -108,6 +108,8 @@ export const createSavedFilterCommandSchema = z.object({
 
 export const updateEntryCommandSchema = createEntryCommandSchema.omit({ metadata: true, type: true }).extend({
   id: z.string().min(1),
+  status: entryStatusSchema,
+  privacyLevel: privacyLevelSchema,
   metadata: metadataSchema.optional()
 });
 
@@ -272,6 +274,11 @@ export const createSourceCommandSchema = sourceCommandBaseSchema
 // metadata.type must match the stored source type (immutable after creation).
 // Schema cannot enforce this without DB access — infra layer must validate.
 export const updateSourceCommandSchema = sourceCommandBaseSchema.extend({
+  id: z.string().min(1),
+  status: recordStatusSchema
+});
+
+export const deleteSourceCommandSchema = z.object({
   id: z.string().min(1)
 });
 

@@ -8,11 +8,12 @@ import { referenceKinds, relationTypes } from "@/domain/context";
 import { labelize } from "@/lib/format";
 import type { RelationshipTarget } from "@/repositories/context-repository";
 
+import { initialMutationState } from "@/application/action-states";
+
 import {
   addAttachmentAction,
   addReferenceAction,
   createThreadWithEntryAction,
-  initialMutationState,
   linkFromEntryAction
 } from "./actions";
 

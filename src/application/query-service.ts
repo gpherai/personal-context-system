@@ -1,4 +1,5 @@
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
+import { listEntries, listSources } from "./context-service";
 
 export async function getDashboardOverview() {
   return createPrismaContextRepository().getDashboardOverview();
@@ -45,7 +46,6 @@ export async function getGraphSnapshot() {
 }
 
 export async function getLedgerEntries(params?: URLSearchParams) {
-  const { listEntries } = await import("./context-service");
   return listEntries(createPrismaContextRepository(), params);
 }
 
@@ -66,6 +66,5 @@ export async function getSourcesByTheme(themeId: string) {
 }
 
 export async function getSources(params?: URLSearchParams) {
-  const { listSources } = await import("./context-service");
   return listSources(createPrismaContextRepository(), params);
 }

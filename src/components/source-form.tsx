@@ -2,12 +2,12 @@
 
 import { useActionState, useState } from "react";
 
-import { initialMutationState } from "@/application/context-service";
+import { initialMutationState } from "@/application/action-states";
 import { TaxonomyPicker } from "@/components/taxonomy-picker";
 import { Button } from "@/components/ui/button";
 import { sourceTypes } from "@/domain/context";
 import { sourceTypeDetails } from "@/domain/taxonomy";
-import type { MutationState } from "@/application/context-service";
+import type { MutationState } from "@/application/action-states";
 import type { SourceRecord } from "@/repositories/context-repository";
 
 interface Theme {

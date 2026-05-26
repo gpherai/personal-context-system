@@ -4,7 +4,9 @@ import { useActionState } from "react";
 
 import { Button } from "@/components/ui/button";
 
-import { initialMutationState, promoteEntryToQuestionAction } from "./actions";
+import { initialMutationState } from "@/application/action-states";
+
+import { promoteEntryToQuestionAction } from "./actions";
 
 export function PromoteQuestionForm({ entryId }: { entryId: string }) {
   const actionWithEntry = promoteEntryToQuestionAction.bind(null, entryId);

@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { entryStatuses, privacyLevels } from "@/domain/context";
 import type { EntryRecord } from "@/repositories/context-repository";
 
-import { initialMutationState, updateEntryAction } from "./actions";
+import { initialMutationState } from "@/application/action-states";
+
+import { updateEntryAction } from "./actions";
 
 function dateInputValue(value?: Date): string {
   return value ? value.toISOString().slice(0, 10) : "";

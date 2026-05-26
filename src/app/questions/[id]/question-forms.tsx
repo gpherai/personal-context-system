@@ -9,7 +9,9 @@ import { relationTypes } from "@/domain/context";
 import { labelize } from "@/lib/format";
 import type { QuestionContext, RelationshipTarget } from "@/repositories/context-repository";
 
-import { initialMutationState, linkFromQuestionAction, updateQuestionAction } from "./actions";
+import { initialMutationState } from "@/application/action-states";
+
+import { linkFromQuestionAction, updateQuestionAction } from "./actions";
 
 function Message({ state }: { state: typeof initialMutationState }) {
   if (!state.message) {

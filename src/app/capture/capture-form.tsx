@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 
-import { initialCaptureEntryState } from "@/application/context-service";
+import { initialCaptureEntryState } from "@/application/action-states";
 import { EntryTypeField } from "@/components/entry-type-field";
 import { entryStatuses, privacyLevels } from "@/domain/context";
 import { Button } from "@/components/ui/button";

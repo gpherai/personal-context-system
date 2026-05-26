@@ -1,3 +1,5 @@
+import { Prisma } from "@/generated/prisma/client";
+
 export const DATABASE_UNAVAILABLE_MESSAGE = "The local database is not available. Start PostgreSQL and run migrations.";
 
 export function databaseMutationErrorState(): { status: "error"; message: string } {
@@ -16,14 +18,13 @@ export function isRecoverableReadError(error: unknown): boolean {
     return true;
   }
 
-  if (!(error instanceof Error)) {
-    return false;
+  if (error instanceof Prisma.PrismaClientInitializationError) {
+    return true;
   }
 
-  return (
-    error.message.includes("DATABASE_URL") ||
-    error.message.includes("ECONNREFUSED") ||
-    error.message.includes("Can't reach database") ||
-    error.message.includes("PrismaClientInitializationError")
-  );
+  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code.startsWith("P1")) {
+    return true;
+  }
+
+  return false;
 }

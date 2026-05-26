@@ -51,8 +51,19 @@ export async function updateSourceAction(
   redirect(`/sources/${id}`);
 }
 
-export async function deleteSourceAction(id: string): Promise<void> {
-  await deleteSource(id, createPrismaContextRepository());
+export async function deleteSourceAction(id: string): Promise<MutationState> {
+  const result = await deleteSource(id, createPrismaContextRepository()).catch((error: unknown) => {
+    if (isRecoverableReadError(error)) {
+      return { ok: false as const, state: databaseMutationErrorState() };
+    }
+
+    throw error;
+  });
+
+  if (!result.ok) {
+    return result.state;
+  }
+
   revalidatePath("/sources");
   revalidatePath("/cabinet");
   redirect("/sources");

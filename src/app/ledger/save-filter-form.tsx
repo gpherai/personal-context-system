@@ -5,7 +5,9 @@ import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import type { SavedFilterParams } from "@/domain/context";
 
-import { createSavedFilterAction, initialMutationState } from "./actions";
+import { initialMutationState } from "@/application/action-states";
+
+import { createSavedFilterAction } from "./actions";
 
 const filterParamKeys: (keyof SavedFilterParams)[] = [
   "search",
