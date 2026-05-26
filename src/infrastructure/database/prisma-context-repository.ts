@@ -1166,6 +1166,12 @@ export class PrismaContextRepository implements ContextRepository {
   }
 
   async updateSource(command: UpdateSourceCommand): Promise<SourceRecord> {
+    const existing = await this.prisma.source.findUnique({ where: { id: command.id }, select: { type: true } });
+    if (!existing) throw new Error(`Source "${command.id}" not found.`);
+    if (command.metadata.type !== existing.type) {
+      throw new Error(`Cannot change source type from "${existing.type}" to "${command.metadata.type}".`);
+    }
+
     const searchText = metadataToSearchText(command.metadata);
     const source = await this.prisma.$transaction(async (tx) => {
       await tx.source.update({
@@ -1218,7 +1224,7 @@ export class PrismaContextRepository implements ContextRepository {
 
     const sources = await this.prisma.source.findMany({
       where,
-      include: { themes: { include: { theme: true } }, entries: { include: { entry: { select: { id: true, title: true } } } } },
+      include: { themes: { include: { theme: true } } },
       orderBy: [{ title: "asc" }],
       take: query?.limit ?? 50
     });
@@ -1276,6 +1282,14 @@ export class PrismaContextRepository implements ContextRepository {
       where: { id: themeId },
       data: { parentThemeId }
     });
+  }
+
+  async listThemes(): Promise<NamedRecord[]> {
+    const themes = await this.prisma.theme.findMany({
+      include: { _count: { select: { entries: true } } },
+      orderBy: { name: "asc" }
+    });
+    return themes.map(mapNamed);
   }
 
   async getContextMirrorSnapshot(): Promise<ContextMirrorSnapshot> {

@@ -1,5 +1,4 @@
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
-import { getPrismaClient } from "@/infrastructure/database/client";
 
 export async function getDashboardOverview() {
   return createPrismaContextRepository().getDashboardOverview();
@@ -55,10 +54,7 @@ export async function getContextMirrorSnapshot() {
 }
 
 export async function listThemes() {
-  return getPrismaClient().theme.findMany({
-    orderBy: [{ name: "asc" }],
-    select: { id: true, slug: true, name: true, metadata: true, parentThemeId: true }
-  });
+  return createPrismaContextRepository().listThemes();
 }
 
 export async function getSourceById(id: string) {

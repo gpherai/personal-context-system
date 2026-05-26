@@ -266,4 +266,5 @@ export interface ContextRepository {
   linkSourceToTheme(sourceId: string, themeId: string): Promise<void>;
   unlinkSourceFromTheme(sourceId: string, themeId: string): Promise<void>;
   setThemeParent(themeId: string, parentThemeId: string | null): Promise<void>;
+  listThemes(): Promise<NamedRecord[]>;
 }
