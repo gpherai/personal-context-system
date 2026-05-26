@@ -3,10 +3,12 @@ import type {
   CreateEntryCommand,
   CreateReferenceCommand,
   CreateSavedFilterCommand,
+  CreateSourceCommand,
   CreateThreadCommand,
   EntryStatus,
   EntryType,
   ListEntriesQuery,
+  ListSourcesQuery,
   LinkObjectsCommand,
   PrivacyLevel,
   PromoteEntryToQuestionCommand,
@@ -16,8 +18,11 @@ import type {
   RelationType,
   ObjectType,
   SavedFilterParams,
+  SourceMetadata,
+  SourceType,
   UpdateEntryCommand,
-  UpdateQuestionCommand
+  UpdateQuestionCommand,
+  UpdateSourceCommand
 } from "@/domain/context";
 
 export interface LinkedName {
@@ -58,6 +63,22 @@ export interface AttachmentRecord {
   description?: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface SourceSummary {
+  id: string;
+  type: SourceType;
+  title: string;
+  description?: string;
+  status: RecordStatus;
+  metadata: SourceMetadata;
+  themes: LinkedName[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface SourceRecord extends SourceSummary {
+  entries: { id: string; title: string }[];
 }
 
 export interface RelationshipRecord {
@@ -131,6 +152,7 @@ export interface NamedRecord {
   name: string;
   description?: string;
   count?: number;
+  metadata?: Record<string, unknown>;
 }
 
 export interface DashboardOverview {
@@ -156,6 +178,11 @@ export interface EntryStatusSummary {
   count: number;
 }
 
+export interface SourceTypeSummary {
+  type: SourceType;
+  count: number;
+}
+
 export interface CabinetOverview {
   entryTypes: EntryTypeSummary[];
   entryStatuses: EntryStatusSummary[];
@@ -164,6 +191,8 @@ export interface CabinetOverview {
   projects: NamedRecord[];
   questions: QuestionRecord[];
   threads: Omit<ThreadRecord, "entries">[];
+  sourceTypes: SourceTypeSummary[];
+  sourceCount: number;
 }
 
 export interface ContextMirrorSnapshot {
@@ -172,6 +201,7 @@ export interface ContextMirrorSnapshot {
   themes: NamedRecord[];
   projects: NamedRecord[];
   threads: ThreadRecord[];
+  sources: SourceSummary[];
 }
 
 export interface NamedRecordContext extends NamedRecord {
@@ -202,6 +232,7 @@ export interface GraphSnapshot {
   questions: QuestionRecord[];
   threads: Omit<ThreadRecord, "entries">[];
   relationships: RelationshipRecord[];
+  sources: SourceSummary[];
 }
 
 export interface ContextRepository {
@@ -227,4 +258,12 @@ export interface ContextRepository {
   getDashboardOverview(): Promise<DashboardOverview>;
   getCabinetOverview(): Promise<CabinetOverview>;
   getContextMirrorSnapshot(): Promise<ContextMirrorSnapshot>;
+  createSource(command: CreateSourceCommand): Promise<SourceRecord>;
+  updateSource(command: UpdateSourceCommand): Promise<SourceRecord>;
+  deleteSource(id: string): Promise<void>;
+  listSources(query?: Partial<ListSourcesQuery>): Promise<SourceSummary[]>;
+  getSource(id: string): Promise<SourceRecord | null>;
+  linkSourceToTheme(sourceId: string, themeId: string): Promise<void>;
+  unlinkSourceFromTheme(sourceId: string, themeId: string): Promise<void>;
+  setThemeParent(themeId: string, parentThemeId: string | null): Promise<void>;
 }

@@ -19,7 +19,8 @@ export const entryStatuses = ["active", "archived", "draft"] as const;
 export const privacyLevels = ["private", "sensitive", "shareable"] as const;
 export const recordStatuses = ["active", "archived"] as const;
 export const questionStatuses = ["open", "active", "parked", "answered", "reframed", "abandoned"] as const;
-export const objectTypes = ["entry", "theme", "project", "question", "thread", "reference", "attachment"] as const;
+export const objectTypes = ["entry", "theme", "project", "question", "thread", "reference", "attachment", "source"] as const;
+export const sourceTypes = ["video", "book", "post", "image", "sadhana", "upadesha", "stotra", "deity_concept"] as const;
 export const referenceKinds = ["url", "book", "article", "film", "game", "repository", "external_record", "other"] as const;
 export const relationTypes = [
   "relates_to",
@@ -41,6 +42,7 @@ export type PrivacyLevel = (typeof privacyLevels)[number];
 export type RecordStatus = (typeof recordStatuses)[number];
 export type QuestionStatus = (typeof questionStatuses)[number];
 export type ObjectType = (typeof objectTypes)[number];
+export type SourceType = (typeof sourceTypes)[number];
 export type ReferenceKind = (typeof referenceKinds)[number];
 export type RelationType = (typeof relationTypes)[number];
 
@@ -50,6 +52,7 @@ export const privacyLevelSchema = z.enum(privacyLevels);
 export const recordStatusSchema = z.enum(recordStatuses);
 export const questionStatusSchema = z.enum(questionStatuses);
 export const objectTypeSchema = z.enum(objectTypes);
+export const sourceTypeSchema = z.enum(sourceTypes);
 export const referenceKindSchema = z.enum(referenceKinds);
 export const relationTypeSchema = z.enum(relationTypes);
 
@@ -147,6 +150,141 @@ export const createAttachmentCommandSchema = z.object({
   metadata: metadataSchema.default({})
 });
 
+const videoMetadataSchema = z.object({
+  type: z.literal("video"),
+  url: z.string().trim().url().optional(),
+  duration: z.number().int().min(0).optional(),
+  channel: z.string().trim().max(240).optional(),
+  language: z.string().trim().max(40).optional()
+});
+
+const bookMetadataSchema = z.object({
+  type: z.literal("book"),
+  authors: z.array(z.string().trim().min(1).max(240)).default([]),
+  isbn: z.string().trim().max(20).optional(),
+  year: z.number().int().min(0).max(2200).optional(),
+  publisher: z.string().trim().max(240).optional(),
+  language: z.string().trim().max(40).optional()
+});
+
+const postMetadataSchema = z.object({
+  type: z.literal("post"),
+  url: z.string().trim().url().optional(),
+  author: z.string().trim().max(240).optional(),
+  publishedAt: z.string().trim().optional()
+});
+
+const imageMetadataSchema = z.object({
+  type: z.literal("image"),
+  url: z.string().trim().url().optional(),
+  alt: z.string().trim().max(500).optional(),
+  photographer: z.string().trim().max(240).optional()
+});
+
+const sadhanaMetadataSchema = z.object({
+  type: z.literal("sadhana"),
+  tradition: z.string().trim().max(240).optional(),
+  deity: z.string().trim().max(240).optional(),
+  language: z.string().trim().max(40).optional(),
+  format: z.enum(["text", "audio", "video"]).optional()
+});
+
+const upadeshaMetadataSchema = z.object({
+  type: z.literal("upadesha"),
+  teacher: z.string().trim().max(240).optional(),
+  tradition: z.string().trim().max(240).optional(),
+  language: z.string().trim().max(40).optional(),
+  format: z.enum(["text", "audio", "video"]).optional()
+});
+
+const stotraMetadataSchema = z.object({
+  type: z.literal("stotra"),
+  deity: z.string().trim().max(240).optional(),
+  tradition: z.string().trim().max(240).optional(),
+  language: z.string().trim().max(40).optional(),
+  script: z.string().trim().max(80).optional()
+});
+
+const deityConceptMetadataSchema = z.object({
+  type: z.literal("deity_concept"),
+  tradition: z.string().trim().max(240).optional(),
+  language: z.string().trim().max(40).optional(),
+  aliases: z.array(z.string().trim().min(1).max(240)).default([])
+});
+
+export const sourceMetadataSchema = z.discriminatedUnion("type", [
+  videoMetadataSchema,
+  bookMetadataSchema,
+  postMetadataSchema,
+  imageMetadataSchema,
+  sadhanaMetadataSchema,
+  upadeshaMetadataSchema,
+  stotraMetadataSchema,
+  deityConceptMetadataSchema
+]);
+
+export type SourceMetadata = z.infer<typeof sourceMetadataSchema>;
+
+export const createSourceCommandSchema = z.object({
+  type: sourceTypeSchema,
+  title: z.string().trim().min(1, "Title is required").max(320),
+  description: z.string().trim().max(4000).optional(),
+  status: recordStatusSchema.default("active"),
+  metadata: sourceMetadataSchema,
+  themeIds: z.array(z.string().trim().min(1)).default([])
+});
+
+export const updateSourceCommandSchema = createSourceCommandSchema.omit({ type: true }).extend({
+  id: z.string().min(1)
+});
+
+export const listSourcesQuerySchema = z.object({
+  search: z.string().trim().optional(),
+  type: sourceTypeSchema.optional(),
+  themeId: z.string().trim().optional(),
+  status: recordStatusSchema.optional(),
+  limit: z.number().int().min(1).max(200).default(50)
+});
+
+export function metadataToSearchText(metadata: SourceMetadata): string {
+  const parts: string[] = [];
+
+  const push = (...values: (string | undefined)[]) => {
+    for (const v of values) {
+      if (v) parts.push(v);
+    }
+  };
+
+  switch (metadata.type) {
+    case "video":
+      push(metadata.channel, metadata.language);
+      break;
+    case "book":
+      push(...metadata.authors, metadata.publisher, metadata.language, metadata.isbn);
+      break;
+    case "post":
+      push(metadata.author, metadata.publishedAt);
+      break;
+    case "image":
+      push(metadata.alt, metadata.photographer);
+      break;
+    case "sadhana":
+      push(metadata.tradition, metadata.deity, metadata.language, metadata.format);
+      break;
+    case "upadesha":
+      push(metadata.teacher, metadata.tradition, metadata.language, metadata.format);
+      break;
+    case "stotra":
+      push(metadata.deity, metadata.tradition, metadata.language, metadata.script);
+      break;
+    case "deity_concept":
+      push(metadata.tradition, metadata.language, ...metadata.aliases);
+      break;
+  }
+
+  return parts.join(" ");
+}
+
 export const createThreadCommandSchema = z.object({
   title: z.string().trim().min(1, "Title is required").max(180),
   description: z.string().trim().max(4000).optional(),
@@ -166,6 +304,9 @@ export type LinkObjectsCommand = z.infer<typeof linkObjectsCommandSchema>;
 export type CreateReferenceCommand = z.infer<typeof createReferenceCommandSchema>;
 export type CreateAttachmentCommand = z.infer<typeof createAttachmentCommandSchema>;
 export type CreateThreadCommand = z.infer<typeof createThreadCommandSchema>;
+export type CreateSourceCommand = z.infer<typeof createSourceCommandSchema>;
+export type UpdateSourceCommand = z.infer<typeof updateSourceCommandSchema>;
+export type ListSourcesQuery = z.infer<typeof listSourcesQuerySchema>;
 
 export function slugifyName(value: string): string {
   return value

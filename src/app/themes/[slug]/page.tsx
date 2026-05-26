@@ -2,12 +2,27 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { isRecoverableReadError } from "@/application/errors";
-import { getThemeBySlug } from "@/application/query-service";
+import { getSourcesByTheme, getThemeBySlug } from "@/application/query-service";
 import { EntryList } from "@/components/entry-list";
 import { SetupNotice } from "@/components/setup-notice";
 import { Badge } from "@/components/ui/badge";
+import { sourceTypeDetails } from "@/domain/taxonomy";
 
 export const dynamic = "force-dynamic";
+
+const categoryLabels: Record<string, string> = {
+  deity: "Godheid",
+  tradition: "Traditie",
+  topic: "Onderwerp",
+  tag: "Tag"
+};
+
+const categoryTones: Record<string, "blue" | "teal" | "amber" | "neutral"> = {
+  deity: "blue",
+  tradition: "teal",
+  topic: "amber",
+  tag: "neutral"
+};
 
 export default async function ThemePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -19,6 +34,11 @@ export default async function ThemePage({ params }: { params: Promise<{ slug: st
       notFound();
     }
 
+    const category = typeof theme.metadata?.category === "string" ? theme.metadata.category : null;
+    const aliases = Array.isArray(theme.metadata?.aliases) ? (theme.metadata.aliases as string[]) : [];
+
+    const sources = await getSourcesByTheme(theme.id);
+
     return (
       <div className="mx-auto grid max-w-5xl gap-5">
         <header className="border-b border-border pb-5">
@@ -28,13 +48,54 @@ export default async function ThemePage({ params }: { params: Promise<{ slug: st
           >
             ← Cabinet
           </Link>
-          <div className="mt-3">
-            <Badge tone="teal">Theme</Badge>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {category ? (
+              <Badge tone={categoryTones[category] ?? "neutral"}>
+                {categoryLabels[category] ?? category}
+              </Badge>
+            ) : (
+              <Badge tone="teal">Theme</Badge>
+            )}
           </div>
           <h1 className="mt-3 text-3xl font-semibold">{theme.name}</h1>
-          {theme.description && <p className="mt-2 text-sm leading-6 text-muted-foreground">{theme.description}</p>}
+          {theme.description && (
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{theme.description}</p>
+          )}
+          {aliases.length > 0 && (
+            <p className="mt-2 text-sm text-muted-foreground">
+              <span className="font-medium">Ook bekend als:</span> {aliases.join(", ")}
+            </p>
+          )}
         </header>
-        <EntryList entries={theme.entries} />
+
+        {sources.length > 0 && (
+          <section className="grid gap-3">
+            <h2 className="text-sm font-semibold">Bronnen</h2>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {sources.map((source) => (
+                <Link
+                  key={source.id}
+                  href={`/sources/${source.id}`}
+                  className="flex items-center justify-between gap-3 rounded-md border border-border bg-surface px-3 py-2.5 text-sm transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 cursor-pointer"
+                >
+                  <span className="line-clamp-1">{source.title}</span>
+                  <Badge tone="neutral">{sourceTypeDetails[source.type].label}</Badge>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {theme.entries.length > 0 && (
+          <section className="grid gap-3">
+            <h2 className="text-sm font-semibold">Entries</h2>
+            <EntryList entries={theme.entries} />
+          </section>
+        )}
+
+        {theme.entries.length === 0 && sources.length === 0 && (
+          <p className="text-sm text-muted-foreground">Geen entries of bronnen gekoppeld aan dit thema.</p>
+        )}
       </div>
     );
   } catch (error) {

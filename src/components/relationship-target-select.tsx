@@ -11,7 +11,8 @@ const targetGroupLabels: Record<RelationshipTargetType, string> = {
   question: "Questions",
   thread: "Threads",
   reference: "References",
-  attachment: "Attachments"
+  attachment: "Attachments",
+  source: "Sources"
 };
 
 const targetOrder: RelationshipTargetType[] = [
@@ -20,6 +21,7 @@ const targetOrder: RelationshipTargetType[] = [
   "project",
   "theme",
   "thread",
+  "source",
   "reference",
   "attachment"
 ];

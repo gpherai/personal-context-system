@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Archive, BookOpen, Command, GitBranch, Home, ListTree, PenLine, Settings } from "lucide-react";
+import { Archive, BookMarked, BookOpen, Command, GitBranch, Home, ListTree, PenLine, Settings } from "lucide-react";
 
 import { cn } from "@/lib/cn";
 
@@ -11,6 +11,7 @@ const navItems = [
   { href: "/capture", label: "Capture", icon: PenLine },
   { href: "/ledger", label: "Ledger", icon: BookOpen },
   { href: "/cabinet", label: "Cabinet", icon: Archive },
+  { href: "/sources", label: "Bronnen", icon: BookMarked },
   { href: "/threads", label: "Threads", icon: ListTree },
   { href: "/map", label: "Map", icon: GitBranch },
   { href: "/command", label: "Command", icon: Command },

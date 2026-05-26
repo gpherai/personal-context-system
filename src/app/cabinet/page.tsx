@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Archive, BookOpen, CircleHelp, Layers, Library, Rows3 } from "lucide-react";
+import { Archive, BookMarked, BookOpen, CircleHelp, Layers, Library, Rows3 } from "lucide-react";
 
 import { isRecoverableReadError } from "@/application/errors";
 import { getCabinetOverview } from "@/application/query-service";
@@ -7,7 +7,7 @@ import { EntryList } from "@/components/entry-list";
 import { EmptyState } from "@/components/empty-state";
 import { SetupNotice } from "@/components/setup-notice";
 import { Badge } from "@/components/ui/badge";
-import { entryTypeDetails } from "@/domain/taxonomy";
+import { entryTypeDetails, sourceTypeDetails } from "@/domain/taxonomy";
 import { labelize } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -165,6 +165,37 @@ export default async function CabinetPage() {
               )}
             </div>
           </div>
+        </section>
+
+        <section className="border border-border bg-surface p-4">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <BookMarked className="h-4 w-4 text-primary" aria-hidden="true" />
+              <h2 className="text-sm font-semibold">Bronnen</h2>
+            </div>
+            <Link
+              href="/sources"
+              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {cabinet.sourceCount} totaal →
+            </Link>
+          </div>
+          {cabinet.sourceCount > 0 ? (
+            <div className="grid gap-1 sm:grid-cols-2 lg:grid-cols-4">
+              {cabinet.sourceTypes
+                .filter((s) => s.count > 0)
+                .map((s) => (
+                  <CountLink
+                    key={s.type}
+                    href={`/sources?type=${s.type}`}
+                    label={sourceTypeDetails[s.type].label}
+                    count={s.count}
+                  />
+                ))}
+            </div>
+          ) : (
+            <EmptyState title="Geen bronnen" body="Bronnen verschijnen hier zodra ze worden aangemaakt." />
+          )}
         </section>
 
         <section className="grid gap-3">

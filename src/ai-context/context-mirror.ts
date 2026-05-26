@@ -4,6 +4,7 @@ import type {
   EntryRecord,
   NamedRecord,
   QuestionRecord,
+  SourceSummary,
   ThreadRecord
 } from "@/repositories/context-repository";
 
@@ -225,6 +226,33 @@ function entryJson(entry: EntryRecord): string {
   );
 }
 
+function sourceList(sources: SourceSummary[]): string {
+  if (!sources.length) return "- None";
+  return sources
+    .map((s) => `- [${s.type}] ${s.title} (${s.id})${s.themes.length ? " — " + s.themes.map((t) => t.name).join(", ") : ""}`)
+    .join("\n");
+}
+
+function sourceMarkdown(source: SourceSummary, generatedAtIso: string): string {
+  const metaEntries = Object.entries(source.metadata)
+    .filter(([k]) => k !== "type")
+    .map(([k, v]) => `- ${k}: ${Array.isArray(v) ? (v as string[]).join(", ") : String(v ?? "")}`);
+
+  return [
+    `# ${source.title}`,
+    "",
+    `Generated: ${generatedAtIso}`,
+    "",
+    `- id: ${source.id}`,
+    `- type: ${source.type}`,
+    `- status: ${source.status}`,
+    `- themes: ${source.themes.map((t) => t.name).join(", ") || "none"}`,
+    "",
+    ...(metaEntries.length ? ["## Metadata", "", ...metaEntries, ""] : []),
+    ...(source.description ? ["## Beschrijving", "", source.description, ""] : [])
+  ].join("\n");
+}
+
 export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt = new Date()): ContextMirrorBuild {
   const generatedAtIso = generatedAt.toISOString();
   const files: ContextMirrorFile[] = [];
@@ -236,7 +264,8 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
       openQuestions: snapshot.openQuestions.length,
       themes: snapshot.themes.length,
       projects: snapshot.projects.length,
-      threads: snapshot.threads.length
+      threads: snapshot.threads.length,
+      sources: snapshot.sources.length
     },
     files: [] as string[]
   };
@@ -257,6 +286,7 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
       `- themes: ${snapshot.themes.length}`,
       `- projects: ${snapshot.projects.length}`,
       `- threads: ${snapshot.threads.length}`,
+      `- sources: ${snapshot.sources.length}`,
       "",
       "## Recent Entries",
       "",
@@ -420,6 +450,78 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
     files.push({
       path: `threads/${thread.slug}.md`,
       contents: threadMarkdown(thread, generatedAtIso)
+    });
+  }
+
+  // Sources
+  const sourcesByType = snapshot.sources.reduce<Record<string, SourceSummary[]>>((acc, s) => {
+    (acc[s.type] ??= []).push(s);
+    return acc;
+  }, {});
+
+  files.push({
+    path: "sources/index.md",
+    contents: ["# Bronnen", "", `Generated: ${generatedAtIso}`, "", `Totaal: ${snapshot.sources.length}`, "", sourceList(snapshot.sources), ""].join("\n")
+  });
+
+  files.push({
+    path: "sources/index.json",
+    contents: JSON.stringify(
+      snapshot.sources.map((s) => ({
+        id: s.id,
+        type: s.type,
+        title: s.title,
+        status: s.status,
+        themes: s.themes.map((t) => t.name)
+      })),
+      null,
+      2
+    )
+  });
+
+  for (const [type, typeSources] of Object.entries(sourcesByType)) {
+    files.push({
+      path: `sources/by-type/${type}.md`,
+      contents: [`# Bronnen: ${type}`, "", `Generated: ${generatedAtIso}`, "", sourceList(typeSources), ""].join("\n")
+    });
+  }
+
+  for (const source of snapshot.sources) {
+    files.push({
+      path: `sources/${source.id}.md`,
+      contents: sourceMarkdown(source, generatedAtIso)
+    });
+  }
+
+  // Sanatana taxonomy map
+  const deities = snapshot.themes.filter((t) => t.metadata?.category === "deity");
+  const traditions = snapshot.themes.filter((t) => t.metadata?.category === "tradition");
+  const topics = snapshot.themes.filter((t) => t.metadata?.category === "topic");
+
+  if (deities.length || traditions.length || topics.length) {
+    files.push({
+      path: "sanatana/taxonomy.md",
+      contents: [
+        "# Sanatana Taxonomie",
+        "",
+        `Generated: ${generatedAtIso}`,
+        "",
+        "## Tradities",
+        "",
+        traditions.length ? traditions.map((t) => `- ${t.name} (${t.slug})`).join("\n") : "- Geen",
+        "",
+        "## Godheden",
+        "",
+        deities.length ? deities.map((t) => {
+          const aliases = Array.isArray(t.metadata?.aliases) ? ` [${(t.metadata.aliases as string[]).join(", ")}]` : "";
+          return `- ${t.name}${aliases} (${t.slug})`;
+        }).join("\n") : "- Geen",
+        "",
+        "## Onderwerpen",
+        "",
+        topics.length ? topics.map((t) => `- ${t.name} (${t.slug})`).join("\n") : "- Geen",
+        ""
+      ].join("\n")
     });
   }
 

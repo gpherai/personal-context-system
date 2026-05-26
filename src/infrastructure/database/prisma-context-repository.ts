@@ -3,18 +3,24 @@ import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import {
   entryStatuses,
   entryTypes,
+  metadataToSearchText,
+  sourceTypes,
   savedFilterParamsSchema,
   slugifyName,
+  sourceMetadataSchema,
   type CreateAttachmentCommand,
   type CreateEntryCommand,
   type CreateReferenceCommand,
   type CreateSavedFilterCommand,
+  type CreateSourceCommand,
   type CreateThreadCommand,
   type ListEntriesQuery,
+  type ListSourcesQuery,
   type LinkObjectsCommand,
   type PromoteEntryToQuestionCommand,
   type UpdateEntryCommand,
-  type UpdateQuestionCommand
+  type UpdateQuestionCommand,
+  type UpdateSourceCommand
 } from "@/domain/context";
 import type {
   AttachmentRecord,
@@ -32,6 +38,8 @@ import type {
   RelationshipRecord,
   RelationshipTarget,
   SavedFilterRecord,
+  SourceRecord,
+  SourceSummary,
   ThreadRecord
 } from "@/repositories/context-repository";
 
@@ -73,6 +81,62 @@ const entryInclude = {
 type EntryWithRelations = Prisma.EntryGetPayload<{
   include: typeof entryInclude;
 }>;
+
+const sourceInclude = {
+  themes: {
+    include: {
+      theme: true
+    }
+  },
+  entries: {
+    include: {
+      entry: {
+        select: { id: true, title: true }
+      }
+    }
+  }
+} satisfies Prisma.SourceInclude;
+
+type SourceWithRelations = Prisma.SourceGetPayload<{
+  include: typeof sourceInclude;
+}>;
+
+function mapSource(source: SourceWithRelations): SourceRecord {
+  const metadata = sourceMetadataSchema.parse(asRecord(source.metadata));
+  return {
+    id: source.id,
+    type: source.type,
+    title: source.title,
+    description: optional(source.description),
+    status: source.status,
+    metadata,
+    themes: source.themes
+      .map(({ theme }) => ({ id: theme.id, slug: theme.slug, name: theme.name }))
+      .sort((a, b) => a.name.localeCompare(b.name)),
+    entries: source.entries
+      .map(({ entry }) => ({ id: entry.id, title: entry.title }))
+      .sort((a, b) => a.title.localeCompare(b.title)),
+    createdAt: source.createdAt,
+    updatedAt: source.updatedAt
+  };
+}
+
+function mapSourceSummary(source: Omit<SourceWithRelations, "entries"> & { entries?: SourceWithRelations["entries"] }): SourceSummary {
+  const metadata = sourceMetadataSchema.parse(asRecord(source.metadata));
+  return {
+    id: source.id,
+    type: source.type,
+    title: source.title,
+    description: optional(source.description),
+    status: source.status,
+    metadata,
+    themes: source.themes
+      .map(({ theme }) => ({ id: theme.id, slug: theme.slug, name: theme.name }))
+      .sort((a, b) => a.name.localeCompare(b.name)),
+    createdAt: source.createdAt,
+    updatedAt: source.updatedAt
+  };
+}
 
 function asRecord(value: unknown): Record<string, unknown> {
   if (value && typeof value === "object" && !Array.isArray(value)) {
@@ -219,6 +283,7 @@ function mapNamed(record: {
   slug: string;
   name: string;
   description: string | null;
+  metadata?: unknown;
   _count?: { entries?: number };
 }): NamedRecord {
   return {
@@ -226,7 +291,8 @@ function mapNamed(record: {
     slug: record.slug,
     name: record.name,
     description: optional(record.description),
-    count: record._count?.entries
+    count: record._count?.entries,
+    metadata: record.metadata ? asRecord(record.metadata) : undefined
   };
 }
 
@@ -958,7 +1024,7 @@ export class PrismaContextRepository implements ContextRepository {
   }
 
   async getGraphSnapshot(): Promise<GraphSnapshot> {
-    const [entries, themes, projects, questions, threads, relationships] = await Promise.all([
+    const [entries, themes, projects, questions, threads, relationships, sources] = await Promise.all([
       this.listEntries({ limit: 120 }),
       this.prisma.theme.findMany({
         include: { _count: { select: { entries: true } } },
@@ -976,7 +1042,8 @@ export class PrismaContextRepository implements ContextRepository {
       this.prisma.relationship.findMany({
         orderBy: { createdAt: "desc" },
         take: 240
-      })
+      }),
+      this.listSources({ limit: 200 })
     ]);
 
     return {
@@ -985,7 +1052,8 @@ export class PrismaContextRepository implements ContextRepository {
       projects: projects.map(mapNamed),
       questions: questions.map(mapQuestion),
       threads,
-      relationships: relationships.map(mapRelationship)
+      relationships: relationships.map(mapRelationship),
+      sources
     };
   }
 
@@ -1032,16 +1100,10 @@ export class PrismaContextRepository implements ContextRepository {
   }
 
   async getCabinetOverview(): Promise<CabinetOverview> {
-    const [entryTypeCounts, entryStatusCounts, archivedEntries, themes, projects, questions, threads] =
+    const [entryTypeCounts, entryStatusCounts, archivedEntries, themes, projects, questions, threads, sourceTypeCounts] =
       await Promise.all([
-        this.prisma.entry.groupBy({
-          by: ["type"],
-          _count: { _all: true }
-        }),
-        this.prisma.entry.groupBy({
-          by: ["status"],
-          _count: { _all: true }
-        }),
+        this.prisma.entry.groupBy({ by: ["type"], _count: { _all: true } }),
+        this.prisma.entry.groupBy({ by: ["status"], _count: { _all: true } }),
         this.listEntries({ status: "archived", limit: 8 }),
         this.prisma.theme.findMany({
           include: { _count: { select: { entries: true } } },
@@ -1053,35 +1115,168 @@ export class PrismaContextRepository implements ContextRepository {
           orderBy: [{ updatedAt: "desc" }],
           take: 16
         }),
-        this.prisma.question.findMany({
-          orderBy: [{ updatedAt: "desc" }],
-          take: 12
-        }),
-        this.listThreads()
+        this.prisma.question.findMany({ orderBy: [{ updatedAt: "desc" }], take: 12 }),
+        this.listThreads(),
+        this.prisma.source.groupBy({ by: ["type"], _count: { _all: true } })
       ]);
 
     const countByType = new Map(entryTypeCounts.map((row) => [row.type, row._count._all]));
     const countByStatus = new Map(entryStatusCounts.map((row) => [row.status, row._count._all]));
+    const countBySourceType = new Map(sourceTypeCounts.map((row) => [row.type, row._count._all]));
+    const sourceCount = sourceTypeCounts.reduce((sum, row) => sum + row._count._all, 0);
 
     return {
-      entryTypes: entryTypes.map((type) => ({
-        type,
-        count: countByType.get(type) ?? 0
-      })),
-      entryStatuses: entryStatuses.map((status) => ({
-        status,
-        count: countByStatus.get(status) ?? 0
-      })),
+      entryTypes: entryTypes.map((type) => ({ type, count: countByType.get(type) ?? 0 })),
+      entryStatuses: entryStatuses.map((status) => ({ status, count: countByStatus.get(status) ?? 0 })),
       archivedEntries,
       themes: themes.map(mapNamed),
       projects: projects.map(mapNamed),
       questions: questions.map(mapQuestion),
-      threads: threads.slice(0, 16)
+      threads: threads.slice(0, 16),
+      sourceTypes: sourceTypes.map((type) => ({ type, count: countBySourceType.get(type as never) ?? 0 })),
+      sourceCount
     };
   }
 
+  async createSource(command: CreateSourceCommand): Promise<SourceRecord> {
+    const searchText = metadataToSearchText(command.metadata);
+    const source = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.source.create({
+        data: {
+          type: command.type,
+          title: command.title,
+          description: command.description ?? null,
+          status: command.status,
+          metadata: command.metadata as Prisma.InputJsonValue,
+          searchText: searchText || null
+        }
+      });
+
+      for (const themeId of command.themeIds) {
+        await tx.sourceTheme.create({ data: { sourceId: created.id, themeId } });
+      }
+
+      return tx.source.findUniqueOrThrow({ where: { id: created.id }, include: sourceInclude });
+    });
+
+    return mapSource(source);
+  }
+
+  async updateSource(command: UpdateSourceCommand): Promise<SourceRecord> {
+    const searchText = metadataToSearchText(command.metadata);
+    const source = await this.prisma.$transaction(async (tx) => {
+      await tx.source.update({
+        where: { id: command.id },
+        data: {
+          title: command.title,
+          description: command.description ?? null,
+          status: command.status,
+          metadata: command.metadata as Prisma.InputJsonValue,
+          searchText: searchText || null
+        }
+      });
+
+      await tx.sourceTheme.deleteMany({ where: { sourceId: command.id } });
+      for (const themeId of command.themeIds) {
+        await tx.sourceTheme.create({ data: { sourceId: command.id, themeId } });
+      }
+
+      return tx.source.findUniqueOrThrow({ where: { id: command.id }, include: sourceInclude });
+    });
+
+    return mapSource(source);
+  }
+
+  async deleteSource(id: string): Promise<void> {
+    await this.prisma.source.delete({ where: { id } });
+  }
+
+  async listSources(query?: Partial<ListSourcesQuery>): Promise<SourceSummary[]> {
+    const where: Prisma.SourceWhereInput = {};
+
+    if (query?.type) where.type = query.type;
+    if (query?.status) where.status = query.status;
+    if (query?.themeId) where.themes = { some: { themeId: query.themeId } };
+
+    if (query?.search) {
+      const rows = await this.prisma.$queryRaw<{ id: string }[]>`
+        SELECT "id"
+        FROM "Source"
+        WHERE to_tsvector('simple', coalesce("title", '') || ' ' || coalesce("searchText", ''))
+          @@ plainto_tsquery('simple', ${query.search})
+        ORDER BY ts_rank(
+          to_tsvector('simple', coalesce("title", '') || ' ' || coalesce("searchText", '')),
+          plainto_tsquery('simple', ${query.search})
+        ) DESC
+        LIMIT ${query.limit ?? 50}
+      `;
+      where.id = { in: rows.map((r) => r.id) };
+    }
+
+    const sources = await this.prisma.source.findMany({
+      where,
+      include: { themes: { include: { theme: true } }, entries: { include: { entry: { select: { id: true, title: true } } } } },
+      orderBy: [{ title: "asc" }],
+      take: query?.limit ?? 50
+    });
+
+    return sources.map(mapSourceSummary);
+  }
+
+  async getSource(id: string): Promise<SourceRecord | null> {
+    const source = await this.prisma.source.findUnique({ where: { id }, include: sourceInclude });
+    return source ? mapSource(source) : null;
+  }
+
+  async linkSourceToTheme(sourceId: string, themeId: string): Promise<void> {
+    await this.prisma.sourceTheme.upsert({
+      where: { sourceId_themeId: { sourceId, themeId } },
+      update: {},
+      create: { sourceId, themeId }
+    });
+  }
+
+  async unlinkSourceFromTheme(sourceId: string, themeId: string): Promise<void> {
+    await this.prisma.sourceTheme.deleteMany({ where: { sourceId, themeId } });
+  }
+
+  private async wouldCreateThemeCycle(themeId: string, proposedParentId: string): Promise<boolean> {
+    const visited = new Set<string>();
+    const ancestors: string[] = [proposedParentId];
+
+    while (ancestors.length > 0) {
+      const id = ancestors.pop()!;
+      if (id === themeId) return true;
+      if (visited.has(id)) return true;
+      visited.add(id);
+
+      const row: { parentThemeId: string | null } | null = await this.prisma.theme.findUnique({
+        where: { id },
+        select: { parentThemeId: true }
+      });
+
+      if (row?.parentThemeId) ancestors.push(row.parentThemeId);
+    }
+
+    return false;
+  }
+
+  async setThemeParent(themeId: string, parentThemeId: string | null): Promise<void> {
+    if (parentThemeId !== null) {
+      const hasCycle = await this.wouldCreateThemeCycle(themeId, parentThemeId);
+      if (hasCycle) {
+        throw new Error(`Setting parentThemeId="${parentThemeId}" on theme "${themeId}" would create a cycle.`);
+      }
+    }
+
+    await this.prisma.theme.update({
+      where: { id: themeId },
+      data: { parentThemeId }
+    });
+  }
+
   async getContextMirrorSnapshot(): Promise<ContextMirrorSnapshot> {
-    const [entries, openQuestions, themes, projects, threads] = await Promise.all([
+    const [entries, openQuestions, themes, projects, threads, sources] = await Promise.all([
       this.listEntries({ limit: 200 }),
       this.prisma.question.findMany({
         where: { status: { in: ["open", "active", "parked"] } },
@@ -1108,7 +1303,8 @@ export class PrismaContextRepository implements ContextRepository {
           }
         },
         orderBy: [{ updatedAt: "desc" }]
-      })
+      }),
+      this.listSources({ limit: 200 })
     ]);
 
     return {
@@ -1121,7 +1317,8 @@ export class PrismaContextRepository implements ContextRepository {
           thread,
           thread.entries.map(({ entry }) => mapEntry(entry))
         )
-      )
+      ),
+      sources
     };
   }
 }

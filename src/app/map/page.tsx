@@ -1,11 +1,13 @@
 import Link from "next/link";
-import { GitBranch, Layers, Library, MessageSquareText } from "lucide-react";
+import { BookMarked, GitBranch, Layers, Library, MessageSquareText } from "lucide-react";
 
 import { isRecoverableReadError } from "@/application/errors";
 import { getGraphSnapshot } from "@/application/query-service";
 import { EmptyState } from "@/components/empty-state";
 import { SetupNotice } from "@/components/setup-notice";
 import { Badge } from "@/components/ui/badge";
+import { sourceTypeDetails } from "@/domain/taxonomy";
+import type { NamedRecord } from "@/repositories/context-repository";
 import { labelize } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -19,9 +21,23 @@ function Stat({ label, value }: { label: string; value: number }) {
   );
 }
 
+function themesByCategory(themes: NamedRecord[], category: string) {
+  return themes.filter((t) => t.metadata?.category === category);
+}
+
 export default async function MapPage() {
   try {
     const snapshot = await getGraphSnapshot();
+
+    const deities = themesByCategory(snapshot.themes, "deity");
+    const traditions = themesByCategory(snapshot.themes, "tradition");
+    const topics = themesByCategory(snapshot.themes, "topic");
+    const otherThemes = snapshot.themes.filter((t) => !t.metadata?.category || !["deity", "tradition", "topic", "tag"].includes(t.metadata.category as string));
+
+    const sourcesByType = snapshot.sources.reduce<Record<string, number>>((acc, s) => {
+      acc[s.type] = (acc[s.type] ?? 0) + 1;
+      return acc;
+    }, {});
 
     return (
       <div className="mx-auto grid max-w-7xl gap-6">
@@ -33,13 +49,82 @@ export default async function MapPage() {
           </p>
         </header>
 
-        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5" aria-label="Graph counts">
+        <section className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6" aria-label="Graph counts">
           <Stat label="Entries" value={snapshot.entries.length} />
           <Stat label="Themes" value={snapshot.themes.length} />
           <Stat label="Projects" value={snapshot.projects.length} />
           <Stat label="Questions" value={snapshot.questions.length} />
-          <Stat label="Relationships" value={snapshot.relationships.length} />
+          <Stat label="Bronnen" value={snapshot.sources.length} />
+          <Stat label="Relaties" value={snapshot.relationships.length} />
         </section>
+
+        {(deities.length > 0 || traditions.length > 0 || topics.length > 0) && (
+          <section className="grid gap-5 border border-border bg-surface p-5">
+            <div className="flex items-center gap-2">
+              <BookMarked className="h-4 w-4 text-primary" aria-hidden="true" />
+              <h2 className="text-sm font-semibold">Sanatana kenniskaart</h2>
+            </div>
+
+            <div className="grid gap-5 lg:grid-cols-3">
+              {traditions.length > 0 && (
+                <div>
+                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tradities</h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {traditions.map((t) => (
+                      <Link key={t.id} href={`/themes/${t.slug}`} className="rounded-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
+                        <Badge tone="teal">{t.name}</Badge>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {deities.length > 0 && (
+                <div>
+                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Godheden</h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {deities.map((t) => (
+                      <Link key={t.id} href={`/themes/${t.slug}`} className="rounded-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
+                        <Badge tone="blue">{t.name}</Badge>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {topics.length > 0 && (
+                <div>
+                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Onderwerpen</h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {topics.map((t) => (
+                      <Link key={t.id} href={`/themes/${t.slug}`} className="rounded-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
+                        <Badge tone="amber">{t.name}</Badge>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {snapshot.sources.length > 0 && (
+              <div>
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Bronnen per type</h3>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(sourcesByType).sort(([, a], [, b]) => b - a).map(([type, count]) => (
+                    <Link
+                      key={type}
+                      href={`/sources?type=${type}`}
+                      className="inline-flex h-8 items-center gap-2 rounded-md border border-border bg-surface px-3 text-xs font-medium transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                    >
+                      {sourceTypeDetails[type as keyof typeof sourceTypeDetails]?.label ?? type}
+                      <Badge tone="neutral">{count}</Badge>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
 
         <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
           <div className="border border-border bg-surface p-5">
@@ -67,23 +152,21 @@ export default async function MapPage() {
           </div>
 
           <aside className="grid content-start gap-4">
-            <section className="border border-border bg-surface p-4">
-              <div className="mb-3 flex items-center gap-2">
-                <Library className="h-4 w-4 text-accent" aria-hidden="true" />
-                <h2 className="text-sm font-semibold">Themes</h2>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {snapshot.themes.length ? (
-                  snapshot.themes.map((theme) => (
+            {otherThemes.length > 0 && (
+              <section className="border border-border bg-surface p-4">
+                <div className="mb-3 flex items-center gap-2">
+                  <Library className="h-4 w-4 text-accent" aria-hidden="true" />
+                  <h2 className="text-sm font-semibold">Themes</h2>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {otherThemes.map((theme) => (
                     <Link key={theme.id} href={`/themes/${theme.slug}`} className="transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 rounded-md">
                       <Badge tone="teal">{theme.name}</Badge>
                     </Link>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground">No themes yet.</p>
-                )}
-              </div>
-            </section>
+                  ))}
+                </div>
+              </section>
+            )}
 
             <section className="border border-border bg-surface p-4">
               <div className="mb-3 flex items-center gap-2">

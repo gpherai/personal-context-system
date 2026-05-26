@@ -56,6 +56,18 @@ enum ObjectType {
   thread
   reference
   attachment
+  source
+}
+
+enum SourceType {
+  video
+  book
+  post
+  image
+  sadhana
+  upadesha
+  stotra
+  deity_concept
 }
 
 enum RelationType {
@@ -105,6 +117,7 @@ model Entry {
   threads             EntryThread[]
   references          EntryReference[]
   attachments         EntryAttachment[]
+  sources             EntrySource[]
   originatedQuestion Question?         @relation("QuestionOrigin")
 
   @@index([type])
@@ -125,9 +138,10 @@ model Theme {
   createdAt     DateTime     @default(now()) @db.Timestamptz(6)
   updatedAt     DateTime     @updatedAt @db.Timestamptz(6)
 
-  parent  Theme?       @relation("ThemeTree", fields: [parentThemeId], references: [id], onDelete: SetNull)
+  parent   Theme?       @relation("ThemeTree", fields: [parentThemeId], references: [id], onDelete: SetNull)
   children Theme[]      @relation("ThemeTree")
   entries  EntryTheme[]
+  sources  SourceTheme[]
 
   @@index([status])
   @@index([parentThemeId])
@@ -236,6 +250,48 @@ model SavedFilter {
   updatedAt   DateTime @updatedAt @db.Timestamptz(6)
 
   @@index([updatedAt])
+}
+
+model Source {
+  id          String       @id @default(cuid())
+  type        SourceType
+  title       String       @db.VarChar(320)
+  description String?      @db.Text
+  status      RecordStatus @default(active)
+  metadata    Json         @default("{}")
+  searchText  String?      @db.Text
+  createdAt   DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime     @updatedAt @db.Timestamptz(6)
+
+  themes  SourceTheme[]
+  entries EntrySource[]
+
+  @@index([type])
+  @@index([status])
+}
+
+model SourceTheme {
+  sourceId  String
+  themeId   String
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  source Source @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  theme  Theme  @relation(fields: [themeId], references: [id], onDelete: Cascade)
+
+  @@id([sourceId, themeId])
+  @@index([themeId])
+}
+
+model EntrySource {
+  entryId   String
+  sourceId  String
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  entry  Entry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  source Source @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@id([entryId, sourceId])
+  @@index([sourceId])
 }
 
 model EntryTheme {

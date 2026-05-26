@@ -1,6 +1,6 @@
 # Personal Context System - Architecture
 
-Updated: 2026-04-30
+Updated: 2026-05-26
 
 ## Purpose
 
@@ -43,9 +43,11 @@ In scope:
 Out of scope for the core system:
 
 - Full external-world investigation datasets. Those belong in `detective`.
-- Canonical Sanatana knowledge modeling. That belongs in `knowledge-base` or `sanatana-kalender`.
+- Sanatana calendar and practice mechanics. Those belong in `sanatana-kalender`.
 - Calendar replacement, habit tracking, recurring todos, and general task management.
 - Autonomous AI mutation of the knowledge base.
+
+Note: Sanatana source material (books, videos, teachings, etc.) and their taxonomy (deities, traditions, topics) are now in scope via the `Source` and `Theme` models. The separate `knowledge-base` app is being migrated into this system.
 
 ## Architecture Goals
 
@@ -218,6 +220,31 @@ Examples:
 
 Track path, media type, checksum, size, title, description, and related domain objects.
 
+### Source
+
+`Source` is a first-class model for Sanatana knowledge sources. It is distinct from `Reference`, which is a lightweight external link. A Source has a fixed type, structured type-specific metadata, and connects to both themes and entries.
+
+SourceType enum (immutable after creation):
+
+- `video` — YouTube or other video content
+- `book` — physical or digital book
+- `post` — article, blog post, online text
+- `image` — visual source (deity images, artwork, diagrams)
+- `sadhana` — practice or ritual context
+- `upadesha` — teaching or discourse
+- `stotra` — hymn or devotional text
+- `deity_concept` — conceptual record for a deity form
+
+Each source type has a discriminated Zod metadata schema in `src/domain/context.ts`. The `metadata` JSONB field stores type-specific data (e.g., `authorName`, `publishYear`, `youtubeUrl`, `mantras`). A derived `searchText` column is populated by `metadataToSearchText()` to make JSONB fields queryable via full-text search.
+
+Sources connect to themes via `SourceTheme` junction (replacing the separate KB ItemDeity/Tradition/Topic/Tag joins) and to entries via `EntrySource` junction.
+
+### Theme (Taxonomy-as-Theme)
+
+Sanatana taxonomy categories (deity, tradition, topic, tag) are stored as `Theme` records with `metadata.category`. This avoids separate Deity/Tradition/Topic tables while enabling category-filtered views.
+
+Theme hierarchy uses `parentThemeId`. A cycle guard in the repository (BFS ancestor walk) prevents circular parent references before any `setThemeParent` call.
+
 ### Reference
 
 References are lightweight pointers to external material such as URLs, books, films, games, articles, repositories, or records in external apps.
@@ -241,8 +268,11 @@ Important indexes:
 - entry `status`
 - theme/project/question slugs
 - relationship endpoints
-- full-text index over title/body/summary
+- GIN full-text index on Entry (title + summary + body) via `to_tsvector('simple', ...)`
+- GIN full-text index on Source (title + searchText) via `to_tsvector('simple', ...)`
 - JSONB indexes only where query patterns justify them
+
+Full-text search uses PostgreSQL `tsvector` with the `simple` dictionary (no language stemming). Source metadata is flattened into the `searchText` column by `metadataToSearchText()` so JSONB fields participate in FTS without a JSONB index.
 
 ## Write Path
 
@@ -487,9 +517,14 @@ This system may store Gerald's reflections, active questions, links to detective
 
 ### knowledge-base and sanatana-kalender
 
-Those systems own structured Sanatana knowledge and calendar/practice mechanics.
+`sanatana-kalender` owns Sanatana calendar and practice mechanics. That boundary is stable.
 
-This system may store personal practice reflections, study questions, links to knowledge-base topics, and project notes. It should not become the canonical scripture/source/topic database.
+`knowledge-base` is being migrated into this system. Sanatana sources (books, videos, teachings, deity records) and taxonomy (deities, traditions, topics) now live here as `Source` and `Theme` records. Migration scripts live in `scripts/`:
+
+- `seed-kb-taxonomy.ts` — migrates KB Deity/Tradition/Topic/Tag to PCS Themes with `metadata.category`; sets hierarchy and Relationship records for deity-tradition links
+- `import-kb-items.ts` — migrates KB Items to PCS Sources; links to themes via slug; stores `kbId` in metadata for idempotency
+
+Both scripts are idempotent and target the PCS database. The KB Docker Compose `db` service must be running for migration.
 
 ## Testing Strategy
 
@@ -522,20 +557,25 @@ This is not an MVP-only design, but implementation still needs order.
 
 ## Current State
 
-Last updated: 2026-04-30
+Last updated: 2026-05-26
 
 **Built:**
 
-- Full Prisma schema including Entry, Theme, Project, Question, Thread, Reference, Attachment, Relationship, SavedFilter, and all explicit join tables.
+- Full Prisma schema including Entry, Theme, Project, Question, Thread, Reference, Attachment, Relationship, SavedFilter, Source, SourceTheme, EntrySource, and all explicit join tables.
 - Layered source structure: `src/domain`, `src/application`, `src/repositories`, `src/infrastructure`, `src/ai-context`, `src/app`, `src/components`.
-- Domain validation and application services for entry capture/update, question status update, object linking, reference/attachment metadata, thread creation, list/query reads, graph reads, and context mirror snapshots.
-- UI routes for Dashboard, Capture, Ledger, Cabinet, Entry detail/edit, Command Center, Settings, Map, and detail views for themes, projects, questions, and threads.
+- Domain validation and application services for entry capture/update, question status update, object linking, reference/attachment metadata, thread creation, list/query reads, graph reads, context mirror snapshots, and source CRUD.
+- UI routes for Dashboard, Capture, Ledger, Cabinet, Entry detail/edit, Command Center, Settings, Map, Sources list/detail/form, and detail views for themes, projects, questions, and threads.
 - Entry capture/edit fields use centralized taxonomy labels for entry types. Question entries create tracked Questions automatically, and entry detail can promote an existing entry into the question workflow.
-- Dashboard and Cabinet use different read models: Dashboard stays focused on current context, while Cabinet is the structured archive with entry type/status counts and truly archived entries.
-- Relationship creation from entry and question detail pages uses selectable targets for entries, questions, projects, themes, threads, references, and attachments instead of requiring pasted object IDs.
+- Dashboard and Cabinet use different read models: Dashboard stays focused on current context, while Cabinet is the structured archive with entry type/status counts, truly archived entries, and source counts per type.
+- Relationship creation from entry and question detail pages uses selectable targets including sources.
 - Ledger filters can be persisted as named saved filters and reused from both Ledger and Command Center. System filters remain available as starter shortcuts.
-- Context mirror generation for `manifest.json`, `ai-index.md`, `today.md`, `ai-bundle.md`, context bundle variants, `recent.md`, `question-queue.md`, project/theme indexes and pages, thread detail pages, timeline pages, `entries/index.json`, and per-entry Markdown/JSON files.
+- Context mirror generation for `manifest.json`, `ai-index.md`, `today.md`, `ai-bundle.md`, context bundle variants, `recent.md`, `question-queue.md`, project/theme indexes and pages, thread detail pages, timeline pages, `entries/index.json`, per-entry Markdown/JSON files, `sources/index.md`, `sources/index.json`, per-type source indexes, per-source Markdown files, and `sanatana/taxonomy.md`.
 - Local backup and restore scripts for the Docker Compose PostgreSQL database and `data/attachments`.
+- Source model with SourceType enum (8 types), discriminated Zod metadata schemas, `searchText` column for FTS, and GIN indexes on Entry and Source.
+- Theme cycle guard (BFS ancestor walk) preventing circular parent hierarchy.
+- KB migration scripts: `seed-kb-taxonomy.ts` and `import-kb-items.ts`.
+- Taxonomy-as-Theme: KB Deity/Tradition/Topic/Tag stored as Theme records with `metadata.category`.
+- Map page Sanatana knowledge section: deities, traditions, topics by category, sources per type.
 
 **Not yet built:**
 
@@ -545,6 +585,7 @@ Last updated: 2026-04-30
 - CLI adapter.
 - Graph/map visual layout beyond the current text-first relationship map.
 - MCP adapter.
+- KB deletion gate (verify PCS fully replaces KB before removing knowledge-base app).
 
 ## Detailed Design Artifacts
 

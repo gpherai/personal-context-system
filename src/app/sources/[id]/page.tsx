@@ -1,0 +1,204 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+
+import { isRecoverableReadError } from "@/application/errors";
+import { getSourceById } from "@/application/query-service";
+import { SetupNotice } from "@/components/setup-notice";
+import { Badge } from "@/components/ui/badge";
+import { formatDateTime } from "@/lib/format";
+import { sourceTypeDetails } from "@/domain/taxonomy";
+import type { SourceMetadata } from "@/domain/context";
+
+export const dynamic = "force-dynamic";
+
+function MetadataField({ label, value }: { label: string; value: string | number | undefined | null }) {
+  if (!value && value !== 0) return null;
+  return (
+    <div className="grid gap-0.5">
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="text-sm">{value}</dd>
+    </div>
+  );
+}
+
+function MetadataList({ label, values }: { label: string; values: string[] }) {
+  if (!values.length) return null;
+  return (
+    <div className="grid gap-0.5">
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="text-sm">{values.join(", ")}</dd>
+    </div>
+  );
+}
+
+function SourceMetadataSection({ metadata }: { metadata: SourceMetadata }) {
+  switch (metadata.type) {
+    case "video":
+      return (
+        <dl className="grid gap-3 sm:grid-cols-2">
+          <MetadataField label="URL" value={metadata.url} />
+          <MetadataField label="Kanaal" value={metadata.channel} />
+          <MetadataField label="Duur (sec)" value={metadata.duration} />
+          <MetadataField label="Taal" value={metadata.language} />
+        </dl>
+      );
+    case "book":
+      return (
+        <dl className="grid gap-3 sm:grid-cols-2">
+          <MetadataList label="Auteurs" values={metadata.authors} />
+          <MetadataField label="ISBN" value={metadata.isbn} />
+          <MetadataField label="Jaar" value={metadata.year} />
+          <MetadataField label="Uitgever" value={metadata.publisher} />
+          <MetadataField label="Taal" value={metadata.language} />
+        </dl>
+      );
+    case "post":
+      return (
+        <dl className="grid gap-3 sm:grid-cols-2">
+          <MetadataField label="URL" value={metadata.url} />
+          <MetadataField label="Auteur" value={metadata.author} />
+          <MetadataField label="Gepubliceerd" value={metadata.publishedAt} />
+        </dl>
+      );
+    case "image":
+      return (
+        <dl className="grid gap-3 sm:grid-cols-2">
+          <MetadataField label="URL" value={metadata.url} />
+          <MetadataField label="Alt tekst" value={metadata.alt} />
+          <MetadataField label="Fotograaf" value={metadata.photographer} />
+        </dl>
+      );
+    case "sadhana":
+      return (
+        <dl className="grid gap-3 sm:grid-cols-2">
+          <MetadataField label="Traditie" value={metadata.tradition} />
+          <MetadataField label="Godheid" value={metadata.deity} />
+          <MetadataField label="Taal" value={metadata.language} />
+          <MetadataField label="Formaat" value={metadata.format} />
+        </dl>
+      );
+    case "upadesha":
+      return (
+        <dl className="grid gap-3 sm:grid-cols-2">
+          <MetadataField label="Leraar" value={metadata.teacher} />
+          <MetadataField label="Traditie" value={metadata.tradition} />
+          <MetadataField label="Taal" value={metadata.language} />
+          <MetadataField label="Formaat" value={metadata.format} />
+        </dl>
+      );
+    case "stotra":
+      return (
+        <dl className="grid gap-3 sm:grid-cols-2">
+          <MetadataField label="Godheid" value={metadata.deity} />
+          <MetadataField label="Traditie" value={metadata.tradition} />
+          <MetadataField label="Taal" value={metadata.language} />
+          <MetadataField label="Script" value={metadata.script} />
+        </dl>
+      );
+    case "deity_concept":
+      return (
+        <dl className="grid gap-3 sm:grid-cols-2">
+          <MetadataField label="Traditie" value={metadata.tradition} />
+          <MetadataField label="Taal" value={metadata.language} />
+          <MetadataList label="Aliassen" values={metadata.aliases} />
+        </dl>
+      );
+  }
+}
+
+export default async function SourceDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+
+  try {
+    const source = await getSourceById(id);
+
+    if (!source) {
+      notFound();
+    }
+
+    const typeDetail = sourceTypeDetails[source.type];
+
+    return (
+      <article className="mx-auto grid max-w-4xl gap-6">
+        <header className="border-b border-border pb-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge tone="blue">{typeDetail.label}</Badge>
+                <Badge tone={source.status === "archived" ? "neutral" : "teal"}>{source.status}</Badge>
+              </div>
+              <h1 className="mt-3 text-3xl font-semibold">{source.title}</h1>
+            </div>
+            <div className="flex flex-col gap-2 sm:items-end">
+              <Link
+                href={`/sources/${source.id}/edit`}
+                className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-surface px-4 text-sm font-medium transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+              >
+                Bewerken
+              </Link>
+            </div>
+          </div>
+        </header>
+
+        {source.description && (
+          <section>
+            <p className="text-sm leading-7 text-muted-foreground">{source.description}</p>
+          </section>
+        )}
+
+        <section className="grid gap-4 border border-border bg-surface p-4">
+          <h2 className="text-sm font-semibold">{typeDetail.label} details</h2>
+          <SourceMetadataSection metadata={source.metadata} />
+        </section>
+
+        {source.themes.length > 0 && (
+          <section className="grid gap-3">
+            <h2 className="text-sm font-semibold">Thema&apos;s</h2>
+            <div className="flex flex-wrap gap-2">
+              {source.themes.map((theme) => (
+                <Link
+                  key={theme.id}
+                  href={`/themes/${theme.slug}`}
+                  className="inline-flex h-8 items-center rounded-md border border-border bg-surface px-3 text-sm transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                >
+                  {theme.name}
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {source.entries.length > 0 && (
+          <section className="grid gap-3">
+            <h2 className="text-sm font-semibold">Gekoppelde entries</h2>
+            <div className="grid gap-1">
+              {source.entries.map((entry) => (
+                <Link
+                  key={entry.id}
+                  href={`/entries/${entry.id}`}
+                  className="rounded-md px-2 py-2 text-sm transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+                >
+                  {entry.title}
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <footer className="border-t border-border pt-4 text-xs text-muted-foreground">
+          Aangemaakt {formatDateTime(source.createdAt)} · Bijgewerkt {formatDateTime(source.updatedAt)}
+        </footer>
+      </article>
+    );
+  } catch (error) {
+    if (isRecoverableReadError(error)) {
+      return (
+        <div className="mx-auto max-w-4xl">
+          <SetupNotice />
+        </div>
+      );
+    }
+
+    throw error;
+  }
+}

@@ -5,9 +5,11 @@ import {
   createEntryCommandSchema,
   createReferenceCommandSchema,
   createSavedFilterCommandSchema,
+  createSourceCommandSchema,
   createThreadCommandSchema,
   linkObjectsCommandSchema,
   listEntriesQuerySchema,
+  listSourcesQuerySchema,
   parseIdList,
   parseNameList,
   parseOptionalDate,
@@ -16,7 +18,8 @@ import {
   promoteEntryToQuestionCommandSchema,
   titleFromBody,
   updateEntryCommandSchema,
-  updateQuestionCommandSchema
+  updateQuestionCommandSchema,
+  updateSourceCommandSchema
 } from "@/domain/context";
 import type { ContextRepository } from "@/repositories/context-repository";
 
@@ -280,6 +283,95 @@ export async function promoteEntryToQuestion(id: string, repository: ContextRepo
 
   const question = await repository.promoteEntryToQuestion(parsed.data);
   return { ok: true as const, question };
+}
+
+function buildSourceMetadata(type: string, formData: FormData): Record<string, unknown> {
+  const str = (key: string) => parseOptionalString(formStr(formData, key));
+  const num = (key: string) => parseOptionalNumber(formStr(formData, key));
+
+  switch (type) {
+    case "video":
+      return { type, url: str("url"), duration: num("duration"), channel: str("channel"), language: str("language") };
+    case "book":
+      return { type, authors: parseNameList(formStr(formData, "authors")), isbn: str("isbn"), year: num("year"), publisher: str("publisher"), language: str("language") };
+    case "post":
+      return { type, url: str("url"), author: str("author"), publishedAt: str("publishedAt") };
+    case "image":
+      return { type, url: str("url"), alt: str("alt"), photographer: str("photographer") };
+    case "sadhana":
+      return { type, tradition: str("tradition"), deity: str("deity"), language: str("language"), format: str("format") };
+    case "upadesha":
+      return { type, teacher: str("teacher"), tradition: str("tradition"), language: str("language"), format: str("format") };
+    case "stotra":
+      return { type, deity: str("deity"), tradition: str("tradition"), language: str("language"), script: str("script") };
+    case "deity_concept":
+      return { type, tradition: str("tradition"), language: str("language"), aliases: parseNameList(formStr(formData, "aliases")) };
+    default:
+      return { type };
+  }
+}
+
+export function parseCreateSourceFormData(formData: FormData) {
+  const type = parseOptionalString(formStr(formData, "type")) ?? "";
+  return createSourceCommandSchema.safeParse({
+    type,
+    title: parseOptionalString(formStr(formData, "title")),
+    description: parseOptionalString(formStr(formData, "description")),
+    status: parseOptionalString(formStr(formData, "status")) ?? "active",
+    metadata: buildSourceMetadata(type, formData),
+    themeIds: parseIdList(formStr(formData, "themeIds"))
+  });
+}
+
+export function parseUpdateSourceFormData(id: string, formData: FormData) {
+  const type = parseOptionalString(formStr(formData, "type")) ?? "";
+  return updateSourceCommandSchema.safeParse({
+    id,
+    title: parseOptionalString(formStr(formData, "title")),
+    description: parseOptionalString(formStr(formData, "description")),
+    status: parseOptionalString(formStr(formData, "status")) ?? "active",
+    metadata: buildSourceMetadata(type, formData),
+    themeIds: parseIdList(formStr(formData, "themeIds"))
+  });
+}
+
+export async function captureSource(formData: FormData, repository: ContextRepository) {
+  const parsed = parseCreateSourceFormData(formData);
+
+  if (!parsed.success) {
+    return { ok: false as const, state: errorState("Check the highlighted fields.", parsed.error) };
+  }
+
+  const source = await repository.createSource(parsed.data);
+  return { ok: true as const, source };
+}
+
+export async function updateSourceFromForm(id: string, formData: FormData, repository: ContextRepository) {
+  const parsed = parseUpdateSourceFormData(id, formData);
+
+  if (!parsed.success) {
+    return { ok: false as const, state: errorState("Check the highlighted fields.", parsed.error) };
+  }
+
+  const source = await repository.updateSource(parsed.data);
+  return { ok: true as const, source };
+}
+
+export async function deleteSource(id: string, repository: ContextRepository) {
+  await repository.deleteSource(id);
+  return { ok: true as const };
+}
+
+export async function listSources(repository: ContextRepository, params?: URLSearchParams) {
+  const parsed = listSourcesQuerySchema.safeParse({
+    search: parseOptionalString(params?.get("search") ?? null),
+    type: parseOptionalString(params?.get("type") ?? null),
+    themeId: parseOptionalString(params?.get("themeId") ?? null),
+    status: parseOptionalString(params?.get("status") ?? null),
+    limit: 100
+  });
+
+  return repository.listSources(parsed.success ? parsed.data : { limit: 100 });
 }
 
 export async function listEntries(repository: ContextRepository, params?: URLSearchParams) {

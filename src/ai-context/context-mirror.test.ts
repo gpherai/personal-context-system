@@ -32,7 +32,8 @@ describe("context mirror", () => {
         openQuestions: [],
         themes: [],
         projects: [],
-        threads: []
+        threads: [],
+        sources: []
       },
       generatedAt
     );

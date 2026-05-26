@@ -1,4 +1,4 @@
-import type { EntryType, QuestionStatus } from "./context";
+import type { EntryType, QuestionStatus, SourceType } from "./context";
 
 export interface TaxonomyDetail {
   label: string;
@@ -82,3 +82,38 @@ export const questionStatusDetails = {
     description: "No longer useful enough to keep active."
   }
 } satisfies Record<QuestionStatus, TaxonomyDetail>;
+
+export const sourceTypeDetails = {
+  video: {
+    label: "Video",
+    description: "Satsang, lecture, tutorial of andere video-opname."
+  },
+  book: {
+    label: "Boek",
+    description: "Geschreven werk: boek, e-book of manuscript."
+  },
+  post: {
+    label: "Post",
+    description: "Artikel, blogpost of online publicatie."
+  },
+  image: {
+    label: "Afbeelding",
+    description: "Foto, tekening, yantra of andere visuele bron."
+  },
+  sadhana: {
+    label: "Sadhana",
+    description: "Spirituele praktijk: puja, meditatie, japa of ritueel."
+  },
+  upadesha: {
+    label: "Upadesha",
+    description: "Onderricht of instructie van een leraar of traditie."
+  },
+  stotra: {
+    label: "Stotra",
+    description: "Lofzang, mantra of gebed in tekst- of audiovorm."
+  },
+  deity_concept: {
+    label: "Godheid / concept",
+    description: "Beschrijving of studie van een godheid, begrip of filosofisch concept."
+  }
+} satisfies Record<SourceType, TaxonomyDetail>;
