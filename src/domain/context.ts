@@ -106,7 +106,7 @@ export const createSavedFilterCommandSchema = z.object({
   params: savedFilterParamsSchema.default({})
 });
 
-export const updateEntryCommandSchema = createEntryCommandSchema.omit({ metadata: true }).extend({
+export const updateEntryCommandSchema = createEntryCommandSchema.omit({ metadata: true, type: true }).extend({
   id: z.string().min(1),
   metadata: metadataSchema.optional()
 });
@@ -121,23 +121,47 @@ export const promoteEntryToQuestionCommandSchema = z.object({
   id: z.string().min(1)
 });
 
-export const linkObjectsCommandSchema = z.object({
-  fromType: objectTypeSchema,
-  fromId: z.string().min(1),
-  toType: objectTypeSchema,
-  toId: z.string().min(1),
-  relationType: relationTypeSchema,
-  note: z.string().trim().max(2000).optional()
-});
+export const linkObjectsCommandSchema = z
+  .object({
+    fromType: objectTypeSchema,
+    fromId: z.string().min(1),
+    toType: objectTypeSchema,
+    toId: z.string().min(1),
+    relationType: relationTypeSchema,
+    note: z.string().trim().max(2000).optional()
+  })
+  .superRefine((val, ctx) => {
+    if (val.fromType === val.toType && val.fromId === val.toId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["toId"],
+        message: "Cannot link an object to itself"
+      });
+    }
+  });
 
-export const createReferenceCommandSchema = z.object({
-  entryId: z.string().min(1),
-  kind: referenceKindSchema.default("url"),
-  title: z.string().trim().min(1, "Title is required").max(220),
-  url: z.string().trim().max(4000).optional(),
-  description: z.string().trim().max(4000).optional(),
-  metadata: metadataSchema.default({})
-});
+export const createReferenceCommandSchema = z
+  .object({
+    entryId: z.string().min(1),
+    kind: referenceKindSchema.default("url"),
+    title: z.string().trim().min(1, "Title is required").max(220),
+    url: z.string().trim().max(4000).optional(),
+    description: z.string().trim().max(4000).optional(),
+    metadata: metadataSchema.default({})
+  })
+  .superRefine((val, ctx) => {
+    if (val.kind === "url" && val.url) {
+      try {
+        new URL(val.url);
+      } catch {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["url"],
+          message: "Must be a valid URL"
+        });
+      }
+    }
+  });
 
 export const createAttachmentCommandSchema = z.object({
   entryId: z.string().min(1),
@@ -225,8 +249,7 @@ export const sourceMetadataSchema = z.discriminatedUnion("type", [
 
 export type SourceMetadata = z.infer<typeof sourceMetadataSchema>;
 
-export const createSourceCommandSchema = z.object({
-  type: sourceTypeSchema,
+const sourceCommandBaseSchema = z.object({
   title: z.string().trim().min(1, "Title is required").max(320),
   description: z.string().trim().max(4000).optional(),
   status: recordStatusSchema.default("active"),
@@ -234,7 +257,21 @@ export const createSourceCommandSchema = z.object({
   themeIds: z.array(z.string().trim().min(1)).default([])
 });
 
-export const updateSourceCommandSchema = createSourceCommandSchema.omit({ type: true }).extend({
+export const createSourceCommandSchema = sourceCommandBaseSchema
+  .extend({ type: sourceTypeSchema })
+  .superRefine((val, ctx) => {
+    if (val.type !== val.metadata.type) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["metadata", "type"],
+        message: `metadata.type "${val.metadata.type}" must match source type "${val.type}"`
+      });
+    }
+  });
+
+// metadata.type must match the stored source type (immutable after creation).
+// Schema cannot enforce this without DB access — infra layer must validate.
+export const updateSourceCommandSchema = sourceCommandBaseSchema.extend({
   id: z.string().min(1)
 });
 
@@ -316,7 +353,8 @@ export function slugifyName(value: string): string {
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
-    .slice(0, 120);
+    .slice(0, 120)
+    .replace(/-+$/, "");
 }
 
 export function parseNameList(value: string | null | undefined): string[] {
@@ -364,7 +402,17 @@ export function parseOptionalDate(value: string | null | undefined): Date | unde
   }
 
   const date = new Date(`${text}T12:00:00.000Z`);
-  return Number.isNaN(date.getTime()) ? undefined : date;
+  if (Number.isNaN(date.getTime())) {
+    return undefined;
+  }
+
+  // Reject calendar overflow (e.g. 2026-02-31 rolls to March in JS)
+  const [y, m, d] = text.split("-").map(Number);
+  if (date.getUTCFullYear() !== y || date.getUTCMonth() + 1 !== m || date.getUTCDate() !== d) {
+    return undefined;
+  }
+
+  return date;
 }
 
 export function parseOptionalNumber(value: string | null | undefined): number | undefined {

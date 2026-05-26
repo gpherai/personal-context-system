@@ -569,7 +569,6 @@ export class PrismaContextRepository implements ContextRepository {
       await tx.entry.update({
         where: { id: command.id },
         data: {
-          type: command.type,
           status: command.status,
           title: command.title,
           body: command.body,
@@ -584,11 +583,15 @@ export class PrismaContextRepository implements ContextRepository {
 
       await this.syncEntryNames(tx, command.id, command.themeNames, command.projectNames);
 
-      if (command.type === "question") {
-        await this.ensureOriginQuestion(tx, {
-          id: command.id,
-          title: command.title,
-          summary: command.summary ?? null
+      // Sync question prompt if this entry has an associated question (title may have changed)
+      const linkedQuestion = await tx.question.findUnique({
+        where: { originEntryId: command.id },
+        select: { id: true }
+      });
+      if (linkedQuestion) {
+        await tx.question.update({
+          where: { id: linkedQuestion.id },
+          data: { prompt: command.title }
         });
       }
 

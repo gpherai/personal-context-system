@@ -72,7 +72,6 @@ export function parseUpdateEntryFormData(id: string, formData: FormData) {
   const body = parseOptionalString(formStr(formData, "body")) ?? "";
   const raw = {
     id,
-    type: parseOptionalString(formStr(formData, "type")) ?? "observation",
     status: parseOptionalString(formStr(formData, "status")) ?? "active",
     title: parseOptionalString(formStr(formData, "title")) ?? titleFromBody(body),
     body,
