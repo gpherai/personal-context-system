@@ -1,3 +1,5 @@
+import "server-only";
+
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 
 import {
@@ -8,6 +10,7 @@ import {
   savedFilterParamsSchema,
   slugifyName,
   sourceMetadataSchema,
+  type ObjectType,
   type CreateAttachmentCommand,
   type CreateEntryCommand,
   type CreateReferenceCommand,
@@ -435,11 +438,11 @@ export class PrismaContextRepository implements ContextRepository {
     await tx.entryTheme.deleteMany({ where: { entryId } });
     await tx.entryProject.deleteMany({ where: { entryId } });
 
+    const seenThemeSlugs = new Set<string>();
     for (const name of themeNames) {
       const slug = slugifyName(name);
-      if (!slug) {
-        continue;
-      }
+      if (!slug || seenThemeSlugs.has(slug)) continue;
+      seenThemeSlugs.add(slug);
 
       const theme = await tx.theme.upsert({
         where: { slug },
@@ -447,19 +450,14 @@ export class PrismaContextRepository implements ContextRepository {
         create: { slug, name }
       });
 
-      await tx.entryTheme.create({
-        data: {
-          entryId,
-          themeId: theme.id
-        }
-      });
+      await tx.entryTheme.create({ data: { entryId, themeId: theme.id } });
     }
 
+    const seenProjectSlugs = new Set<string>();
     for (const name of projectNames) {
       const slug = slugifyName(name);
-      if (!slug) {
-        continue;
-      }
+      if (!slug || seenProjectSlugs.has(slug)) continue;
+      seenProjectSlugs.add(slug);
 
       const project = await tx.project.upsert({
         where: { slug },
@@ -467,39 +465,27 @@ export class PrismaContextRepository implements ContextRepository {
         create: { slug, name }
       });
 
-      await tx.entryProject.create({
-        data: {
-          entryId,
-          projectId: project.id
+      await tx.entryProject.create({ data: { entryId, projectId: project.id } });
+    }
+  }
+
+  private async retryOnSlugConflict<T>(baseSlug: string, createFn: (slug: string) => Promise<T>): Promise<T> {
+    let suffix = 2;
+    let slug = baseSlug;
+
+    for (let attempt = 0; attempt < 10; attempt++) {
+      try {
+        return await createFn(slug);
+      } catch (err) {
+        if ((err as { code?: string }).code === "P2002") {
+          slug = `${baseSlug}-${suffix++}`;
+          continue;
         }
-      });
-    }
-  }
-
-  private async uniqueThreadSlug(title: string): Promise<string> {
-    const baseSlug = slugifyName(title) || "thread";
-    let candidate = baseSlug;
-    let suffix = 2;
-
-    while (await this.prisma.thread.findUnique({ where: { slug: candidate }, select: { id: true } })) {
-      candidate = `${baseSlug}-${suffix}`;
-      suffix += 1;
+        throw err;
+      }
     }
 
-    return candidate;
-  }
-
-  private async uniqueSavedFilterSlug(name: string): Promise<string> {
-    const baseSlug = slugifyName(name) || "saved-filter";
-    let candidate = baseSlug;
-    let suffix = 2;
-
-    while (await this.prisma.savedFilter.findUnique({ where: { slug: candidate }, select: { id: true } })) {
-      candidate = `${baseSlug}-${suffix}`;
-      suffix += 1;
-    }
-
-    return candidate;
+    throw new Error(`Failed to generate unique slug after 10 attempts: ${baseSlug}`);
   }
 
   private async ensureOriginQuestion(
@@ -623,6 +609,13 @@ export class PrismaContextRepository implements ContextRepository {
       orderBy: [{ capturedAt: "desc" }, { createdAt: "desc" }],
       take: query.limit ?? 50
     });
+
+    if (searchIds) {
+      const rank = new Map(searchIds.map((id, i) => [id, i]));
+      return entries
+        .sort((a, b) => (rank.get(a.id) ?? Infinity) - (rank.get(b.id) ?? Infinity))
+        .map((entry) => mapEntry(entry));
+    }
 
     return entries.map((entry) => mapEntry(entry));
   }
@@ -846,15 +839,17 @@ export class PrismaContextRepository implements ContextRepository {
   }
 
   async createSavedFilter(command: CreateSavedFilterCommand): Promise<SavedFilterRecord> {
-    const slug = await this.uniqueSavedFilterSlug(command.name);
-    const filter = await this.prisma.savedFilter.create({
-      data: {
-        name: command.name,
-        slug,
-        description: command.description ?? null,
-        params: command.params as Prisma.InputJsonValue
-      }
-    });
+    const baseSlug = slugifyName(command.name) || "saved-filter";
+    const filter = await this.retryOnSlugConflict(baseSlug, (slug) =>
+      this.prisma.savedFilter.create({
+        data: {
+          name: command.name,
+          slug,
+          description: command.description ?? null,
+          params: command.params as Prisma.InputJsonValue
+        }
+      })
+    );
 
     return mapSavedFilter(filter);
   }
@@ -898,7 +893,27 @@ export class PrismaContextRepository implements ContextRepository {
     return mapQuestion(question);
   }
 
+  private async validateObjectExists(type: ObjectType, id: string): Promise<void> {
+    let exists: boolean;
+    switch (type) {
+      case "entry": exists = !!(await this.prisma.entry.findUnique({ where: { id }, select: { id: true } })); break;
+      case "theme": exists = !!(await this.prisma.theme.findUnique({ where: { id }, select: { id: true } })); break;
+      case "project": exists = !!(await this.prisma.project.findUnique({ where: { id }, select: { id: true } })); break;
+      case "question": exists = !!(await this.prisma.question.findUnique({ where: { id }, select: { id: true } })); break;
+      case "thread": exists = !!(await this.prisma.thread.findUnique({ where: { id }, select: { id: true } })); break;
+      case "reference": exists = !!(await this.prisma.reference.findUnique({ where: { id }, select: { id: true } })); break;
+      case "attachment": exists = !!(await this.prisma.attachment.findUnique({ where: { id }, select: { id: true } })); break;
+      case "source": exists = !!(await this.prisma.source.findUnique({ where: { id }, select: { id: true } })); break;
+    }
+    if (!exists) throw new Error(`${type} "${id}" not found.`);
+  }
+
   async linkObjects(command: LinkObjectsCommand): Promise<RelationshipRecord> {
+    await Promise.all([
+      this.validateObjectExists(command.fromType, command.fromId),
+      this.validateObjectExists(command.toType, command.toId)
+    ]);
+
     const relationship = await this.prisma.relationship.create({
       data: {
         fromType: command.fromType,
@@ -966,43 +981,45 @@ export class PrismaContextRepository implements ContextRepository {
   }
 
   async createThread(command: CreateThreadCommand): Promise<ThreadRecord> {
-    const slug = await this.uniqueThreadSlug(command.title);
-    const thread = await this.prisma.$transaction(async (tx) => {
-      const created = await tx.thread.create({
-        data: {
-          slug,
-          title: command.title,
-          description: command.description,
-          status: command.status,
-          metadata: command.metadata as Prisma.InputJsonValue
-        }
-      });
-
-      const uniqueEntryIds = [...new Set(command.entryIds)];
-      for (const [index, entryId] of uniqueEntryIds.entries()) {
-        await tx.entryThread.create({
+    const baseSlug = slugifyName(command.title) || "thread";
+    const thread = await this.retryOnSlugConflict(baseSlug, (slug) =>
+      this.prisma.$transaction(async (tx) => {
+        const created = await tx.thread.create({
           data: {
-            entryId,
-            threadId: created.id,
-            position: index + 1
+            slug,
+            title: command.title,
+            description: command.description,
+            status: command.status,
+            metadata: command.metadata as Prisma.InputJsonValue
           }
         });
-      }
 
-      return tx.thread.findUniqueOrThrow({
-        where: { id: created.id },
-        include: {
-          entries: {
-            include: {
-              entry: {
-                include: entryInclude
-              }
-            },
-            orderBy: { position: "asc" }
-          }
+        const uniqueEntryIds = [...new Set(command.entryIds)];
+        for (const [index, entryId] of uniqueEntryIds.entries()) {
+          await tx.entryThread.create({
+            data: {
+              entryId,
+              threadId: created.id,
+              position: index + 1
+            }
+          });
         }
-      });
-    });
+
+        return tx.thread.findUniqueOrThrow({
+          where: { id: created.id },
+          include: {
+            entries: {
+              include: {
+                entry: {
+                  include: entryInclude
+                }
+              },
+              orderBy: { position: "asc" }
+            }
+          }
+        });
+      })
+    );
 
     return mapThread(
       thread,
@@ -1181,7 +1198,7 @@ export class PrismaContextRepository implements ContextRepository {
         }
       });
 
-      for (const themeId of command.themeIds) {
+      for (const themeId of [...new Set(command.themeIds)]) {
         await tx.sourceTheme.create({ data: { sourceId: created.id, themeId } });
       }
 
@@ -1212,7 +1229,7 @@ export class PrismaContextRepository implements ContextRepository {
       });
 
       await tx.sourceTheme.deleteMany({ where: { sourceId: command.id } });
-      for (const themeId of command.themeIds) {
+      for (const themeId of [...new Set(command.themeIds)]) {
         await tx.sourceTheme.create({ data: { sourceId: command.id, themeId } });
       }
 
@@ -1223,7 +1240,12 @@ export class PrismaContextRepository implements ContextRepository {
   }
 
   async deleteSource(id: string): Promise<void> {
-    await this.prisma.source.delete({ where: { id } });
+    await this.prisma.$transaction(async (tx) => {
+      await tx.relationship.deleteMany({
+        where: { OR: [{ fromType: "source", fromId: id }, { toType: "source", toId: id }] }
+      });
+      await tx.source.delete({ where: { id } });
+    });
   }
 
   async listSources(query?: Partial<ListSourcesQuery>): Promise<SourceSummary[]> {
@@ -1233,6 +1255,7 @@ export class PrismaContextRepository implements ContextRepository {
     if (query?.status) where.status = query.status;
     if (query?.themeId) where.themes = { some: { themeId: query.themeId } };
 
+    let searchIds: string[] | undefined;
     if (query?.search) {
       const rows = await this.prisma.$queryRaw<{ id: string }[]>`
         SELECT "id"
@@ -1245,7 +1268,8 @@ export class PrismaContextRepository implements ContextRepository {
         ) DESC
         LIMIT ${query.limit ?? 50}
       `;
-      where.id = { in: rows.map((r) => r.id) };
+      searchIds = rows.map((r) => r.id);
+      where.id = { in: searchIds };
     }
 
     const sources = await this.prisma.source.findMany({
@@ -1254,6 +1278,13 @@ export class PrismaContextRepository implements ContextRepository {
       orderBy: [{ title: "asc" }],
       take: query?.limit ?? 50
     });
+
+    if (searchIds) {
+      const rank = new Map(searchIds.map((id, i) => [id, i]));
+      return sources
+        .sort((a, b) => (rank.get(a.id) ?? Infinity) - (rank.get(b.id) ?? Infinity))
+        .map(mapSourceSummary);
+    }
 
     return sources.map(mapSourceSummary);
   }
