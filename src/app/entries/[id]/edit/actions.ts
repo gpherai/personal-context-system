@@ -10,6 +10,7 @@ import {
   type MutationState
 } from "@/application/context-service";
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
+import { isValidId } from "@/lib/format";
 
 export { initialMutationState };
 
@@ -18,6 +19,10 @@ export async function updateEntryAction(
   _previousState: MutationState,
   formData: FormData
 ): Promise<MutationState> {
+  if (!isValidId(id)) {
+    return { status: "error", message: "Invalid entry id." };
+  }
+
   const result = await updateEntryFromForm(id, formData, createPrismaContextRepository()).catch((error: unknown) => {
     if (isRecoverableReadError(error)) {
       return { ok: false as const, state: databaseMutationErrorState() };

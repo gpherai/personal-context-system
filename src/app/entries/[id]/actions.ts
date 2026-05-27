@@ -14,6 +14,7 @@ import {
 } from "@/application/context-service";
 import { databaseMutationErrorState, isRecoverableReadError } from "@/application/errors";
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
+import { isValidId } from "@/lib/format";
 
 export { initialMutationState };
 
@@ -29,6 +30,10 @@ export async function addReferenceAction(
   _previousState: MutationState,
   formData: FormData
 ): Promise<MutationState> {
+  if (!isValidId(entryId)) {
+    return { status: "error", message: "Invalid entry id." };
+  }
+
   const result = await createReferenceFromForm(entryId, formData, createPrismaContextRepository()).catch(
     (error: unknown) => {
       if (isRecoverableReadError(error)) {
@@ -52,6 +57,10 @@ export async function addAttachmentAction(
   _previousState: MutationState,
   formData: FormData
 ): Promise<MutationState> {
+  if (!isValidId(entryId)) {
+    return { status: "error", message: "Invalid entry id." };
+  }
+
   const result = await createAttachmentFromForm(entryId, formData, createPrismaContextRepository()).catch(
     (error: unknown) => {
       if (isRecoverableReadError(error)) {
@@ -75,6 +84,10 @@ export async function linkFromEntryAction(
   _previousState: MutationState,
   formData: FormData
 ): Promise<MutationState> {
+  if (!isValidId(entryId)) {
+    return { status: "error", message: "Invalid entry id." };
+  }
+
   formData.set("fromType", "entry");
   formData.set("fromId", entryId);
 
@@ -99,6 +112,10 @@ export async function promoteEntryToQuestionAction(
   _previousState: MutationState
 ): Promise<MutationState> {
   void _previousState;
+
+  if (!isValidId(entryId)) {
+    return { status: "error", message: "Invalid entry id." };
+  }
 
   const result = await promoteEntryToQuestion(entryId, createPrismaContextRepository()).catch((error: unknown) => {
     if (isRecoverableReadError(error)) {
@@ -126,6 +143,10 @@ export async function createThreadWithEntryAction(
   _previousState: MutationState,
   formData: FormData
 ): Promise<MutationState> {
+  if (!isValidId(entryId)) {
+    return { status: "error", message: "Invalid entry id." };
+  }
+
   formData.set("entryIds", entryId);
 
   const result = await createThreadFromForm(formData, createPrismaContextRepository()).catch((error: unknown) => {

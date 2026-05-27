@@ -89,7 +89,7 @@ export default async function CabinetPage() {
                     className="flex items-center justify-between rounded-md px-2 py-2 text-sm transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   >
                     <span>{theme.name}</span>
-                    <Badge>{theme.count ?? 0}</Badge>
+                    <Badge>{theme.entryCount ?? 0}</Badge>
                   </Link>
                 ))
               ) : (
@@ -112,7 +112,7 @@ export default async function CabinetPage() {
                     className="flex items-center justify-between rounded-md px-2 py-2 text-sm transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   >
                     <span>{project.name}</span>
-                    <Badge>{project.count ?? 0}</Badge>
+                    <Badge>{project.entryCount ?? 0}</Badge>
                   </Link>
                 ))
               ) : (

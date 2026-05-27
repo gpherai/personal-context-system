@@ -127,7 +127,7 @@ export default async function DashboardPage() {
                   >
                     <span>{project.name}</span>
                     <span className="text-xs tabular-nums text-muted-foreground">
-                      {project.count ?? 0}
+                      {project.entryCount ?? 0}
                     </span>
                   </Link>
                 ))

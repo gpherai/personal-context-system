@@ -5,10 +5,9 @@ import { useActionState, useState } from "react";
 import { initialMutationState } from "@/application/action-states";
 import { TaxonomyPicker } from "@/components/taxonomy-picker";
 import { Button } from "@/components/ui/button";
-import { sourceTypes } from "@/domain/context";
+import { sourceTypes, type SourceType, type RecordStatus, type SourceMetadata } from "@/domain/context";
 import { sourceTypeDetails } from "@/domain/taxonomy";
 import type { MutationState } from "@/application/action-states";
-import type { SourceRecord } from "@/repositories/context-repository";
 
 interface Theme {
   id: string;
@@ -16,10 +15,19 @@ interface Theme {
   slug: string;
 }
 
+interface SourceFormInitial {
+  type?: SourceType;
+  status?: RecordStatus;
+  title?: string;
+  description?: string;
+  metadata?: SourceMetadata;
+  themes?: { id: string }[];
+}
+
 interface SourceFormProps {
   action: (state: MutationState, formData: FormData) => Promise<MutationState>;
   themes: Theme[];
-  initial?: Partial<SourceRecord>;
+  initial?: SourceFormInitial;
   isEdit?: boolean;
 }
 

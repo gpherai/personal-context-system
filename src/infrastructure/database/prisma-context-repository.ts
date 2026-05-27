@@ -33,6 +33,7 @@ import type {
   DashboardOverview,
   EntryRecord,
   GraphSnapshot,
+  JsonObject,
   NamedRecord,
   NamedRecordContext,
   QuestionContext,
@@ -148,12 +149,16 @@ function mapSourceSummary(source: Omit<SourceWithRelations, "entries"> & { entri
   };
 }
 
-function asRecord(value: unknown): Record<string, unknown> {
-  if (value && typeof value === "object" && !Array.isArray(value)) {
-    return value as Record<string, unknown>;
+function asRecord(value: unknown): JsonObject {
+  if (value === null || value === undefined) {
+    return {};
   }
 
-  return {};
+  if (typeof value === "object" && !Array.isArray(value)) {
+    return value as JsonObject;
+  }
+
+  throw new Error(`Expected JSON object, got ${Array.isArray(value) ? "array" : typeof value}`);
 }
 
 function optional<T>(value: T | null | undefined): T | undefined {
@@ -166,6 +171,7 @@ function mapReference(reference: {
   title: string;
   url: string | null;
   description: string | null;
+  metadata: unknown;
   createdAt: Date;
   updatedAt: Date;
 }): ReferenceRecord {
@@ -175,6 +181,7 @@ function mapReference(reference: {
     title: reference.title,
     url: optional(reference.url),
     description: optional(reference.description),
+    metadata: asRecord(reference.metadata),
     createdAt: reference.createdAt,
     updatedAt: reference.updatedAt
   };
@@ -188,6 +195,7 @@ function mapAttachment(attachment: {
   sizeBytes: bigint | null;
   title: string | null;
   description: string | null;
+  metadata: unknown;
   createdAt: Date;
   updatedAt: Date;
 }): AttachmentRecord {
@@ -199,6 +207,7 @@ function mapAttachment(attachment: {
     sizeBytes: attachment.sizeBytes?.toString(),
     title: optional(attachment.title),
     description: optional(attachment.description),
+    metadata: asRecord(attachment.metadata),
     createdAt: attachment.createdAt,
     updatedAt: attachment.updatedAt
   };
@@ -304,7 +313,7 @@ function mapNamed(record: {
     slug: record.slug,
     name: record.name,
     description: optional(record.description),
-    count: record._count?.entries,
+    entryCount: record._count?.entries,
     metadata: record.metadata ? asRecord(record.metadata) : undefined
   };
 }
@@ -344,18 +353,22 @@ function mapSavedFilter(filter: {
 }): SavedFilterRecord {
   const parsedParams = savedFilterParamsSchema.safeParse(asRecord(filter.params));
 
+  if (!parsedParams.success) {
+    throw new Error(`Corrupt saved filter params for filter "${filter.id}": ${parsedParams.error.message}`);
+  }
+
   return {
     id: filter.id,
     slug: filter.slug,
     name: filter.name,
     description: optional(filter.description),
-    params: parsedParams.success ? parsedParams.data : {},
+    params: parsedParams.data,
     createdAt: filter.createdAt,
     updatedAt: filter.updatedAt
   };
 }
 
-function entryWhere(query?: Partial<ListEntriesQuery>, searchIds?: string[]): Prisma.EntryWhereInput {
+function entryWhere(query?: ListEntriesQuery, searchIds?: string[]): Prisma.EntryWhereInput {
   const where: Prisma.EntryWhereInput = {};
 
   if (query?.type) {
@@ -601,13 +614,14 @@ export class PrismaContextRepository implements ContextRepository {
     return mapEntry(entry, relationships);
   }
 
-  async listEntries(query: Partial<ListEntriesQuery> = {}): Promise<EntryRecord[]> {
-    const searchIds = query.search ? await this.searchEntryIds(query.search, 200) : undefined;
+  async listEntries(query?: ListEntriesQuery): Promise<EntryRecord[]> {
+    const limit = Math.min(query?.limit ?? 50, 200);
+    const searchIds = query?.search ? await this.searchEntryIds(query.search, 200) : undefined;
     const entries = await this.prisma.entry.findMany({
       where: entryWhere(query, searchIds),
       include: entryInclude,
       orderBy: [{ capturedAt: "desc" }, { createdAt: "desc" }],
-      take: query.limit ?? 50
+      take: limit
     });
 
     if (searchIds) {
@@ -1248,7 +1262,8 @@ export class PrismaContextRepository implements ContextRepository {
     });
   }
 
-  async listSources(query?: Partial<ListSourcesQuery>): Promise<SourceSummary[]> {
+  async listSources(query?: ListSourcesQuery): Promise<SourceSummary[]> {
+    const limit = Math.min(query?.limit ?? 50, 200);
     const where: Prisma.SourceWhereInput = {};
 
     if (query?.type) where.type = query.type;
@@ -1266,7 +1281,7 @@ export class PrismaContextRepository implements ContextRepository {
           to_tsvector('simple', coalesce("title", '') || ' ' || coalesce("searchText", '')),
           plainto_tsquery('simple', ${query.search})
         ) DESC
-        LIMIT ${query.limit ?? 50}
+        LIMIT ${limit}
       `;
       searchIds = rows.map((r) => r.id);
       where.id = { in: searchIds };
@@ -1276,7 +1291,7 @@ export class PrismaContextRepository implements ContextRepository {
       where,
       include: { themes: { include: { theme: true } } },
       orderBy: [{ title: "asc" }],
-      take: query?.limit ?? 50
+      take: limit
     });
 
     if (searchIds) {

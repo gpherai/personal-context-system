@@ -25,6 +25,11 @@ import type {
   UpdateSourceCommand
 } from "@/domain/context";
 
+export type JsonPrimitive = string | number | boolean | null;
+export type JsonObject = { [key: string]: JsonValue };
+export type JsonArray = JsonValue[];
+export type JsonValue = JsonPrimitive | JsonObject | JsonArray;
+
 export interface LinkedName {
   id: string;
   slug: string;
@@ -49,6 +54,7 @@ export interface ReferenceRecord {
   title: string;
   url?: string;
   description?: string;
+  metadata: JsonObject;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -61,6 +67,7 @@ export interface AttachmentRecord {
   sizeBytes?: string;
   title?: string;
   description?: string;
+  metadata: JsonObject;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -125,7 +132,7 @@ export interface EntryRecord {
   capturedAt: Date;
   createdAt: Date;
   updatedAt: Date;
-  metadata: Record<string, unknown>;
+  metadata: JsonObject;
   themes: LinkedName[];
   projects: LinkedName[];
   questions: LinkedQuestion[];
@@ -152,8 +159,8 @@ export interface NamedRecord {
   slug: string;
   name: string;
   description?: string;
-  count?: number;
-  metadata?: Record<string, unknown>;
+  entryCount?: number;
+  metadata?: JsonObject;
 }
 
 export interface DashboardOverview {
@@ -239,7 +246,7 @@ export interface GraphSnapshot {
 export interface ContextRepository {
   createEntry(command: CreateEntryCommand): Promise<EntryRecord>;
   updateEntry(command: UpdateEntryCommand): Promise<EntryRecord>;
-  listEntries(query?: Partial<ListEntriesQuery>): Promise<EntryRecord[]>;
+  listEntries(query?: ListEntriesQuery): Promise<EntryRecord[]>;
   getEntry(id: string): Promise<EntryRecord | null>;
   getThemeBySlug(slug: string): Promise<NamedRecordContext | null>;
   getProjectBySlug(slug: string): Promise<NamedRecordContext | null>;
@@ -262,7 +269,7 @@ export interface ContextRepository {
   createSource(command: CreateSourceCommand): Promise<SourceRecord>;
   updateSource(command: UpdateSourceCommand): Promise<SourceRecord>;
   deleteSource(id: string): Promise<void>;
-  listSources(query?: Partial<ListSourcesQuery>): Promise<SourceSummary[]>;
+  listSources(query?: ListSourcesQuery): Promise<SourceSummary[]>;
   getSource(id: string): Promise<SourceRecord | null>;
   linkEntryToSource(entryId: string, sourceId: string): Promise<void>;
   unlinkEntryFromSource(entryId: string, sourceId: string): Promise<void>;

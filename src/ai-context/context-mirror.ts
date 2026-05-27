@@ -69,7 +69,7 @@ function slugSectionEntries(entries: EntryRecord[], kind: "project" | "theme", s
 
 function namedList(title: string, records: NamedRecord[]): string {
   const lines = records.length
-    ? records.map((record) => `- ${record.name} (${record.slug})${record.count !== undefined ? ` - ${record.count} entries` : ""}`)
+    ? records.map((record) => `- ${record.name} (${record.slug})${record.entryCount !== undefined ? ` - ${record.entryCount} entries` : ""}`)
     : ["- None"];
 
   return [`## ${title}`, "", ...lines].join("\n");

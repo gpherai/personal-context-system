@@ -4,12 +4,26 @@ import { useActionState } from "react";
 
 import { EntryTypeField } from "@/components/entry-type-field";
 import { Button } from "@/components/ui/button";
-import { entryStatuses, privacyLevels } from "@/domain/context";
-import type { EntryRecord } from "@/repositories/context-repository";
+import { entryStatuses, privacyLevels, type EntryType, type EntryStatus, type PrivacyLevel } from "@/domain/context";
 
 import { initialMutationState } from "@/application/action-states";
 
 import { updateEntryAction } from "./actions";
+
+interface EditEntryDto {
+  id: string;
+  type: EntryType;
+  status: EntryStatus;
+  privacyLevel: PrivacyLevel;
+  title: string;
+  body: string;
+  summary?: string;
+  source?: string;
+  confidence?: number;
+  occurredAt?: Date;
+  themes: { name: string }[];
+  projects: { name: string }[];
+}
 
 function dateInputValue(value?: Date): string {
   return value ? value.toISOString().slice(0, 10) : "";
@@ -27,7 +41,7 @@ function FieldError({ errors }: { errors?: string[] }) {
   return <p className="mt-1 text-sm text-danger">{errors[0]}</p>;
 }
 
-export function EditEntryForm({ entry }: { entry: EntryRecord }) {
+export function EditEntryForm({ entry }: { entry: EditEntryDto }) {
   const updateEntryWithId = updateEntryAction.bind(null, entry.id);
   const [state, formAction, pending] = useActionState(updateEntryWithId, initialMutationState);
 

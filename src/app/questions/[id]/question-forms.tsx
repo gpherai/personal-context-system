@@ -5,13 +5,19 @@ import { useActionState } from "react";
 import { QuestionStatusField } from "@/components/question-status-field";
 import { RelationshipTargetSelect } from "@/components/relationship-target-select";
 import { Button } from "@/components/ui/button";
-import { relationTypes } from "@/domain/context";
+import { relationTypes, type QuestionStatus } from "@/domain/context";
 import { labelize } from "@/lib/format";
-import type { QuestionContext, RelationshipTarget } from "@/repositories/context-repository";
+import type { RelationshipTarget } from "@/repositories/context-repository";
 
 import { initialMutationState } from "@/application/action-states";
 
 import { linkFromQuestionAction, updateQuestionAction } from "./actions";
+
+interface QuestionUpdateDto {
+  id: string;
+  status: QuestionStatus;
+  summary?: string;
+}
 
 function Message({ state }: { state: typeof initialMutationState }) {
   if (!state.message) {
@@ -21,7 +27,7 @@ function Message({ state }: { state: typeof initialMutationState }) {
   return <p className={state.status === "error" ? "text-sm text-danger" : "text-sm text-accent"}>{state.message}</p>;
 }
 
-export function QuestionUpdateForm({ question }: { question: QuestionContext }) {
+export function QuestionUpdateForm({ question }: { question: QuestionUpdateDto }) {
   const actionWithQuestion = updateQuestionAction.bind(null, question.id);
   const [state, action, pending] = useActionState(actionWithQuestion, initialMutationState);
 

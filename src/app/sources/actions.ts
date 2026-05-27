@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { captureSource, deleteSource, updateSourceFromForm, type MutationState } from "@/application/context-service";
 import { databaseMutationErrorState, isRecoverableReadError } from "@/application/errors";
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
+import { isValidId } from "@/lib/format";
 
 export async function createSourceAction(
   _previousState: MutationState,
@@ -33,6 +34,10 @@ export async function updateSourceAction(
   _previousState: MutationState,
   formData: FormData
 ): Promise<MutationState> {
+  if (!isValidId(id)) {
+    return { status: "error", message: "Invalid source id." };
+  }
+
   const result = await updateSourceFromForm(id, formData, createPrismaContextRepository()).catch((error: unknown) => {
     if (isRecoverableReadError(error)) {
       return { ok: false as const, state: databaseMutationErrorState() };
@@ -52,6 +57,10 @@ export async function updateSourceAction(
 }
 
 export async function deleteSourceAction(id: string): Promise<MutationState> {
+  if (!isValidId(id)) {
+    return { status: "error", message: "Invalid source id." };
+  }
+
   const result = await deleteSource(id, createPrismaContextRepository()).catch((error: unknown) => {
     if (isRecoverableReadError(error)) {
       return { ok: false as const, state: databaseMutationErrorState() };
