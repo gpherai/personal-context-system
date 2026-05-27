@@ -10,7 +10,7 @@ export default function CapturePage() {
           Create a durable entry and optionally attach it to themes or projects.
         </p>
       </header>
-      <section className="mt-6 rounded-lg border border-border bg-surface p-5 shadow-sm">
+      <section aria-label="Capture form" className="mt-6 rounded-lg border border-border bg-surface p-5 shadow-sm">
         <CaptureForm />
       </section>
     </div>

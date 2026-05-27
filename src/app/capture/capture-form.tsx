@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useId } from "react";
 
 import { initialCaptureEntryState } from "@/application/action-states";
 import { EntryTypeField } from "@/components/entry-type-field";
@@ -9,18 +9,45 @@ import { Button } from "@/components/ui/button";
 
 import { createEntryAction } from "./actions";
 
-function FieldError({ errors }: { errors?: string[] }) {
+function FieldError({ id, errors }: { id?: string; errors?: string[] }) {
   if (!errors?.length) return null;
-  return <p className="mt-1 text-xs text-danger">{errors[0]}</p>;
+  return (
+    <p id={id} role="alert" className="mt-1 text-xs text-danger">
+      {errors[0]}
+    </p>
+  );
 }
 
 export function CaptureForm() {
   const [state, formAction, pending] = useActionState(createEntryAction, initialCaptureEntryState);
+  const formId = useId();
+
+  const ids = {
+    title:         `${formId}-title`,
+    body:          `${formId}-body`,
+    titleError:    `${formId}-title-error`,
+    bodyError:     `${formId}-body-error`,
+    themes:        `${formId}-themes`,
+    themesHint:    `${formId}-themes-hint`,
+    projects:      `${formId}-projects`,
+    projectsHint:  `${formId}-projects-hint`,
+    confidence:    `${formId}-confidence`,
+    confidenceHint:`${formId}-confidence-hint`,
+  };
+
+  useEffect(() => {
+    if (state.status === "error") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [state.status, state.message]);
 
   return (
     <form action={formAction} className="grid gap-5">
       {state.status === "error" && (
-        <div className="rounded-lg border border-danger/30 bg-danger/8 px-4 py-3 text-sm text-danger">
+        <div
+          role="alert"
+          className="rounded-lg border border-danger/30 bg-danger/8 px-4 py-3 text-sm text-danger"
+        >
           {state.message ?? "The entry could not be saved."}
         </div>
       )}
@@ -47,22 +74,34 @@ export function CaptureForm() {
         </label>
       </div>
 
-      <label className="grid gap-1.5 text-sm font-medium">
-        Title
-        <input className="field-input" name="title" placeholder="A concise title" />
-        <FieldError errors={state.fieldErrors?.title} />
-      </label>
+      <div className="grid gap-1.5">
+        <label htmlFor={ids.title} className="text-sm font-medium">Title</label>
+        <input
+          id={ids.title}
+          className="field-input"
+          name="title"
+          placeholder="Leave empty to auto-generate from body"
+          aria-describedby={state.fieldErrors?.title ? ids.titleError : undefined}
+          aria-invalid={!!state.fieldErrors?.title || undefined}
+        />
+        <FieldError id={ids.titleError} errors={state.fieldErrors?.title} />
+      </div>
 
-      <label className="grid gap-1.5 text-sm font-medium">
-        Body
+      <div className="grid gap-1.5">
+        <label htmlFor={ids.body} className="text-sm font-medium">
+          Body <span aria-hidden="true" className="text-danger">*</span>
+        </label>
         <textarea
+          id={ids.body}
           className="field-textarea min-h-44"
           name="body"
           placeholder="Capture the thought, observation, question, or decision."
           required
+          aria-describedby={state.fieldErrors?.body ? ids.bodyError : undefined}
+          aria-invalid={!!state.fieldErrors?.body || undefined}
         />
-        <FieldError errors={state.fieldErrors?.body} />
-      </label>
+        <FieldError id={ids.bodyError} errors={state.fieldErrors?.body} />
+      </div>
 
       <label className="grid gap-1.5 text-sm font-medium">
         Summary
@@ -74,28 +113,43 @@ export function CaptureForm() {
       </label>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <label className="grid gap-1.5 text-sm font-medium">
-          Themes
+        <div className="grid gap-1.5">
+          <label htmlFor={ids.themes} className="text-sm font-medium">Themes</label>
           <input
+            id={ids.themes}
             className="field-input"
             name="themes"
             placeholder="AI, architecture, daily use"
+            aria-describedby={ids.themesHint}
           />
-        </label>
-        <label className="grid gap-1.5 text-sm font-medium">
-          Projects
+          <p id={ids.themesHint} className="text-xs leading-5 text-muted-foreground">
+            Comma-separated. New themes are created automatically.
+          </p>
+        </div>
+        <div className="grid gap-1.5">
+          <label htmlFor={ids.projects} className="text-sm font-medium">Projects</label>
           <input
+            id={ids.projects}
             className="field-input"
             name="projects"
             placeholder="personal-context-system"
+            aria-describedby={ids.projectsHint}
           />
-        </label>
+          <p id={ids.projectsHint} className="text-xs leading-5 text-muted-foreground">
+            Comma-separated. New projects are created automatically.
+          </p>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
         <label className="grid gap-1.5 text-sm font-medium">
           Occurred at
-          <input className="field-input" name="occurredAt" type="date" />
+          <input
+            className="field-input"
+            name="occurredAt"
+            type="date"
+            max={new Date().toISOString().split("T")[0]}
+          />
         </label>
         <label className="grid gap-1.5 text-sm font-medium">
           Source
@@ -105,9 +159,13 @@ export function CaptureForm() {
             placeholder="self, Codex, article, conversation"
           />
         </label>
-        <label className="grid gap-1.5 text-sm font-medium">
-          Confidence
+        <div className="grid gap-1.5">
+          <label htmlFor={ids.confidence} className="text-sm font-medium">
+            Confidence{" "}
+            <span className="font-normal text-muted-foreground">(0–1)</span>
+          </label>
           <input
+            id={ids.confidence}
             className="field-input"
             inputMode="decimal"
             max="1"
@@ -116,8 +174,12 @@ export function CaptureForm() {
             placeholder="0.8"
             step="0.1"
             type="number"
+            aria-describedby={ids.confidenceHint}
           />
-        </label>
+          <p id={ids.confidenceHint} className="text-xs leading-5 text-muted-foreground">
+            Certainty score from 0 (guess) to 1 (verified).
+          </p>
+        </div>
       </div>
 
       <div className="flex justify-end border-t border-border pt-5">
