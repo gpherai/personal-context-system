@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { databaseMutationErrorState, isRecoverableReadError } from "@/application/errors";
 import {
   initialMutationState,
   updateEntryFromForm,
@@ -23,13 +22,7 @@ export async function updateEntryAction(
     return { status: "error", message: "Invalid entry id." };
   }
 
-  const result = await updateEntryFromForm(id, formData, createPrismaContextRepository()).catch((error: unknown) => {
-    if (isRecoverableReadError(error)) {
-      return { ok: false as const, state: databaseMutationErrorState() };
-    }
-
-    throw error;
-  });
+  const result = await updateEntryFromForm(id, formData, createPrismaContextRepository());
 
   if (!result.ok) {
     return result.state;

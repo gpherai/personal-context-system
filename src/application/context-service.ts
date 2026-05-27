@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { rebuildContextMirror } from "@/infrastructure/files/context-mirror-writer";
 
+import { databaseMutationErrorState, isRecoverableReadError } from "./errors";
 import {
   createAttachmentCommandSchema,
   createEntryCommandSchema,
@@ -178,8 +179,10 @@ export async function captureEntry(formData: FormData, repository: ContextReposi
     };
   }
 
-  const entry = await repository.createEntry(parsed.data);
-  return { ok: true as const, entry };
+  return withDbErrorHandling(async () => {
+    const entry = await repository.createEntry(parsed.data);
+    return { ok: true as const, entry };
+  });
 }
 
 function errorState(message: string, error: z.ZodError): MutationState {
@@ -190,6 +193,19 @@ function errorState(message: string, error: z.ZodError): MutationState {
   };
 }
 
+async function withDbErrorHandling<T extends { ok: true }>(
+  fn: () => Promise<T>
+): Promise<T | { ok: false; state: { status: "error"; message: string } }> {
+  try {
+    return await fn();
+  } catch (error) {
+    if (isRecoverableReadError(error)) {
+      return { ok: false, state: databaseMutationErrorState() };
+    }
+    throw error;
+  }
+}
+
 export async function updateEntryFromForm(id: string, formData: FormData, repository: ContextRepository) {
   const parsed = parseUpdateEntryFormData(id, formData);
 
@@ -197,8 +213,10 @@ export async function updateEntryFromForm(id: string, formData: FormData, reposi
     return { ok: false as const, state: errorState("Check the highlighted fields.", parsed.error) };
   }
 
-  const entry = await repository.updateEntry(parsed.data);
-  return { ok: true as const, entry };
+  return withDbErrorHandling(async () => {
+    const entry = await repository.updateEntry(parsed.data);
+    return { ok: true as const, entry };
+  });
 }
 
 export async function updateQuestionFromForm(id: string, formData: FormData, repository: ContextRepository) {
@@ -208,8 +226,10 @@ export async function updateQuestionFromForm(id: string, formData: FormData, rep
     return { ok: false as const, state: errorState("Check the highlighted fields.", parsed.error) };
   }
 
-  const question = await repository.updateQuestion(parsed.data);
-  return { ok: true as const, question };
+  return withDbErrorHandling(async () => {
+    const question = await repository.updateQuestion(parsed.data);
+    return { ok: true as const, question };
+  });
 }
 
 export async function linkObjectsFromForm(formData: FormData, repository: ContextRepository) {
@@ -219,8 +239,10 @@ export async function linkObjectsFromForm(formData: FormData, repository: Contex
     return { ok: false as const, state: errorState("Check the relationship fields.", parsed.error) };
   }
 
-  const relationship = await repository.linkObjects(parsed.data);
-  return { ok: true as const, relationship };
+  return withDbErrorHandling(async () => {
+    const relationship = await repository.linkObjects(parsed.data);
+    return { ok: true as const, relationship };
+  });
 }
 
 export async function createReferenceFromForm(entryId: string, formData: FormData, repository: ContextRepository) {
@@ -230,8 +252,10 @@ export async function createReferenceFromForm(entryId: string, formData: FormDat
     return { ok: false as const, state: errorState("Check the reference fields.", parsed.error) };
   }
 
-  const reference = await repository.createReference(parsed.data);
-  return { ok: true as const, reference };
+  return withDbErrorHandling(async () => {
+    const reference = await repository.createReference(parsed.data);
+    return { ok: true as const, reference };
+  });
 }
 
 export async function createAttachmentFromForm(entryId: string, formData: FormData, repository: ContextRepository) {
@@ -241,8 +265,10 @@ export async function createAttachmentFromForm(entryId: string, formData: FormDa
     return { ok: false as const, state: errorState("Check the attachment fields.", parsed.error) };
   }
 
-  const attachment = await repository.createAttachment(parsed.data);
-  return { ok: true as const, attachment };
+  return withDbErrorHandling(async () => {
+    const attachment = await repository.createAttachment(parsed.data);
+    return { ok: true as const, attachment };
+  });
 }
 
 export async function createThreadFromForm(formData: FormData, repository: ContextRepository) {
@@ -252,8 +278,10 @@ export async function createThreadFromForm(formData: FormData, repository: Conte
     return { ok: false as const, state: errorState("Check the thread fields.", parsed.error) };
   }
 
-  const thread = await repository.createThread(parsed.data);
-  return { ok: true as const, thread };
+  return withDbErrorHandling(async () => {
+    const thread = await repository.createThread(parsed.data);
+    return { ok: true as const, thread };
+  });
 }
 
 export async function createSavedFilterFromForm(formData: FormData, repository: ContextRepository) {
@@ -263,8 +291,10 @@ export async function createSavedFilterFromForm(formData: FormData, repository: 
     return { ok: false as const, state: errorState("Check the filter fields.", parsed.error) };
   }
 
-  const savedFilter = await repository.createSavedFilter(parsed.data);
-  return { ok: true as const, savedFilter };
+  return withDbErrorHandling(async () => {
+    const savedFilter = await repository.createSavedFilter(parsed.data);
+    return { ok: true as const, savedFilter };
+  });
 }
 
 export async function promoteEntryToQuestion(id: string, repository: ContextRepository) {
@@ -274,34 +304,41 @@ export async function promoteEntryToQuestion(id: string, repository: ContextRepo
     return { ok: false as const, state: errorState("This entry could not be promoted.", parsed.error) };
   }
 
-  const question = await repository.promoteEntryToQuestion(parsed.data);
-  return { ok: true as const, question };
+  return withDbErrorHandling(async () => {
+    const question = await repository.promoteEntryToQuestion(parsed.data);
+    return { ok: true as const, question };
+  });
 }
 
-function buildSourceMetadata(type: string, formData: FormData): Record<string, unknown> {
+function buildRawSourceMetadata(type: string, formData: FormData): Record<string, unknown> {
   const str = (key: string) => parseOptionalString(formStr(formData, key));
   const num = (key: string) => parseOptionalNumber(formStr(formData, key));
-
-  switch (type) {
-    case "video":
-      return { type, url: str("url"), duration: num("duration"), channel: str("channel"), language: str("language") };
-    case "book":
-      return { type, authors: parseNameList(formStr(formData, "authors")), isbn: str("isbn"), year: num("year"), publisher: str("publisher"), language: str("language"), chapters: parseLineList(formStr(formData, "chapters")) };
-    case "post":
-      return { type, url: str("url"), author: str("author"), publishedAt: str("publishedAt") };
-    case "image":
-      return { type, url: str("url"), alt: str("alt"), photographer: str("photographer") };
-    case "sadhana":
-      return { type, tradition: str("tradition"), deity: str("deity"), language: str("language"), format: str("format"), steps: parseLineList(formStr(formData, "steps")), mantras: parseLineList(formStr(formData, "mantras")) };
-    case "upadesha":
-      return { type, teacher: str("teacher"), tradition: str("tradition"), language: str("language"), format: str("format"), chapters: parseLineList(formStr(formData, "chapters")) };
-    case "stotra":
-      return { type, deity: str("deity"), tradition: str("tradition"), language: str("language"), script: str("script"), text: str("text"), mantras: parseLineList(formStr(formData, "mantras")) };
-    case "deity_concept":
-      return { type, tradition: str("tradition"), language: str("language"), aliases: parseNameList(formStr(formData, "aliases")), mantras: parseLineList(formStr(formData, "mantras")), description: str("description") };
-    default:
-      return { type };
-  }
+  return {
+    type,
+    url: str("url"),
+    duration: num("duration"),
+    channel: str("channel"),
+    language: str("language"),
+    authors: parseNameList(formStr(formData, "authors")),
+    isbn: str("isbn"),
+    year: num("year"),
+    publisher: str("publisher"),
+    author: str("author"),
+    publishedAt: str("publishedAt"),
+    alt: str("alt"),
+    photographer: str("photographer"),
+    tradition: str("tradition"),
+    deity: str("deity"),
+    format: str("format"),
+    teacher: str("teacher"),
+    chapters: parseLineList(formStr(formData, "chapters")),
+    steps: parseLineList(formStr(formData, "steps")),
+    mantras: parseLineList(formStr(formData, "mantras")),
+    script: str("script"),
+    text: str("text"),
+    aliases: parseNameList(formStr(formData, "aliases")),
+    description: str("description")
+  };
 }
 
 export function parseCreateSourceFormData(formData: FormData) {
@@ -311,7 +348,7 @@ export function parseCreateSourceFormData(formData: FormData) {
     title: parseOptionalString(formStr(formData, "title")),
     description: parseOptionalString(formStr(formData, "description")),
     status: parseOptionalString(formStr(formData, "status")) ?? "active",
-    metadata: buildSourceMetadata(type, formData),
+    metadata: buildRawSourceMetadata(type, formData),
     themeIds: parseIdList(formStr(formData, "themeIds"))
   });
 }
@@ -323,7 +360,7 @@ export function parseUpdateSourceFormData(id: string, formData: FormData) {
     title: parseOptionalString(formStr(formData, "title")),
     description: parseOptionalString(formStr(formData, "description")),
     status: parseOptionalString(formStr(formData, "status")),
-    metadata: buildSourceMetadata(type, formData),
+    metadata: buildRawSourceMetadata(type, formData),
     themeIds: parseIdList(formStr(formData, "themeIds"))
   });
 }
@@ -335,8 +372,10 @@ export async function captureSource(formData: FormData, repository: ContextRepos
     return { ok: false as const, state: errorState("Check the highlighted fields.", parsed.error) };
   }
 
-  const source = await repository.createSource(parsed.data);
-  return { ok: true as const, source };
+  return withDbErrorHandling(async () => {
+    const source = await repository.createSource(parsed.data);
+    return { ok: true as const, source };
+  });
 }
 
 export async function updateSourceFromForm(id: string, formData: FormData, repository: ContextRepository) {
@@ -346,8 +385,10 @@ export async function updateSourceFromForm(id: string, formData: FormData, repos
     return { ok: false as const, state: errorState("Check the highlighted fields.", parsed.error) };
   }
 
-  const source = await repository.updateSource(parsed.data);
-  return { ok: true as const, source };
+  return withDbErrorHandling(async () => {
+    const source = await repository.updateSource(parsed.data);
+    return { ok: true as const, source };
+  });
 }
 
 export async function deleteSource(id: string, repository: ContextRepository) {
@@ -357,8 +398,10 @@ export async function deleteSource(id: string, repository: ContextRepository) {
     return { ok: false as const, state: errorState("Invalid source id.", parsed.error) };
   }
 
-  await repository.deleteSource(parsed.data.id);
-  return { ok: true as const };
+  return withDbErrorHandling(async () => {
+    await repository.deleteSource(parsed.data.id);
+    return { ok: true as const };
+  });
 }
 
 const laxListSourcesQuerySchema = listSourcesQuerySchema.extend({

@@ -12,7 +12,6 @@ import {
   promoteEntryToQuestion,
   type MutationState
 } from "@/application/context-service";
-import { databaseMutationErrorState, isRecoverableReadError } from "@/application/errors";
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
 import { isValidId } from "@/lib/format";
 
@@ -34,15 +33,7 @@ export async function addReferenceAction(
     return { status: "error", message: "Invalid entry id." };
   }
 
-  const result = await createReferenceFromForm(entryId, formData, createPrismaContextRepository()).catch(
-    (error: unknown) => {
-      if (isRecoverableReadError(error)) {
-        return { ok: false as const, state: databaseMutationErrorState() };
-      }
-
-      throw error;
-    }
-  );
+  const result = await createReferenceFromForm(entryId, formData, createPrismaContextRepository());
 
   if (!result.ok) {
     return result.state;
@@ -61,15 +52,7 @@ export async function addAttachmentAction(
     return { status: "error", message: "Invalid entry id." };
   }
 
-  const result = await createAttachmentFromForm(entryId, formData, createPrismaContextRepository()).catch(
-    (error: unknown) => {
-      if (isRecoverableReadError(error)) {
-        return { ok: false as const, state: databaseMutationErrorState() };
-      }
-
-      throw error;
-    }
-  );
+  const result = await createAttachmentFromForm(entryId, formData, createPrismaContextRepository());
 
   if (!result.ok) {
     return result.state;
@@ -91,13 +74,7 @@ export async function linkFromEntryAction(
   formData.set("fromType", "entry");
   formData.set("fromId", entryId);
 
-  const result = await linkObjectsFromForm(formData, createPrismaContextRepository()).catch((error: unknown) => {
-    if (isRecoverableReadError(error)) {
-      return { ok: false as const, state: databaseMutationErrorState() };
-    }
-
-    throw error;
-  });
+  const result = await linkObjectsFromForm(formData, createPrismaContextRepository());
 
   if (!result.ok) {
     return result.state;
@@ -117,13 +94,7 @@ export async function promoteEntryToQuestionAction(
     return { status: "error", message: "Invalid entry id." };
   }
 
-  const result = await promoteEntryToQuestion(entryId, createPrismaContextRepository()).catch((error: unknown) => {
-    if (isRecoverableReadError(error)) {
-      return { ok: false as const, state: databaseMutationErrorState() };
-    }
-
-    throw error;
-  });
+  const result = await promoteEntryToQuestion(entryId, createPrismaContextRepository());
 
   if (!result.ok) {
     return result.state;
@@ -149,13 +120,7 @@ export async function createThreadWithEntryAction(
 
   formData.set("entryIds", entryId);
 
-  const result = await createThreadFromForm(formData, createPrismaContextRepository()).catch((error: unknown) => {
-    if (isRecoverableReadError(error)) {
-      return { ok: false as const, state: databaseMutationErrorState() };
-    }
-
-    throw error;
-  });
+  const result = await createThreadFromForm(formData, createPrismaContextRepository());
 
   if (!result.ok) {
     return result.state;

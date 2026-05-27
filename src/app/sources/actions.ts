@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { captureSource, deleteSource, updateSourceFromForm, type MutationState } from "@/application/context-service";
-import { databaseMutationErrorState, isRecoverableReadError } from "@/application/errors";
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
 import { isValidId } from "@/lib/format";
 
@@ -12,13 +11,7 @@ export async function createSourceAction(
   _previousState: MutationState,
   formData: FormData
 ): Promise<MutationState> {
-  const result = await captureSource(formData, createPrismaContextRepository()).catch((error: unknown) => {
-    if (isRecoverableReadError(error)) {
-      return { ok: false as const, state: databaseMutationErrorState() };
-    }
-
-    throw error;
-  });
+  const result = await captureSource(formData, createPrismaContextRepository());
 
   if (!result.ok) {
     return result.state;
@@ -38,13 +31,7 @@ export async function updateSourceAction(
     return { status: "error", message: "Invalid source id." };
   }
 
-  const result = await updateSourceFromForm(id, formData, createPrismaContextRepository()).catch((error: unknown) => {
-    if (isRecoverableReadError(error)) {
-      return { ok: false as const, state: databaseMutationErrorState() };
-    }
-
-    throw error;
-  });
+  const result = await updateSourceFromForm(id, formData, createPrismaContextRepository());
 
   if (!result.ok) {
     return result.state;
@@ -61,13 +48,7 @@ export async function deleteSourceAction(id: string): Promise<MutationState> {
     return { status: "error", message: "Invalid source id." };
   }
 
-  const result = await deleteSource(id, createPrismaContextRepository()).catch((error: unknown) => {
-    if (isRecoverableReadError(error)) {
-      return { ok: false as const, state: databaseMutationErrorState() };
-    }
-
-    throw error;
-  });
+  const result = await deleteSource(id, createPrismaContextRepository());
 
   if (!result.ok) {
     return result.state;

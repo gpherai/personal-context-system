@@ -8,7 +8,6 @@ import {
   updateQuestionFromForm,
   type MutationState
 } from "@/application/context-service";
-import { databaseMutationErrorState, isRecoverableReadError } from "@/application/errors";
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
 import { isValidId } from "@/lib/format";
 
@@ -23,15 +22,7 @@ export async function updateQuestionAction(
     return { status: "error", message: "Invalid question id." };
   }
 
-  const result = await updateQuestionFromForm(questionId, formData, createPrismaContextRepository()).catch(
-    (error: unknown) => {
-      if (isRecoverableReadError(error)) {
-        return { ok: false as const, state: databaseMutationErrorState() };
-      }
-
-      throw error;
-    }
-  );
+  const result = await updateQuestionFromForm(questionId, formData, createPrismaContextRepository());
 
   if (!result.ok) {
     return result.state;
@@ -55,13 +46,7 @@ export async function linkFromQuestionAction(
   formData.set("fromType", "question");
   formData.set("fromId", questionId);
 
-  const result = await linkObjectsFromForm(formData, createPrismaContextRepository()).catch((error: unknown) => {
-    if (isRecoverableReadError(error)) {
-      return { ok: false as const, state: databaseMutationErrorState() };
-    }
-
-    throw error;
-  });
+  const result = await linkObjectsFromForm(formData, createPrismaContextRepository());
 
   if (!result.ok) {
     return result.state;
