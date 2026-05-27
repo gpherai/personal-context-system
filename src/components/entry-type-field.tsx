@@ -7,17 +7,14 @@ import { entryTypeDetails } from "@/domain/taxonomy";
 
 export function EntryTypeField({ defaultValue = "observation" }: { defaultValue?: EntryType }) {
   const [value, setValue] = useState<EntryType>(defaultValue);
-  const baseId = useId();
-  const selectId = `${baseId}-select`;
-  const descriptionId = `${baseId}-desc`;
+  const selectId = useId();
   const selectedDetail = entryTypeDetails[value];
 
   return (
-    <div className="grid gap-1.5">
-      <label htmlFor={selectId} className="text-sm font-medium">Type</label>
+    <label htmlFor={selectId} className="grid gap-1.5 text-sm font-medium">
+      Type
       <select
         id={selectId}
-        aria-describedby={descriptionId}
         className="field-select"
         name="type"
         value={value}
@@ -29,9 +26,9 @@ export function EntryTypeField({ defaultValue = "observation" }: { defaultValue?
           </option>
         ))}
       </select>
-      <p id={descriptionId} className="text-xs leading-5 text-muted-foreground">
+      <span className="block text-xs leading-5 font-normal text-muted-foreground">
         {selectedDetail.description}
-      </p>
-    </div>
+      </span>
+    </label>
   );
 }
