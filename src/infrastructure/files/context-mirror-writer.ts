@@ -1,10 +1,12 @@
 import "server-only";
 
 import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
-import { dirname, join, normalize, resolve, sep } from "node:path";
+import { dirname, join, resolve, sep } from "node:path";
 
-import { buildContextMirror } from "@/ai-context/context-mirror";
-import { getContextMirrorSnapshot } from "@/application/query-service";
+interface MirrorBuildInput {
+  generatedAt: string;
+  files: Array<{ path: string; contents: string }>;
+}
 
 function assertSafeOutputDir(outputDir: string): void {
   const resolved = resolve(outputDir);
@@ -24,11 +26,11 @@ function assertSafeFilePath(outputDir: string, filePath: string): void {
   }
 }
 
-export async function rebuildContextMirror(outputDir = process.env.CONTEXT_MIRROR_DIR ?? "data/context-mirror") {
+export async function writeContextMirror(
+  build: MirrorBuildInput,
+  outputDir = process.env.CONTEXT_MIRROR_DIR ?? "data/context-mirror"
+) {
   assertSafeOutputDir(outputDir);
-
-  const snapshot = await getContextMirrorSnapshot();
-  const build = buildContextMirror(snapshot);
 
   const tmpDir = `${outputDir}.tmp`;
   await rm(tmpDir, { recursive: true, force: true });

@@ -1,3 +1,5 @@
+import "dotenv/config";
+
 import { createWriteStream } from "node:fs";
 import { mkdir, rm, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -49,9 +51,22 @@ async function pathExists(path: string): Promise<boolean> {
   }
 }
 
-await mkdir(backupDir, { recursive: true });
+async function dumpDatabase(outputPath: string): Promise<void> {
+  const dbUrl = process.env.DATABASE_URL;
+  if (dbUrl) {
+    try {
+      await writeCommandOutput(
+        "pg_dump",
+        ["--format=custom", "--no-owner", "--no-privileges", dbUrl],
+        outputPath
+      );
+      return;
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
+      console.warn("pg_dump binary not found, falling back to Docker Compose...");
+    }
+  }
 
-try {
   await writeCommandOutput(
     "docker",
     [
@@ -68,8 +83,14 @@ try {
       "--no-owner",
       "--no-privileges"
     ],
-    join(backupDir, "database.dump")
+    outputPath
   );
+}
+
+await mkdir(backupDir, { recursive: true });
+
+try {
+  await dumpDatabase(join(backupDir, "database.dump"));
 
   if (await pathExists("data/attachments")) {
     await run("tar", ["-czf", join(backupDir, "attachments.tar.gz"), "-C", "data", "attachments"]);
@@ -84,7 +105,7 @@ try {
       "",
       "Contents:",
       "",
-      "- `database.dump`: PostgreSQL custom-format dump from the local Docker Compose database.",
+      "- `database.dump`: PostgreSQL custom-format dump (native pg_dump via DATABASE_URL, Docker Compose fallback).",
       "- `attachments.tar.gz`: present only when `data/attachments` existed.",
       "",
       "Not included:",

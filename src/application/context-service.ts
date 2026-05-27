@@ -2,7 +2,9 @@ import "server-only";
 
 import { z } from "zod";
 
-import { rebuildContextMirror } from "@/infrastructure/files/context-mirror-writer";
+import { buildContextMirror } from "@/ai-context/context-mirror";
+import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
+import { writeContextMirror } from "@/infrastructure/files/context-mirror-writer";
 
 import { databaseMutationErrorState, isRecoverableReadError } from "./errors";
 import {
@@ -32,7 +34,15 @@ import {
   updateQuestionCommandSchema,
   updateSourceCommandSchema
 } from "@/domain/context";
-import type { ContextRepository } from "@/repositories/context-repository";
+import type {
+  EntryRepository,
+  FilterRepository,
+  QuestionRepository,
+  RelationshipRepository,
+  SnapshotRepository,
+  SourceRepository,
+  ThreadRepository
+} from "@/repositories/context-repository";
 import type { MutationState } from "./action-states";
 
 export type { CaptureEntryState, MutationState } from "./action-states";
@@ -165,7 +175,7 @@ export function parseCreateSavedFilterFormData(formData: FormData) {
   });
 }
 
-export async function captureEntry(formData: FormData, repository: ContextRepository) {
+export async function captureEntry(formData: FormData, repository: EntryRepository) {
   const parsed = parseCreateEntryFormData(formData);
 
   if (!parsed.success) {
@@ -221,7 +231,7 @@ async function withDbErrorHandling<T extends { ok: true }>(
   }
 }
 
-export async function updateEntryFromForm(id: string, formData: FormData, repository: ContextRepository) {
+export async function updateEntryFromForm(id: string, formData: FormData, repository: EntryRepository) {
   const parsed = parseUpdateEntryFormData(id, formData);
 
   if (!parsed.success) {
@@ -234,7 +244,7 @@ export async function updateEntryFromForm(id: string, formData: FormData, reposi
   });
 }
 
-export async function updateQuestionFromForm(id: string, formData: FormData, repository: ContextRepository) {
+export async function updateQuestionFromForm(id: string, formData: FormData, repository: QuestionRepository) {
   const parsed = parseUpdateQuestionFormData(id, formData);
 
   if (!parsed.success) {
@@ -247,7 +257,7 @@ export async function updateQuestionFromForm(id: string, formData: FormData, rep
   });
 }
 
-export async function linkObjectsFromForm(formData: FormData, repository: ContextRepository) {
+export async function linkObjectsFromForm(formData: FormData, repository: RelationshipRepository) {
   const parsed = parseLinkObjectsFormData(formData);
 
   if (!parsed.success) {
@@ -260,7 +270,7 @@ export async function linkObjectsFromForm(formData: FormData, repository: Contex
   });
 }
 
-export async function createReferenceFromForm(entryId: string, formData: FormData, repository: ContextRepository) {
+export async function createReferenceFromForm(entryId: string, formData: FormData, repository: EntryRepository) {
   const parsed = parseCreateReferenceFormData(entryId, formData);
 
   if (!parsed.success) {
@@ -273,7 +283,7 @@ export async function createReferenceFromForm(entryId: string, formData: FormDat
   });
 }
 
-export async function createAttachmentFromForm(entryId: string, formData: FormData, repository: ContextRepository) {
+export async function createAttachmentFromForm(entryId: string, formData: FormData, repository: EntryRepository) {
   const parsed = parseCreateAttachmentFormData(entryId, formData);
 
   if (!parsed.success) {
@@ -286,7 +296,7 @@ export async function createAttachmentFromForm(entryId: string, formData: FormDa
   });
 }
 
-export async function createThreadFromForm(formData: FormData, repository: ContextRepository) {
+export async function createThreadFromForm(formData: FormData, repository: ThreadRepository) {
   const parsed = parseCreateThreadFormData(formData);
 
   if (!parsed.success) {
@@ -299,7 +309,7 @@ export async function createThreadFromForm(formData: FormData, repository: Conte
   });
 }
 
-export async function createSavedFilterFromForm(formData: FormData, repository: ContextRepository) {
+export async function createSavedFilterFromForm(formData: FormData, repository: FilterRepository) {
   const parsed = parseCreateSavedFilterFormData(formData);
 
   if (!parsed.success) {
@@ -312,7 +322,7 @@ export async function createSavedFilterFromForm(formData: FormData, repository: 
   });
 }
 
-export async function promoteEntryToQuestion(id: string, repository: ContextRepository) {
+export async function promoteEntryToQuestion(id: string, repository: EntryRepository) {
   const parsed = parsePromoteEntryToQuestion(id);
 
   if (!parsed.success) {
@@ -380,7 +390,7 @@ export function parseUpdateSourceFormData(id: string, formData: FormData) {
   });
 }
 
-export async function captureSource(formData: FormData, repository: ContextRepository) {
+export async function captureSource(formData: FormData, repository: SourceRepository) {
   const parsed = parseCreateSourceFormData(formData);
 
   if (!parsed.success) {
@@ -393,7 +403,7 @@ export async function captureSource(formData: FormData, repository: ContextRepos
   });
 }
 
-export async function updateSourceFromForm(id: string, formData: FormData, repository: ContextRepository) {
+export async function updateSourceFromForm(id: string, formData: FormData, repository: SourceRepository) {
   const parsed = parseUpdateSourceFormData(id, formData);
 
   if (!parsed.success) {
@@ -406,7 +416,7 @@ export async function updateSourceFromForm(id: string, formData: FormData, repos
   });
 }
 
-export async function deleteSource(id: string, repository: ContextRepository) {
+export async function deleteSource(id: string, repository: SourceRepository) {
   const parsed = deleteSourceCommandSchema.safeParse({ id });
 
   if (!parsed.success) {
@@ -424,7 +434,7 @@ const laxListSourcesQuerySchema = listSourcesQuerySchema.extend({
   status: recordStatusSchema.optional().catch(undefined)
 });
 
-export async function listSources(repository: ContextRepository, params?: URLSearchParams) {
+export async function listSources(repository: SourceRepository, params?: URLSearchParams) {
   const parsed = laxListSourcesQuerySchema.parse({
     search: parseOptionalString(params?.get("search") ?? null),
     type: parseOptionalString(params?.get("type") ?? null),
@@ -442,7 +452,7 @@ const laxListEntriesQuerySchema = listEntriesQuerySchema.extend({
   privacyLevel: privacyLevelSchema.optional().catch(undefined)
 });
 
-export async function listEntries(repository: ContextRepository, params?: URLSearchParams) {
+export async function listEntries(repository: EntryRepository, params?: URLSearchParams) {
   const parsed = laxListEntriesQuerySchema.parse({
     search: parseOptionalString(params?.get("search") ?? null),
     type: parseOptionalString(params?.get("type") ?? null),
@@ -459,6 +469,8 @@ export async function listEntries(repository: ContextRepository, params?: URLSea
   return repository.listEntries(parsed);
 }
 
-export function rebuildMirror() {
-  return rebuildContextMirror();
+export async function rebuildMirror(repository?: SnapshotRepository) {
+  const snapshot = await (repository ?? createPrismaContextRepository()).getContextMirrorSnapshot();
+  const build = buildContextMirror(snapshot);
+  return writeContextMirror(build);
 }

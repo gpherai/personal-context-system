@@ -1,10 +1,10 @@
 import "dotenv/config";
 
-import { rebuildContextMirror } from "../src/infrastructure/files/context-mirror-writer";
+import { rebuildMirror } from "../src/application/context-service";
 import { getPrismaClient } from "../src/infrastructure/database/client";
 
 try {
-  const result = await rebuildContextMirror();
+  const result = await rebuildMirror();
 
   console.log(
     `Context mirror generated at ${result.generatedAt}: ${result.fileCount} files in ${result.outputDir}`
