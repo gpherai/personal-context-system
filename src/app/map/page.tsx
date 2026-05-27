@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="border border-border bg-surface px-4 py-3">
+    <div className="rounded-lg border border-border bg-surface px-4 py-3 shadow-sm">
       <div className="text-2xl font-semibold">{value}</div>
       <div className="mt-1 text-sm text-muted-foreground">{label}</div>
     </div>
@@ -59,7 +59,7 @@ export default async function MapPage() {
         </section>
 
         {(deities.length > 0 || traditions.length > 0 || topics.length > 0) && (
-          <section className="grid gap-5 border border-border bg-surface p-5">
+          <section className="grid gap-5 rounded-lg border border-border bg-surface p-5">
             <div className="flex items-center gap-2">
               <BookMarked className="h-4 w-4 text-primary" aria-hidden="true" />
               <h2 className="text-sm font-semibold">Sanatana knowledge map</h2>

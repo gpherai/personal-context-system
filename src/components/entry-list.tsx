@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import type { EntryListItem } from "@/repositories/context-repository";
 import { formatDate, labelize } from "@/lib/format";
+import { cn } from "@/lib/cn";
 
 import { Badge } from "./ui/badge";
 import { EmptyState } from "./empty-state";
@@ -27,9 +28,10 @@ export function EntryList({ entries }: { entries: EntryListItem[] }) {
       {entries.map((entry, index) => (
         <article
           key={entry.id}
-          className={`grid gap-3 px-5 py-4 transition-colors duration-150 hover:bg-surface-muted md:grid-cols-[1fr_auto] ${
-            index > 0 ? "border-t border-border" : ""
-          }`}
+          className={cn(
+            "grid gap-3 px-5 py-4 transition-colors duration-150 hover:bg-surface-muted md:grid-cols-[1fr_auto]",
+            index > 0 && "border-t border-border"
+          )}
         >
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-1.5">

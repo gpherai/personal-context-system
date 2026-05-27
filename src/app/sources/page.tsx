@@ -86,9 +86,9 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
             <label className="grid gap-1.5 text-xs font-medium">
               Search
               <span className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" aria-hidden="true" />
                 <input
-                  className="h-9 w-48 rounded-md border border-border bg-surface pl-9 pr-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                  className="field-input w-48 pl-9"
                   defaultValue={urlParams.get("search") ?? ""}
                   name="search"
                   placeholder="title, metadata…"
@@ -99,7 +99,7 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
             <label className="grid gap-1.5 text-xs font-medium">
               Type
               <select
-                className="h-9 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                className="field-select"
                 defaultValue={activeType}
                 name="type"
               >
@@ -115,7 +115,7 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
             <label className="grid gap-1.5 text-xs font-medium">
               Theme
               <select
-                className="h-9 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                className="field-select"
                 defaultValue={activeTheme}
                 name="themeId"
               >
@@ -129,10 +129,10 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
             </label>
 
             <div className="flex gap-2">
-              <Button type="submit" className="h-9 px-3 text-sm">Filter</Button>
+              <Button type="submit">Filter</Button>
               <Link
                 href="/sources"
-                className="inline-flex h-9 items-center rounded-md border border-border bg-surface px-3 text-sm font-medium transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                className="inline-flex h-10 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               >
                 Reset
               </Link>
@@ -141,7 +141,7 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
 
           <Link
             href="/sources/new"
-            className="inline-flex h-9 shrink-0 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors duration-200 hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+            className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
           >
             <Plus className="h-4 w-4" aria-hidden="true" />
             New source
@@ -155,7 +155,7 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
             ))}
           </div>
         ) : (
-          <div className="border border-border bg-surface p-8">
+          <div className="rounded-lg border border-border bg-surface p-8">
             <EmptyState
               title="No sources found"
               body="Adjust the filters or add a new source."

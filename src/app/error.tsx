@@ -24,7 +24,7 @@ export default function GlobalError({
         <div className="mt-5 flex gap-3">
           <button
             onClick={reset}
-            className="inline-flex items-center text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded"
+            className="inline-flex cursor-pointer items-center text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded"
           >
             Try again
           </button>
