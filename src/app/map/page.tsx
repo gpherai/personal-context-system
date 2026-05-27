@@ -54,21 +54,21 @@ export default async function MapPage() {
           <Stat label="Themes" value={snapshot.themes.length} />
           <Stat label="Projects" value={snapshot.projects.length} />
           <Stat label="Questions" value={snapshot.questions.length} />
-          <Stat label="Bronnen" value={snapshot.sources.length} />
-          <Stat label="Relaties" value={snapshot.relationships.length} />
+          <Stat label="Sources" value={snapshot.sources.length} />
+          <Stat label="Relations" value={snapshot.relationships.length} />
         </section>
 
         {(deities.length > 0 || traditions.length > 0 || topics.length > 0) && (
           <section className="grid gap-5 border border-border bg-surface p-5">
             <div className="flex items-center gap-2">
               <BookMarked className="h-4 w-4 text-primary" aria-hidden="true" />
-              <h2 className="text-sm font-semibold">Sanatana kenniskaart</h2>
+              <h2 className="text-sm font-semibold">Sanatana knowledge map</h2>
             </div>
 
             <div className="grid gap-5 lg:grid-cols-3">
               {traditions.length > 0 && (
                 <div>
-                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tradities</h3>
+                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Traditions</h3>
                   <div className="flex flex-wrap gap-1.5">
                     {traditions.map((t) => (
                       <Link key={t.id} href={`/themes/${t.slug}`} className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30">
@@ -81,7 +81,7 @@ export default async function MapPage() {
 
               {deities.length > 0 && (
                 <div>
-                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Godheden</h3>
+                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Deities</h3>
                   <div className="flex flex-wrap gap-1.5">
                     {deities.map((t) => (
                       <Link key={t.id} href={`/themes/${t.slug}`} className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30">
@@ -94,7 +94,7 @@ export default async function MapPage() {
 
               {topics.length > 0 && (
                 <div>
-                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Onderwerpen</h3>
+                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Topics</h3>
                   <div className="flex flex-wrap gap-1.5">
                     {topics.map((t) => (
                       <Link key={t.id} href={`/themes/${t.slug}`} className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30">
@@ -108,7 +108,7 @@ export default async function MapPage() {
 
             {snapshot.sources.length > 0 && (
               <div>
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Bronnen per type</h3>
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Sources by type</h3>
                 <div className="flex flex-wrap gap-2">
                   {Object.entries(sourcesByType).sort(([, a], [, b]) => b - a).map(([type, count]) => (
                     <Link

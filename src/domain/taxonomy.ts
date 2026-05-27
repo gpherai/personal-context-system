@@ -86,34 +86,34 @@ export const questionStatusDetails = {
 export const sourceTypeDetails = {
   video: {
     label: "Video",
-    description: "Satsang, lecture, tutorial of andere video-opname."
+    description: "Satsang, lecture, tutorial, or other video recording."
   },
   book: {
-    label: "Boek",
-    description: "Geschreven werk: boek, e-book of manuscript."
+    label: "Book",
+    description: "Written work: book, e-book, or manuscript."
   },
   post: {
     label: "Post",
-    description: "Artikel, blogpost of online publicatie."
+    description: "Article, blog post, or online publication."
   },
   image: {
-    label: "Afbeelding",
-    description: "Foto, tekening, yantra of andere visuele bron."
+    label: "Image",
+    description: "Photo, drawing, yantra, or other visual source."
   },
   sadhana: {
     label: "Sadhana",
-    description: "Spirituele praktijk: puja, meditatie, japa of ritueel."
+    description: "Spiritual practice: puja, meditation, japa, or ritual."
   },
   upadesha: {
     label: "Upadesha",
-    description: "Onderricht of instructie van een leraar of traditie."
+    description: "Teaching or instruction from a teacher or tradition."
   },
   stotra: {
     label: "Stotra",
-    description: "Lofzang, mantra of gebed in tekst- of audiovorm."
+    description: "Hymn, mantra, or prayer in text or audio form."
   },
   deity_concept: {
-    label: "Godheid / concept",
-    description: "Beschrijving of studie van een godheid, begrip of filosofisch concept."
+    label: "Deity / concept",
+    description: "Description or study of a deity, concept, or philosophical idea."
   }
 } satisfies Record<SourceType, TaxonomyDetail>;

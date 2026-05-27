@@ -193,6 +193,21 @@ function errorState(message: string, error: z.ZodError): MutationState {
   };
 }
 
+function sourceErrorState(message: string, error: z.ZodError): MutationState {
+  const flat = z.flattenError(error);
+  const merged: Record<string, string[]> = { ...flat.fieldErrors };
+  for (const issue of error.issues) {
+    if (issue.path.length >= 2 && issue.path[0] === "metadata") {
+      const key = String(issue.path[1]);
+      merged[key] = [...(merged[key] ?? []), issue.message];
+    }
+  }
+  if (error.issues.some((i) => i.path.length >= 2 && i.path[0] === "metadata")) {
+    delete merged.metadata;
+  }
+  return { status: "error", message, fieldErrors: merged };
+}
+
 async function withDbErrorHandling<T extends { ok: true }>(
   fn: () => Promise<T>
 ): Promise<T | { ok: false; state: { status: "error"; message: string } }> {
@@ -369,7 +384,7 @@ export async function captureSource(formData: FormData, repository: ContextRepos
   const parsed = parseCreateSourceFormData(formData);
 
   if (!parsed.success) {
-    return { ok: false as const, state: errorState("Check the highlighted fields.", parsed.error) };
+    return { ok: false as const, state: sourceErrorState("Check the highlighted fields.", parsed.error) };
   }
 
   return withDbErrorHandling(async () => {
@@ -382,7 +397,7 @@ export async function updateSourceFromForm(id: string, formData: FormData, repos
   const parsed = parseUpdateSourceFormData(id, formData);
 
   if (!parsed.success) {
-    return { ok: false as const, state: errorState("Check the highlighted fields.", parsed.error) };
+    return { ok: false as const, state: sourceErrorState("Check the highlighted fields.", parsed.error) };
   }
 
   return withDbErrorHandling(async () => {

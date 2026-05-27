@@ -37,70 +37,70 @@ function SourceMetadataSection({ metadata }: { metadata: SourceMetadata }) {
       return (
         <dl className="grid gap-3 sm:grid-cols-2">
           <MetadataField label="URL" value={metadata.url} />
-          <MetadataField label="Kanaal" value={metadata.channel} />
-          <MetadataField label="Duur (sec)" value={metadata.duration} />
-          <MetadataField label="Taal" value={metadata.language} />
+          <MetadataField label="Channel" value={metadata.channel} />
+          <MetadataField label="Duration (s)" value={metadata.duration} />
+          <MetadataField label="Language" value={metadata.language} />
         </dl>
       );
     case "book":
       return (
         <dl className="grid gap-3 sm:grid-cols-2">
-          <MetadataList label="Auteurs" values={metadata.authors} />
+          <MetadataList label="Authors" values={metadata.authors} />
           <MetadataField label="ISBN" value={metadata.isbn} />
-          <MetadataField label="Jaar" value={metadata.year} />
-          <MetadataField label="Uitgever" value={metadata.publisher} />
-          <MetadataField label="Taal" value={metadata.language} />
+          <MetadataField label="Year" value={metadata.year} />
+          <MetadataField label="Publisher" value={metadata.publisher} />
+          <MetadataField label="Language" value={metadata.language} />
         </dl>
       );
     case "post":
       return (
         <dl className="grid gap-3 sm:grid-cols-2">
           <MetadataField label="URL" value={metadata.url} />
-          <MetadataField label="Auteur" value={metadata.author} />
-          <MetadataField label="Gepubliceerd" value={metadata.publishedAt} />
+          <MetadataField label="Author" value={metadata.author} />
+          <MetadataField label="Published" value={metadata.publishedAt} />
         </dl>
       );
     case "image":
       return (
         <dl className="grid gap-3 sm:grid-cols-2">
           <MetadataField label="URL" value={metadata.url} />
-          <MetadataField label="Alt tekst" value={metadata.alt} />
-          <MetadataField label="Fotograaf" value={metadata.photographer} />
+          <MetadataField label="Alt text" value={metadata.alt} />
+          <MetadataField label="Photographer" value={metadata.photographer} />
         </dl>
       );
     case "sadhana":
       return (
         <dl className="grid gap-3 sm:grid-cols-2">
-          <MetadataField label="Traditie" value={metadata.tradition} />
-          <MetadataField label="Godheid" value={metadata.deity} />
-          <MetadataField label="Taal" value={metadata.language} />
-          <MetadataField label="Formaat" value={metadata.format} />
+          <MetadataField label="Tradition" value={metadata.tradition} />
+          <MetadataField label="Deity" value={metadata.deity} />
+          <MetadataField label="Language" value={metadata.language} />
+          <MetadataField label="Format" value={metadata.format} />
         </dl>
       );
     case "upadesha":
       return (
         <dl className="grid gap-3 sm:grid-cols-2">
-          <MetadataField label="Leraar" value={metadata.teacher} />
-          <MetadataField label="Traditie" value={metadata.tradition} />
-          <MetadataField label="Taal" value={metadata.language} />
-          <MetadataField label="Formaat" value={metadata.format} />
+          <MetadataField label="Teacher" value={metadata.teacher} />
+          <MetadataField label="Tradition" value={metadata.tradition} />
+          <MetadataField label="Language" value={metadata.language} />
+          <MetadataField label="Format" value={metadata.format} />
         </dl>
       );
     case "stotra":
       return (
         <dl className="grid gap-3 sm:grid-cols-2">
-          <MetadataField label="Godheid" value={metadata.deity} />
-          <MetadataField label="Traditie" value={metadata.tradition} />
-          <MetadataField label="Taal" value={metadata.language} />
+          <MetadataField label="Deity" value={metadata.deity} />
+          <MetadataField label="Tradition" value={metadata.tradition} />
+          <MetadataField label="Language" value={metadata.language} />
           <MetadataField label="Script" value={metadata.script} />
         </dl>
       );
     case "deity_concept":
       return (
         <dl className="grid gap-3 sm:grid-cols-2">
-          <MetadataField label="Traditie" value={metadata.tradition} />
-          <MetadataField label="Taal" value={metadata.language} />
-          <MetadataList label="Aliassen" values={metadata.aliases} />
+          <MetadataField label="Tradition" value={metadata.tradition} />
+          <MetadataField label="Language" value={metadata.language} />
+          <MetadataList label="Aliases" values={metadata.aliases} />
         </dl>
       );
   }
@@ -136,7 +136,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
                 href={`/sources/${source.id}/edit`}
                 className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-surface px-4 text-sm font-medium transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               >
-                Bewerken
+                Edit
               </Link>
             </div>
           </div>
@@ -155,7 +155,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
 
         {source.themes.length > 0 && (
           <section className="grid gap-3">
-            <h2 className="text-sm font-semibold">Thema&apos;s</h2>
+            <h2 className="text-sm font-semibold">Themes</h2>
             <div className="flex flex-wrap gap-2">
               {source.themes.map((theme) => (
                 <Link
@@ -172,7 +172,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
 
         {source.entries.length > 0 && (
           <section className="grid gap-3">
-            <h2 className="text-sm font-semibold">Gekoppelde entries</h2>
+            <h2 className="text-sm font-semibold">Linked entries</h2>
             <div className="grid gap-1">
               {source.entries.map((entry) => (
                 <Link
@@ -188,7 +188,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
         )}
 
         <footer className="border-t border-border pt-4 text-xs text-muted-foreground">
-          Aangemaakt {formatDateTime(source.createdAt)} · Bijgewerkt {formatDateTime(source.updatedAt)}
+          Created {formatDateTime(source.createdAt)} · Updated {formatDateTime(source.updatedAt)}
         </footer>
       </article>
     );

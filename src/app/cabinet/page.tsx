@@ -171,7 +171,7 @@ export default async function CabinetPage() {
           <div className="mb-3 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <BookMarked className="h-4 w-4 text-primary" aria-hidden="true" />
-              <h2 className="text-sm font-semibold">Bronnen</h2>
+              <h2 className="text-sm font-semibold">Sources</h2>
             </div>
             <Link
               href="/sources"
@@ -194,7 +194,7 @@ export default async function CabinetPage() {
                 ))}
             </div>
           ) : (
-            <EmptyState title="Geen bronnen" body="Bronnen verschijnen hier zodra ze worden aangemaakt." />
+            <EmptyState title="No sources" body="Sources appear here once they are created." />
           )}
         </section>
 

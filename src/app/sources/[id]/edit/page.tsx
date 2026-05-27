@@ -27,8 +27,8 @@ export default async function EditSourcePage({ params }: { params: Promise<{ id:
     return (
       <div className="mx-auto max-w-4xl">
         <header className="border-b border-border pb-5">
-          <p className="text-sm font-medium text-primary">Bronnen</p>
-          <h1 className="mt-1 text-3xl font-semibold">Bron bewerken</h1>
+          <p className="text-sm font-medium text-primary">Sources</p>
+          <h1 className="mt-1 text-3xl font-semibold">Edit source</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{source.title}</p>
         </header>
         <section className="mt-6 border border-border bg-surface p-5">

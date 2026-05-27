@@ -11,9 +11,9 @@ import { sourceTypeDetails } from "@/domain/taxonomy";
 export const dynamic = "force-dynamic";
 
 const categoryLabels: Record<string, string> = {
-  deity: "Godheid",
-  tradition: "Traditie",
-  topic: "Onderwerp",
+  deity: "Deity",
+  tradition: "Tradition",
+  topic: "Topic",
   tag: "Tag"
 };
 
@@ -63,14 +63,14 @@ export default async function ThemePage({ params }: { params: Promise<{ slug: st
           )}
           {aliases.length > 0 && (
             <p className="mt-2 text-sm text-muted-foreground">
-              <span className="font-medium">Ook bekend als:</span> {aliases.join(", ")}
+              <span className="font-medium">Also known as:</span> {aliases.join(", ")}
             </p>
           )}
         </header>
 
         {sources.length > 0 && (
           <section className="grid gap-3">
-            <h2 className="text-sm font-semibold">Bronnen</h2>
+            <h2 className="text-sm font-semibold">Sources</h2>
             <div className="grid gap-2 sm:grid-cols-2">
               {sources.map((source) => (
                 <Link
@@ -94,7 +94,7 @@ export default async function ThemePage({ params }: { params: Promise<{ slug: st
         )}
 
         {theme.entries.length === 0 && sources.length === 0 && (
-          <p className="text-sm text-muted-foreground">Geen entries of bronnen gekoppeld aan dit thema.</p>
+          <p className="text-sm text-muted-foreground">No entries or sources linked to this theme.</p>
         )}
       </div>
     );
