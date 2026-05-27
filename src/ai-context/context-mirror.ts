@@ -104,12 +104,19 @@ function entryMarkdown(entry: EntryRecord): string {
   ].join("\n");
 }
 
-function slugSectionEntries(entries: EntryRecord[], kind: "project" | "theme", slug: string): EntryRecord[] {
-  return entries.filter((entry) =>
-    kind === "project"
-      ? entry.projects.some((project) => project.slug === slug)
-      : entry.themes.some((theme) => theme.slug === slug)
-  );
+function buildEntrySlugMap(entries: EntryRecord[], kind: "themes" | "projects"): Map<string, EntryRecord[]> {
+  const map = new Map<string, EntryRecord[]>();
+  for (const entry of entries) {
+    for (const named of entry[kind]) {
+      const bucket = map.get(named.slug);
+      if (bucket) {
+        bucket.push(entry);
+      } else {
+        map.set(named.slug, [entry]);
+      }
+    }
+  }
+  return map;
 }
 
 function namedList(title: string, records: NamedRecord[]): string {
@@ -303,6 +310,9 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
   const projects = sortedNamed(snapshot.projects);
   const sources = [...snapshot.sources].sort((a, b) => a.title.localeCompare(b.title));
 
+  const entriesByTheme = buildEntrySlugMap(entries, "themes");
+  const entriesByProject = buildEntrySlugMap(entries, "projects");
+
   const manifest = {
     generatedAt: generatedAtIso,
     counts: {
@@ -431,7 +441,7 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
   });
 
   for (const theme of themes) {
-    const themeEntries = slugSectionEntries(entries, "theme", theme.slug);
+    const themeEntries = entriesByTheme.get(theme.slug) ?? [];
     files.push({
       path: `themes/${theme.slug}.md`,
       contents: [
@@ -455,7 +465,7 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
   });
 
   for (const project of projects) {
-    const projectEntries = slugSectionEntries(entries, "project", project.slug);
+    const projectEntries = entriesByProject.get(project.slug) ?? [];
     const projectQuestions = snapshot.openQuestions.filter((question) =>
       projectEntries.some((entry) => entry.questions.some((entryQuestion) => entryQuestion.id === question.id))
     );
