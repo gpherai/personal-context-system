@@ -65,14 +65,26 @@ function formatDate(value?: Date): string {
   return value ? value.toISOString().slice(0, 10) : "unknown";
 }
 
+// Collapse newlines to spaces so user content cannot inject headings or list items
+// into Markdown structure (headings end at first newline; list items break on newline).
+function sanitizeInline(s: string): string {
+  return s.replace(/\r?\n|\r/g, " ").trim();
+}
+
+// Wrap multi-line user-authored content with explicit delimiters so AI consumers
+// can distinguish generated document structure from user-written prose.
+function wrapUserContent(s: string): string {
+  return `<!-- user-content-start -->\n${s}\n<!-- user-content-end -->`;
+}
+
 function excerpt(entry: EntryRecord): string {
   return (entry.summary || entry.body).replace(/\s+/g, " ").trim().slice(0, 220);
 }
 
 function metadataBlock(entry: EntryRecord): string {
-  const themes = entry.themes.map((theme) => theme.name).join(", ") || "none";
-  const projects = entry.projects.map((project) => project.name).join(", ") || "none";
-  const sources = entry.sources.map((s) => `${s.title} (${s.id})`).join(", ") || "none";
+  const themes = entry.themes.map((theme) => sanitizeInline(theme.name)).join(", ") || "none";
+  const projects = entry.projects.map((project) => sanitizeInline(project.name)).join(", ") || "none";
+  const sources = entry.sources.map((s) => `${sanitizeInline(s.title)} (${s.id})`).join(", ") || "none";
 
   return [
     `- id: ${entry.id}`,
@@ -89,17 +101,17 @@ function metadataBlock(entry: EntryRecord): string {
 
 function entryMarkdown(entry: EntryRecord): string {
   return [
-    `# ${entry.title}`,
+    `# ${sanitizeInline(entry.title)}`,
     "",
     metadataBlock(entry),
     "",
     "## Summary",
     "",
-    entry.summary || excerpt(entry) || "No summary.",
+    wrapUserContent(entry.summary || excerpt(entry) || "No summary."),
     "",
     "## Body",
     "",
-    entry.body,
+    wrapUserContent(entry.body),
     ""
   ].join("\n");
 }
@@ -121,7 +133,7 @@ function buildEntrySlugMap(entries: EntryRecord[], kind: "themes" | "projects"):
 
 function namedList(title: string, records: NamedRecord[]): string {
   const lines = records.length
-    ? records.map((record) => `- ${record.name} (${record.slug})${record.entryCount !== undefined ? ` - ${record.entryCount} entries` : ""}`)
+    ? records.map((record) => `- ${sanitizeInline(record.name)} (${record.slug})${record.entryCount !== undefined ? ` - ${record.entryCount} entries` : ""}`)
     : ["- None"];
 
   return [`## ${title}`, "", ...lines].join("\n");
@@ -132,12 +144,12 @@ function threadList(threads: Omit<ThreadRecord, "entries">[]): string {
     return "- None";
   }
 
-  return threads.map((thread) => `- [${thread.status}] ${thread.title} (${thread.slug})`).join("\n");
+  return threads.map((thread) => `- [${thread.status}] ${sanitizeInline(thread.title)} (${thread.slug})`).join("\n");
 }
 
 function threadMarkdown(thread: ThreadRecord, generatedAtIso: string): string {
   return [
-    `# ${thread.title}`,
+    `# ${sanitizeInline(thread.title)}`,
     "",
     `Generated: ${generatedAtIso}`,
     "",
@@ -148,7 +160,7 @@ function threadMarkdown(thread: ThreadRecord, generatedAtIso: string): string {
     "",
     "## Description",
     "",
-    thread.description || "No description.",
+    wrapUserContent(thread.description || "No description."),
     "",
     "## Entries",
     "",
@@ -162,7 +174,7 @@ function questionList(questions: QuestionRecord[]): string {
     return "- None";
   }
 
-  return questions.map((question) => `- [${question.status}] ${question.prompt} (${question.id})`).join("\n");
+  return questions.map((question) => `- [${question.status}] ${sanitizeInline(question.prompt)} (${question.id})`).join("\n");
 }
 
 function recentList(entries: EntryRecord[]): string {
@@ -174,7 +186,7 @@ function recentList(entries: EntryRecord[]): string {
     .slice(0, 30)
     .map(
       (entry) =>
-        `- ${formatDate(entry.occurredAt ?? entry.capturedAt)} [${entry.type}/${entry.status}/${entry.privacyLevel}] ${entry.title} (${entry.id})`
+        `- ${formatDate(entry.occurredAt ?? entry.capturedAt)} [${entry.type}/${entry.status}/${entry.privacyLevel}] ${sanitizeInline(entry.title)} (${entry.id})`
     )
     .join("\n");
 }
@@ -187,7 +199,7 @@ function entryList(entries: EntryRecord[]): string {
   return entries
     .map(
       (entry) =>
-        `- ${formatDate(entry.occurredAt ?? entry.capturedAt)} [${entry.type}/${entry.status}/${entry.privacyLevel}] ${entry.title} (${entry.id})\n  - ${excerpt(entry)}`
+        `- ${formatDate(entry.occurredAt ?? entry.capturedAt)} [${entry.type}/${entry.status}/${entry.privacyLevel}] ${sanitizeInline(entry.title)} (${entry.id})\n  - ${sanitizeInline(excerpt(entry))}`
     )
     .join("\n");
 }
@@ -201,7 +213,7 @@ function timelineList(entries: EntryRecord[]): string {
     .map((entry) => {
       const timelineDate = entry.occurredAt ?? entry.capturedAt;
       return [
-        `## ${formatDate(timelineDate)} - ${entry.title}`,
+        `## ${formatDate(timelineDate)} - ${sanitizeInline(entry.title)}`,
         "",
         `- id: ${entry.id}`,
         `- type: ${entry.type}`,
@@ -210,7 +222,7 @@ function timelineList(entries: EntryRecord[]): string {
         `- captured: ${entry.capturedAt.toISOString()}`,
         `- occurred: ${entry.occurredAt ? entry.occurredAt.toISOString() : "unknown"}`,
         "",
-        excerpt(entry),
+        sanitizeInline(excerpt(entry)),
         ""
       ].join("\n");
     })
@@ -262,7 +274,7 @@ function entryJson(entry: EntryRecord): string {
 function sourceList(sources: SourceSummary[]): string {
   if (!sources.length) return "- None";
   return sources
-    .map((s) => `- [${s.type}] ${s.title} (${s.id})${s.themes.length ? " — " + s.themes.map((t) => t.name).join(", ") : ""}`)
+    .map((s) => `- [${s.type}] ${sanitizeInline(s.title)} (${s.id})${s.themes.length ? " — " + s.themes.map((t) => sanitizeInline(t.name)).join(", ") : ""}`)
     .join("\n");
 }
 
@@ -271,23 +283,23 @@ function sourceMarkdown(source: SourceSummary, generatedAtIso: string): string {
     .filter(([k]) => k !== "type")
     .map(([k, v]) => {
       if (v === null || v === undefined) return `- ${k}: `;
-      if (Array.isArray(v)) return `- ${k}: ${(v as unknown[]).map((item) => (typeof item === "object" ? JSON.stringify(item) : String(item))).join(", ")}`;
+      if (Array.isArray(v)) return `- ${k}: ${(v as unknown[]).map((item) => (typeof item === "object" ? JSON.stringify(item) : sanitizeInline(String(item)))).join(", ")}`;
       if (typeof v === "object") return `- ${k}: ${JSON.stringify(v)}`;
-      return `- ${k}: ${String(v)}`;
+      return `- ${k}: ${sanitizeInline(String(v))}`;
     });
 
   return [
-    `# ${source.title}`,
+    `# ${sanitizeInline(source.title)}`,
     "",
     `Generated: ${generatedAtIso}`,
     "",
     `- id: ${source.id}`,
     `- type: ${source.type}`,
     `- status: ${source.status}`,
-    `- themes: ${source.themes.map((t) => t.name).join(", ") || "none"}`,
+    `- themes: ${source.themes.map((t) => sanitizeInline(t.name)).join(", ") || "none"}`,
     "",
     ...(metaEntries.length ? ["## Metadata", "", ...metaEntries, ""] : []),
-    ...(source.description ? ["## Beschrijving", "", source.description, ""] : [])
+    ...(source.description ? ["## Beschrijving", "", wrapUserContent(source.description), ""] : [])
   ].join("\n");
 }
 
@@ -566,18 +578,18 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
         "",
         "## Tradities",
         "",
-        traditions.length ? traditions.map((t) => `- ${t.name} (${t.slug})`).join("\n") : "- Geen",
+        traditions.length ? traditions.map((t) => `- ${sanitizeInline(t.name)} (${t.slug})`).join("\n") : "- Geen",
         "",
         "## Godheden",
         "",
         deities.length ? deities.map((t) => {
-          const aliases = Array.isArray(t.metadata?.aliases) ? ` [${(t.metadata.aliases as string[]).join(", ")}]` : "";
-          return `- ${t.name}${aliases} (${t.slug})`;
+          const aliases = Array.isArray(t.metadata?.aliases) ? ` [${(t.metadata.aliases as string[]).map((a) => sanitizeInline(a)).join(", ")}]` : "";
+          return `- ${sanitizeInline(t.name)}${aliases} (${t.slug})`;
         }).join("\n") : "- Geen",
         "",
         "## Onderwerpen",
         "",
-        topics.length ? topics.map((t) => `- ${t.name} (${t.slug})`).join("\n") : "- Geen",
+        topics.length ? topics.map((t) => `- ${sanitizeInline(t.name)} (${t.slug})`).join("\n") : "- Geen",
         ""
       ].join("\n")
     });
