@@ -1,18 +1,18 @@
 import Link from "next/link";
 
-import type { EntryRecord } from "@/repositories/context-repository";
+import type { EntryListItem } from "@/repositories/context-repository";
 import { formatDate, labelize } from "@/lib/format";
 
 import { Badge } from "./ui/badge";
 import { EmptyState } from "./empty-state";
 
-function privacyTone(privacy: EntryRecord["privacyLevel"]) {
+function privacyTone(privacy: EntryListItem["privacyLevel"]) {
   if (privacy === "sensitive") return "amber" as const;
   if (privacy === "shareable") return "teal" as const;
   return "neutral" as const;
 }
 
-export function EntryList({ entries }: { entries: EntryRecord[] }) {
+export function EntryList({ entries }: { entries: EntryListItem[] }) {
   if (!entries.length) {
     return (
       <EmptyState

@@ -31,6 +31,7 @@ import type {
   ContextMirrorSnapshot,
   ContextRepository,
   DashboardOverview,
+  EntryListItem,
   EntryRecord,
   GraphSnapshot,
   JsonObject,
@@ -92,6 +93,34 @@ const entryInclude = {
 type EntryWithRelations = Prisma.EntryGetPayload<{
   include: typeof entryInclude;
 }>;
+
+const entryListSelect = {
+  id: true,
+  type: true,
+  status: true,
+  title: true,
+  body: true,
+  summary: true,
+  privacyLevel: true,
+  occurredAt: true,
+  capturedAt: true,
+  themes: {
+    select: {
+      theme: {
+        select: { id: true, slug: true, name: true }
+      }
+    }
+  },
+  projects: {
+    select: {
+      project: {
+        select: { id: true, slug: true, name: true }
+      }
+    }
+  }
+} satisfies Prisma.EntrySelect;
+
+type EntryListRow = Prisma.EntryGetPayload<{ select: typeof entryListSelect }>;
 
 const sourceInclude = {
   themes: {
@@ -277,6 +306,26 @@ function mapEntry(
       .sort((a, b) => a.title.localeCompare(b.title)),
     outgoingRelationships: relationships.outgoing ?? [],
     incomingRelationships: relationships.incoming ?? []
+  };
+}
+
+function mapEntryListItem(entry: EntryListRow): EntryListItem {
+  return {
+    id: entry.id,
+    type: entry.type,
+    status: entry.status,
+    title: entry.title,
+    body: entry.body,
+    summary: optional(entry.summary),
+    privacyLevel: entry.privacyLevel,
+    occurredAt: optional(entry.occurredAt),
+    capturedAt: entry.capturedAt,
+    themes: entry.themes
+      .map(({ theme }) => ({ id: theme.id, slug: theme.slug, name: theme.name }))
+      .sort((a, b) => a.name.localeCompare(b.name)),
+    projects: entry.projects
+      .map(({ project }) => ({ id: project.id, slug: project.slug, name: project.name }))
+      .sort((a, b) => a.name.localeCompare(b.name))
   };
 }
 
@@ -614,12 +663,12 @@ export class PrismaContextRepository implements ContextRepository {
     return mapEntry(entry, relationships);
   }
 
-  async listEntries(query?: ListEntriesQuery): Promise<EntryRecord[]> {
+  async listEntries(query?: ListEntriesQuery): Promise<EntryListItem[]> {
     const limit = Math.min(query?.limit ?? 50, 200);
     const searchIds = query?.search ? await this.searchEntryIds(query.search, 200) : undefined;
     const entries = await this.prisma.entry.findMany({
       where: entryWhere(query, searchIds),
-      include: entryInclude,
+      select: entryListSelect,
       orderBy: [{ capturedAt: "desc" }, { createdAt: "desc" }],
       take: limit
     });
@@ -628,10 +677,10 @@ export class PrismaContextRepository implements ContextRepository {
       const rank = new Map(searchIds.map((id, i) => [id, i]));
       return entries
         .sort((a, b) => (rank.get(a.id) ?? Infinity) - (rank.get(b.id) ?? Infinity))
-        .map((entry) => mapEntry(entry));
+        .map(mapEntryListItem);
     }
 
-    return entries.map((entry) => mapEntry(entry));
+    return entries.map(mapEntryListItem);
   }
 
   async getEntry(id: string): Promise<EntryRecord | null> {
@@ -1373,7 +1422,11 @@ export class PrismaContextRepository implements ContextRepository {
 
   async getContextMirrorSnapshot(): Promise<ContextMirrorSnapshot> {
     const [entries, openQuestions, themes, projects, threads, sources] = await Promise.all([
-      this.listEntries({ limit: 200 }),
+      this.prisma.entry.findMany({
+        include: entryInclude,
+        orderBy: [{ capturedAt: "desc" }, { createdAt: "desc" }],
+        take: 200
+      }),
       this.prisma.question.findMany({
         where: { status: { in: ["open", "active", "parked"] } },
         orderBy: [{ updatedAt: "desc" }],
@@ -1404,7 +1457,7 @@ export class PrismaContextRepository implements ContextRepository {
     ]);
 
     return {
-      entries,
+      entries: entries.map((entry) => mapEntry(entry)),
       openQuestions: openQuestions.map(mapQuestion),
       themes: themes.map(mapNamed),
       projects: projects.map(mapNamed),

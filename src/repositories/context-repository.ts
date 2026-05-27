@@ -118,23 +118,26 @@ export interface SavedFilterRecord {
   updatedAt: Date;
 }
 
-export interface EntryRecord {
+export interface EntryListItem {
   id: string;
   type: EntryType;
   status: EntryStatus;
   title: string;
   body: string;
   summary?: string;
-  source?: string;
-  confidence?: number;
   privacyLevel: PrivacyLevel;
   occurredAt?: Date;
   capturedAt: Date;
+  themes: LinkedName[];
+  projects: LinkedName[];
+}
+
+export interface EntryRecord extends EntryListItem {
+  source?: string;
+  confidence?: number;
   createdAt: Date;
   updatedAt: Date;
   metadata: JsonObject;
-  themes: LinkedName[];
-  projects: LinkedName[];
   questions: LinkedQuestion[];
   threads: LinkedThread[];
   references: ReferenceRecord[];
@@ -164,7 +167,7 @@ export interface NamedRecord {
 }
 
 export interface DashboardOverview {
-  recentEntries: EntryRecord[];
+  recentEntries: EntryListItem[];
   openQuestions: QuestionRecord[];
   activeThemes: NamedRecord[];
   activeProjects: NamedRecord[];
@@ -194,7 +197,7 @@ export interface SourceTypeSummary {
 export interface CabinetOverview {
   entryTypes: EntryTypeSummary[];
   entryStatuses: EntryStatusSummary[];
-  archivedEntries: EntryRecord[];
+  archivedEntries: EntryListItem[];
   themes: NamedRecord[];
   projects: NamedRecord[];
   questions: QuestionRecord[];
@@ -234,7 +237,7 @@ export interface ThreadRecord {
 }
 
 export interface GraphSnapshot {
-  entries: EntryRecord[];
+  entries: EntryListItem[];
   themes: NamedRecord[];
   projects: NamedRecord[];
   questions: QuestionRecord[];
@@ -243,29 +246,17 @@ export interface GraphSnapshot {
   sources: SourceSummary[];
 }
 
-export interface ContextRepository {
+export interface EntryRepository {
   createEntry(command: CreateEntryCommand): Promise<EntryRecord>;
   updateEntry(command: UpdateEntryCommand): Promise<EntryRecord>;
-  listEntries(query?: ListEntriesQuery): Promise<EntryRecord[]>;
+  listEntries(query?: ListEntriesQuery): Promise<EntryListItem[]>;
   getEntry(id: string): Promise<EntryRecord | null>;
-  getThemeBySlug(slug: string): Promise<NamedRecordContext | null>;
-  getProjectBySlug(slug: string): Promise<NamedRecordContext | null>;
-  getQuestion(id: string): Promise<QuestionContext | null>;
-  listRelationshipTargets(): Promise<RelationshipTarget[]>;
-  createSavedFilter(command: CreateSavedFilterCommand): Promise<SavedFilterRecord>;
-  listSavedFilters(): Promise<SavedFilterRecord[]>;
-  updateQuestion(command: UpdateQuestionCommand): Promise<QuestionRecord>;
   promoteEntryToQuestion(command: PromoteEntryToQuestionCommand): Promise<QuestionRecord>;
-  linkObjects(command: LinkObjectsCommand): Promise<RelationshipRecord>;
   createReference(command: CreateReferenceCommand): Promise<ReferenceRecord>;
   createAttachment(command: CreateAttachmentCommand): Promise<AttachmentRecord>;
-  createThread(command: CreateThreadCommand): Promise<ThreadRecord>;
-  listThreads(): Promise<Omit<ThreadRecord, "entries">[]>;
-  getThreadBySlug(slug: string): Promise<ThreadRecord | null>;
-  getGraphSnapshot(): Promise<GraphSnapshot>;
-  getDashboardOverview(): Promise<DashboardOverview>;
-  getCabinetOverview(): Promise<CabinetOverview>;
-  getContextMirrorSnapshot(): Promise<ContextMirrorSnapshot>;
+}
+
+export interface SourceRepository {
   createSource(command: CreateSourceCommand): Promise<SourceRecord>;
   updateSource(command: UpdateSourceCommand): Promise<SourceRecord>;
   deleteSource(id: string): Promise<void>;
@@ -275,6 +266,49 @@ export interface ContextRepository {
   unlinkEntryFromSource(entryId: string, sourceId: string): Promise<void>;
   linkSourceToTheme(sourceId: string, themeId: string): Promise<void>;
   unlinkSourceFromTheme(sourceId: string, themeId: string): Promise<void>;
-  setThemeParent(themeId: string, parentThemeId: string | null): Promise<void>;
-  listThemes(): Promise<NamedRecord[]>;
 }
+
+export interface QuestionRepository {
+  getQuestion(id: string): Promise<QuestionContext | null>;
+  updateQuestion(command: UpdateQuestionCommand): Promise<QuestionRecord>;
+}
+
+export interface TaxonomyRepository {
+  getThemeBySlug(slug: string): Promise<NamedRecordContext | null>;
+  getProjectBySlug(slug: string): Promise<NamedRecordContext | null>;
+  listThemes(): Promise<NamedRecord[]>;
+  setThemeParent(themeId: string, parentThemeId: string | null): Promise<void>;
+}
+
+export interface RelationshipRepository {
+  listRelationshipTargets(): Promise<RelationshipTarget[]>;
+  linkObjects(command: LinkObjectsCommand): Promise<RelationshipRecord>;
+}
+
+export interface ThreadRepository {
+  createThread(command: CreateThreadCommand): Promise<ThreadRecord>;
+  listThreads(): Promise<Omit<ThreadRecord, "entries">[]>;
+  getThreadBySlug(slug: string): Promise<ThreadRecord | null>;
+}
+
+export interface FilterRepository {
+  createSavedFilter(command: CreateSavedFilterCommand): Promise<SavedFilterRecord>;
+  listSavedFilters(): Promise<SavedFilterRecord[]>;
+}
+
+export interface SnapshotRepository {
+  getDashboardOverview(): Promise<DashboardOverview>;
+  getCabinetOverview(): Promise<CabinetOverview>;
+  getGraphSnapshot(): Promise<GraphSnapshot>;
+  getContextMirrorSnapshot(): Promise<ContextMirrorSnapshot>;
+}
+
+export interface ContextRepository extends
+  EntryRepository,
+  SourceRepository,
+  QuestionRepository,
+  TaxonomyRepository,
+  RelationshipRepository,
+  ThreadRepository,
+  FilterRepository,
+  SnapshotRepository {}

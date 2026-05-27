@@ -1,11 +1,55 @@
+import type { EntryStatus, EntryType, PrivacyLevel } from "@/domain/context";
 import type {
   ContextMirrorSnapshot,
   EntryRecord,
+  JsonObject,
   NamedRecord,
   QuestionRecord,
   SourceSummary,
   ThreadRecord
 } from "@/repositories/context-repository";
+
+interface EntryMirrorDto {
+  id: string;
+  type: EntryType;
+  status: EntryStatus;
+  privacyLevel: PrivacyLevel;
+  title: string;
+  summary: string | undefined;
+  body: string;
+  source: string | undefined;
+  confidence: number | undefined;
+  occurredAt: string | undefined;
+  capturedAt: string;
+  updatedAt: string;
+  metadata: JsonObject;
+  themes: Array<{ id: string; slug: string; name: string }>;
+  projects: Array<{ id: string; slug: string; name: string }>;
+  questions: Array<{ id: string; prompt: string }>;
+  sources: Array<{ id: string; type: string; title: string }>;
+}
+
+function toEntryMirrorDto(entry: EntryRecord): EntryMirrorDto {
+  return {
+    id: entry.id,
+    type: entry.type,
+    status: entry.status,
+    privacyLevel: entry.privacyLevel,
+    title: entry.title,
+    summary: entry.summary,
+    body: entry.body,
+    source: entry.source,
+    confidence: entry.confidence,
+    occurredAt: entry.occurredAt?.toISOString(),
+    capturedAt: entry.capturedAt.toISOString(),
+    updatedAt: entry.updatedAt.toISOString(),
+    metadata: entry.metadata,
+    themes: entry.themes.map(({ id, slug, name }) => ({ id, slug, name })),
+    projects: entry.projects.map(({ id, slug, name }) => ({ id, slug, name })),
+    questions: entry.questions.map(({ id, prompt }) => ({ id, prompt })),
+    sources: entry.sources.map(({ id, type, title }) => ({ id, type, title }))
+  };
+}
 
 export interface ContextMirrorFile {
   path: string;
@@ -205,29 +249,7 @@ function bundleMarkdown({
 }
 
 function entryJson(entry: EntryRecord): string {
-  return JSON.stringify(
-    {
-      id: entry.id,
-      type: entry.type,
-      status: entry.status,
-      title: entry.title,
-      summary: entry.summary,
-      body: entry.body,
-      source: entry.source,
-      confidence: entry.confidence,
-      privacyLevel: entry.privacyLevel,
-      occurredAt: entry.occurredAt?.toISOString(),
-      capturedAt: entry.capturedAt.toISOString(),
-      updatedAt: entry.updatedAt.toISOString(),
-      metadata: entry.metadata,
-      themes: entry.themes,
-      projects: entry.projects,
-      questions: entry.questions,
-      sources: entry.sources
-    },
-    null,
-    2
-  );
+  return JSON.stringify(toEntryMirrorDto(entry), null, 2);
 }
 
 function sourceList(sources: SourceSummary[]): string {
