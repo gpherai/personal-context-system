@@ -1334,24 +1334,19 @@ export class PrismaContextRepository implements ContextRepository {
   }
 
   private async wouldCreateThemeCycle(themeId: string, proposedParentId: string): Promise<boolean> {
-    const visited = new Set<string>();
-    const ancestors: string[] = [proposedParentId];
-
-    while (ancestors.length > 0) {
-      const id = ancestors.pop()!;
-      if (id === themeId) return true;
-      if (visited.has(id)) return true;
-      visited.add(id);
-
-      const row: { parentThemeId: string | null } | null = await this.prisma.theme.findUnique({
-        where: { id },
-        select: { parentThemeId: true }
-      });
-
-      if (row?.parentThemeId) ancestors.push(row.parentThemeId);
-    }
-
-    return false;
+    const rows = await this.prisma.$queryRaw<{ found: boolean }[]>`
+      WITH RECURSIVE ancestors AS (
+        SELECT id, "parentThemeId"
+        FROM "Theme"
+        WHERE id = ${proposedParentId}
+        UNION ALL
+        SELECT t.id, t."parentThemeId"
+        FROM "Theme" t
+        INNER JOIN ancestors a ON t.id = a."parentThemeId"
+      )
+      SELECT EXISTS(SELECT 1 FROM ancestors WHERE id = ${themeId}) AS found
+    `;
+    return rows[0]?.found ?? false;
   }
 
   async setThemeParent(themeId: string, parentThemeId: string | null): Promise<void> {

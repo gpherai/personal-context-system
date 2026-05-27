@@ -1,73 +1,78 @@
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
 import { getContextMirrorStatus as infraGetContextMirrorStatus } from "@/infrastructure/files/context-mirror-writer";
+import type { ContextRepository } from "@/repositories/context-repository";
 import { listEntries, listSources } from "./context-service";
 
-export async function getDashboardOverview() {
-  return createPrismaContextRepository().getDashboardOverview();
+function repo(r?: ContextRepository): ContextRepository {
+  return r ?? createPrismaContextRepository();
 }
 
-export async function getCabinetOverview() {
-  return createPrismaContextRepository().getCabinetOverview();
+export async function getDashboardOverview(repository?: ContextRepository) {
+  return repo(repository).getDashboardOverview();
 }
 
-export async function getEntryById(id: string) {
-  return createPrismaContextRepository().getEntry(id);
+export async function getCabinetOverview(repository?: ContextRepository) {
+  return repo(repository).getCabinetOverview();
 }
 
-export async function getThemeBySlug(slug: string) {
-  return createPrismaContextRepository().getThemeBySlug(slug);
+export async function getEntryById(id: string, repository?: ContextRepository) {
+  return repo(repository).getEntry(id);
 }
 
-export async function getProjectBySlug(slug: string) {
-  return createPrismaContextRepository().getProjectBySlug(slug);
+export async function getThemeBySlug(slug: string, repository?: ContextRepository) {
+  return repo(repository).getThemeBySlug(slug);
 }
 
-export async function getQuestionById(id: string) {
-  return createPrismaContextRepository().getQuestion(id);
+export async function getProjectBySlug(slug: string, repository?: ContextRepository) {
+  return repo(repository).getProjectBySlug(slug);
 }
 
-export async function getRelationshipTargets() {
-  return createPrismaContextRepository().listRelationshipTargets();
+export async function getQuestionById(id: string, repository?: ContextRepository) {
+  return repo(repository).getQuestion(id);
 }
 
-export async function getSavedFilters() {
-  return createPrismaContextRepository().listSavedFilters();
+export async function getRelationshipTargets(repository?: ContextRepository) {
+  return repo(repository).listRelationshipTargets();
 }
 
-export async function getThreads() {
-  return createPrismaContextRepository().listThreads();
+export async function getSavedFilters(repository?: ContextRepository) {
+  return repo(repository).listSavedFilters();
 }
 
-export async function getThreadBySlug(slug: string) {
-  return createPrismaContextRepository().getThreadBySlug(slug);
+export async function getThreads(repository?: ContextRepository) {
+  return repo(repository).listThreads();
 }
 
-export async function getGraphSnapshot() {
-  return createPrismaContextRepository().getGraphSnapshot();
+export async function getThreadBySlug(slug: string, repository?: ContextRepository) {
+  return repo(repository).getThreadBySlug(slug);
 }
 
-export async function getLedgerEntries(params?: URLSearchParams) {
-  return listEntries(createPrismaContextRepository(), params);
+export async function getGraphSnapshot(repository?: ContextRepository) {
+  return repo(repository).getGraphSnapshot();
 }
 
-export async function getContextMirrorSnapshot() {
-  return createPrismaContextRepository().getContextMirrorSnapshot();
+export async function getLedgerEntries(params?: URLSearchParams, repository?: ContextRepository) {
+  return listEntries(repo(repository), params);
 }
 
-export async function listThemes() {
-  return createPrismaContextRepository().listThemes();
+export async function getContextMirrorSnapshot(repository?: ContextRepository) {
+  return repo(repository).getContextMirrorSnapshot();
 }
 
-export async function getSourceById(id: string) {
-  return createPrismaContextRepository().getSource(id);
+export async function listThemes(repository?: ContextRepository) {
+  return repo(repository).listThemes();
 }
 
-export async function getSourcesByTheme(themeId: string) {
-  return createPrismaContextRepository().listSources({ themeId, limit: 200 });
+export async function getSourceById(id: string, repository?: ContextRepository) {
+  return repo(repository).getSource(id);
 }
 
-export async function getSources(params?: URLSearchParams) {
-  return listSources(createPrismaContextRepository(), params);
+export async function getSourcesByTheme(themeId: string, repository?: ContextRepository) {
+  return repo(repository).listSources({ themeId, limit: 200 });
+}
+
+export async function getSources(params?: URLSearchParams, repository?: ContextRepository) {
+  return listSources(repo(repository), params);
 }
 
 export function getContextMirrorStatus() {
