@@ -190,7 +190,8 @@ const bookMetadataSchema = z.object({
   isbn: z.string().trim().max(20).optional(),
   year: z.number().int().min(0).max(2200).optional(),
   publisher: z.string().trim().max(240).optional(),
-  language: z.string().trim().max(40).optional()
+  language: z.string().trim().max(40).optional(),
+  chapters: z.array(z.string().trim().min(1).max(500)).default([])
 });
 
 const postMetadataSchema = z.object({
@@ -212,7 +213,9 @@ const sadhanaMetadataSchema = z.object({
   tradition: z.string().trim().max(240).optional(),
   deity: z.string().trim().max(240).optional(),
   language: z.string().trim().max(40).optional(),
-  format: z.enum(["text", "audio", "video"]).optional()
+  format: z.enum(["text", "audio", "video"]).optional(),
+  steps: z.array(z.string().trim().min(1).max(1000)).default([]),
+  mantras: z.array(z.string().trim().min(1).max(500)).default([])
 });
 
 const upadeshaMetadataSchema = z.object({
@@ -220,7 +223,8 @@ const upadeshaMetadataSchema = z.object({
   teacher: z.string().trim().max(240).optional(),
   tradition: z.string().trim().max(240).optional(),
   language: z.string().trim().max(40).optional(),
-  format: z.enum(["text", "audio", "video"]).optional()
+  format: z.enum(["text", "audio", "video"]).optional(),
+  chapters: z.array(z.string().trim().min(1).max(500)).default([])
 });
 
 const stotraMetadataSchema = z.object({
@@ -228,14 +232,18 @@ const stotraMetadataSchema = z.object({
   deity: z.string().trim().max(240).optional(),
   tradition: z.string().trim().max(240).optional(),
   language: z.string().trim().max(40).optional(),
-  script: z.string().trim().max(80).optional()
+  script: z.string().trim().max(80).optional(),
+  text: z.string().trim().max(50000).optional(),
+  mantras: z.array(z.string().trim().min(1).max(500)).default([])
 });
 
 const deityConceptMetadataSchema = z.object({
   type: z.literal("deity_concept"),
   tradition: z.string().trim().max(240).optional(),
   language: z.string().trim().max(40).optional(),
-  aliases: z.array(z.string().trim().min(1).max(240)).default([])
+  aliases: z.array(z.string().trim().min(1).max(240)).default([]),
+  mantras: z.array(z.string().trim().min(1).max(500)).default([]),
+  description: z.string().trim().max(4000).optional()
 });
 
 export const sourceMetadataSchema = z.discriminatedUnion("type", [
@@ -304,7 +312,7 @@ export function metadataToSearchText(metadata: SourceMetadata): string {
       push(metadata.channel, metadata.language);
       break;
     case "book":
-      push(...metadata.authors, metadata.publisher, metadata.language, metadata.isbn);
+      push(...metadata.authors, metadata.publisher, metadata.language, metadata.isbn, ...metadata.chapters);
       break;
     case "post":
       push(metadata.author, metadata.publishedAt);
@@ -313,16 +321,16 @@ export function metadataToSearchText(metadata: SourceMetadata): string {
       push(metadata.alt, metadata.photographer);
       break;
     case "sadhana":
-      push(metadata.tradition, metadata.deity, metadata.language, metadata.format);
+      push(metadata.tradition, metadata.deity, metadata.language, metadata.format, ...metadata.steps, ...metadata.mantras);
       break;
     case "upadesha":
-      push(metadata.teacher, metadata.tradition, metadata.language, metadata.format);
+      push(metadata.teacher, metadata.tradition, metadata.language, metadata.format, ...metadata.chapters);
       break;
     case "stotra":
-      push(metadata.deity, metadata.tradition, metadata.language, metadata.script);
+      push(metadata.deity, metadata.tradition, metadata.language, metadata.script, metadata.text, ...metadata.mantras);
       break;
     case "deity_concept":
-      push(metadata.tradition, metadata.language, ...metadata.aliases);
+      push(metadata.tradition, metadata.language, metadata.description, ...metadata.aliases, ...metadata.mantras);
       break;
   }
 
@@ -391,6 +399,21 @@ export function parseNameList(value: string | null | undefined): string[] {
 
 export function parseIdList(value: string | null | undefined): string[] {
   return parseNameList(value);
+}
+
+export function parseLineList(value: string | null | undefined): string[] {
+  if (typeof value !== "string") return [];
+  const seen = new Set<string>();
+  return value
+    .split("\n")
+    .map((item) => item.trim())
+    .filter((item) => {
+      if (!item) return false;
+      const key = item.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 }
 
 export function parseOptionalString(value: string | null | undefined): string | undefined {

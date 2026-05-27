@@ -17,6 +17,7 @@ import {
   listEntriesQuerySchema,
   listSourcesQuerySchema,
   parseIdList,
+  parseLineList,
   parseNameList,
   parseOptionalDate,
   parseOptionalNumber,
@@ -285,19 +286,19 @@ function buildSourceMetadata(type: string, formData: FormData): Record<string, u
     case "video":
       return { type, url: str("url"), duration: num("duration"), channel: str("channel"), language: str("language") };
     case "book":
-      return { type, authors: parseNameList(formStr(formData, "authors")), isbn: str("isbn"), year: num("year"), publisher: str("publisher"), language: str("language") };
+      return { type, authors: parseNameList(formStr(formData, "authors")), isbn: str("isbn"), year: num("year"), publisher: str("publisher"), language: str("language"), chapters: parseLineList(formStr(formData, "chapters")) };
     case "post":
       return { type, url: str("url"), author: str("author"), publishedAt: str("publishedAt") };
     case "image":
       return { type, url: str("url"), alt: str("alt"), photographer: str("photographer") };
     case "sadhana":
-      return { type, tradition: str("tradition"), deity: str("deity"), language: str("language"), format: str("format") };
+      return { type, tradition: str("tradition"), deity: str("deity"), language: str("language"), format: str("format"), steps: parseLineList(formStr(formData, "steps")), mantras: parseLineList(formStr(formData, "mantras")) };
     case "upadesha":
-      return { type, teacher: str("teacher"), tradition: str("tradition"), language: str("language"), format: str("format") };
+      return { type, teacher: str("teacher"), tradition: str("tradition"), language: str("language"), format: str("format"), chapters: parseLineList(formStr(formData, "chapters")) };
     case "stotra":
-      return { type, deity: str("deity"), tradition: str("tradition"), language: str("language"), script: str("script") };
+      return { type, deity: str("deity"), tradition: str("tradition"), language: str("language"), script: str("script"), text: str("text"), mantras: parseLineList(formStr(formData, "mantras")) };
     case "deity_concept":
-      return { type, tradition: str("tradition"), language: str("language"), aliases: parseNameList(formStr(formData, "aliases")) };
+      return { type, tradition: str("tradition"), language: str("language"), aliases: parseNameList(formStr(formData, "aliases")), mantras: parseLineList(formStr(formData, "mantras")), description: str("description") };
     default:
       return { type };
   }

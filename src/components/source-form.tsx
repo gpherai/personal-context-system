@@ -50,10 +50,16 @@ function inputCls() {
   return "h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30";
 }
 
+function areaCls() {
+  return "min-h-20 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30";
+}
+
 function MetadataFields({ type, initial }: { type: string; initial?: Record<string, unknown> }) {
   const m = (initial ?? {}) as Record<string, unknown>;
   const str = (k: string) => (typeof m[k] === "string" ? String(m[k]) : "");
   const num = (k: string) => (typeof m[k] === "number" ? String(m[k]) : "");
+  const lines = (k: string) => (Array.isArray(m[k]) ? (m[k] as string[]).join("\n") : "");
+  const csv = (k: string) => (Array.isArray(m[k]) ? (m[k] as string[]).join(", ") : "");
 
   switch (type) {
     case "video":
@@ -67,12 +73,17 @@ function MetadataFields({ type, initial }: { type: string; initial?: Record<stri
       );
     case "book":
       return (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Auteurs (kommagescheiden)"><input className={inputCls()} name="authors" defaultValue={Array.isArray(m.authors) ? (m.authors as string[]).join(", ") : ""} /></Field>
-          <Field label="ISBN"><input className={inputCls()} name="isbn" defaultValue={str("isbn")} /></Field>
-          <Field label="Jaar"><input className={inputCls()} name="year" defaultValue={num("year")} type="number" /></Field>
-          <Field label="Uitgever"><input className={inputCls()} name="publisher" defaultValue={str("publisher")} /></Field>
-          <Field label="Taal"><input className={inputCls()} name="language" defaultValue={str("language")} /></Field>
+        <div className="grid gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Auteurs (kommagescheiden)"><input className={inputCls()} name="authors" defaultValue={csv("authors")} /></Field>
+            <Field label="ISBN"><input className={inputCls()} name="isbn" defaultValue={str("isbn")} /></Field>
+            <Field label="Jaar"><input className={inputCls()} name="year" defaultValue={num("year")} type="number" /></Field>
+            <Field label="Uitgever"><input className={inputCls()} name="publisher" defaultValue={str("publisher")} /></Field>
+            <Field label="Taal"><input className={inputCls()} name="language" defaultValue={str("language")} /></Field>
+          </div>
+          <Field label="Hoofdstukken (één per regel)">
+            <textarea className={areaCls()} name="chapters" defaultValue={lines("chapters")} placeholder="Hoofdstuk 1&#10;Hoofdstuk 2" />
+          </Field>
         </div>
       );
     case "post":
@@ -93,52 +104,81 @@ function MetadataFields({ type, initial }: { type: string; initial?: Record<stri
       );
     case "sadhana":
       return (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Traditie"><input className={inputCls()} name="tradition" defaultValue={str("tradition")} /></Field>
-          <Field label="Godheid"><input className={inputCls()} name="deity" defaultValue={str("deity")} /></Field>
-          <Field label="Taal"><input className={inputCls()} name="language" defaultValue={str("language")} /></Field>
-          <Field label="Formaat">
-            <select className={inputCls()} name="format" defaultValue={str("format")}>
-              <option value="">—</option>
-              <option value="text">Tekst</option>
-              <option value="audio">Audio</option>
-              <option value="video">Video</option>
-            </select>
+        <div className="grid gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Traditie"><input className={inputCls()} name="tradition" defaultValue={str("tradition")} /></Field>
+            <Field label="Godheid"><input className={inputCls()} name="deity" defaultValue={str("deity")} /></Field>
+            <Field label="Taal"><input className={inputCls()} name="language" defaultValue={str("language")} /></Field>
+            <Field label="Formaat">
+              <select className={inputCls()} name="format" defaultValue={str("format")}>
+                <option value="">—</option>
+                <option value="text">Tekst</option>
+                <option value="audio">Audio</option>
+                <option value="video">Video</option>
+              </select>
+            </Field>
+          </div>
+          <Field label="Stappen (één per regel)">
+            <textarea className={areaCls()} name="steps" defaultValue={lines("steps")} placeholder="Stap 1&#10;Stap 2" />
+          </Field>
+          <Field label="Mantra&apos;s (één per regel)">
+            <textarea className={areaCls()} name="mantras" defaultValue={lines("mantras")} placeholder="Om Namah Shivaya&#10;Om Gam Ganapataye Namah" />
           </Field>
         </div>
       );
     case "upadesha":
       return (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Leraar"><input className={inputCls()} name="teacher" defaultValue={str("teacher")} /></Field>
-          <Field label="Traditie"><input className={inputCls()} name="tradition" defaultValue={str("tradition")} /></Field>
-          <Field label="Taal"><input className={inputCls()} name="language" defaultValue={str("language")} /></Field>
-          <Field label="Formaat">
-            <select className={inputCls()} name="format" defaultValue={str("format")}>
-              <option value="">—</option>
-              <option value="text">Tekst</option>
-              <option value="audio">Audio</option>
-              <option value="video">Video</option>
-            </select>
+        <div className="grid gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Leraar"><input className={inputCls()} name="teacher" defaultValue={str("teacher")} /></Field>
+            <Field label="Traditie"><input className={inputCls()} name="tradition" defaultValue={str("tradition")} /></Field>
+            <Field label="Taal"><input className={inputCls()} name="language" defaultValue={str("language")} /></Field>
+            <Field label="Formaat">
+              <select className={inputCls()} name="format" defaultValue={str("format")}>
+                <option value="">—</option>
+                <option value="text">Tekst</option>
+                <option value="audio">Audio</option>
+                <option value="video">Video</option>
+              </select>
+            </Field>
+          </div>
+          <Field label="Hoofdstukken / secties (één per regel)">
+            <textarea className={areaCls()} name="chapters" defaultValue={lines("chapters")} placeholder="Inleiding&#10;Hoofdstuk 1" />
           </Field>
         </div>
       );
     case "stotra":
       return (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Godheid"><input className={inputCls()} name="deity" defaultValue={str("deity")} /></Field>
-          <Field label="Traditie"><input className={inputCls()} name="tradition" defaultValue={str("tradition")} /></Field>
-          <Field label="Taal"><input className={inputCls()} name="language" defaultValue={str("language")} /></Field>
-          <Field label="Script"><input className={inputCls()} name="script" defaultValue={str("script")} /></Field>
+        <div className="grid gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Godheid"><input className={inputCls()} name="deity" defaultValue={str("deity")} /></Field>
+            <Field label="Traditie"><input className={inputCls()} name="tradition" defaultValue={str("tradition")} /></Field>
+            <Field label="Taal"><input className={inputCls()} name="language" defaultValue={str("language")} /></Field>
+            <Field label="Script"><input className={inputCls()} name="script" defaultValue={str("script")} /></Field>
+          </div>
+          <Field label="Mantra&apos;s / shlokas (één per regel)">
+            <textarea className={areaCls()} name="mantras" defaultValue={lines("mantras")} placeholder="Om Namah Shivaya&#10;Shri Ram Jai Ram" />
+          </Field>
+          <Field label="Tekst (volledig stotra)">
+            <textarea className="min-h-32 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" name="text" defaultValue={str("text")} placeholder="Volledige tekst van het stotra…" />
+          </Field>
         </div>
       );
     case "deity_concept":
       return (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Traditie"><input className={inputCls()} name="tradition" defaultValue={str("tradition")} /></Field>
-          <Field label="Taal"><input className={inputCls()} name="language" defaultValue={str("language")} /></Field>
-          <Field label="Aliassen (kommagescheiden)">
-            <input className={inputCls()} name="aliases" defaultValue={Array.isArray(m.aliases) ? (m.aliases as string[]).join(", ") : ""} />
+        <div className="grid gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Traditie"><input className={inputCls()} name="tradition" defaultValue={str("tradition")} /></Field>
+            <Field label="Taal"><input className={inputCls()} name="language" defaultValue={str("language")} /></Field>
+            <Field label="Aliassen (kommagescheiden)">
+              <input className={inputCls()} name="aliases" defaultValue={csv("aliases")} />
+            </Field>
+          </div>
+          <Field label="Mantra&apos;s (één per regel)">
+            <textarea className={areaCls()} name="mantras" defaultValue={lines("mantras")} placeholder="Om Namah Shivaya&#10;Om Gam Ganapataye Namah" />
+          </Field>
+          <Field label="Beschrijving van de godheidsvorm">
+            <textarea className={areaCls()} name="description" defaultValue={str("description")} placeholder="Attributen, symboliek, iconografie…" />
           </Field>
         </div>
       );
