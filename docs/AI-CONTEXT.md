@@ -20,7 +20,7 @@ Path:
 data/context-mirror/
 ```
 
-Initial target files:
+Generated files:
 
 - `manifest.json`
 - `ai-index.md`
@@ -43,10 +43,11 @@ Initial target files:
 - `entries/index.json`
 - `entries/{id}.md`
 - `entries/{id}.json`
-
-A `timeline/` directory for time-sequenced entry views is a planned later addition, not part of the initial build.
-
-Current state: the initial target files above are generated. Not yet built: per-thread detail projections, timeline views, and alternate privacy export modes.
+- `sources/index.md`
+- `sources/index.json`
+- `sources/by-type/{type}.md`
+- `sources/{id}.md`
+- `sanatana/taxonomy.md` (only if Sanatana taxonomy themes exist)
 
 Rules:
 

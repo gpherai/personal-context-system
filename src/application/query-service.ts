@@ -1,5 +1,6 @@
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
 import { getContextMirrorStatus as infraGetContextMirrorStatus } from "@/infrastructure/files/context-mirror-writer";
+import { isValidId } from "@/lib/format";
 import type { ContextRepository } from "@/repositories/context-repository";
 import { listEntries, listSources } from "./context-service";
 
@@ -16,6 +17,7 @@ export async function getCabinetOverview(repository?: ContextRepository) {
 }
 
 export async function getEntryById(id: string, repository?: ContextRepository) {
+  if (!isValidId(id)) return null;
   return repo(repository).getEntry(id);
 }
 
@@ -28,6 +30,7 @@ export async function getProjectBySlug(slug: string, repository?: ContextReposit
 }
 
 export async function getQuestionById(id: string, repository?: ContextRepository) {
+  if (!isValidId(id)) return null;
   return repo(repository).getQuestion(id);
 }
 
@@ -64,6 +67,7 @@ export async function listThemes(repository?: ContextRepository) {
 }
 
 export async function getSourceById(id: string, repository?: ContextRepository) {
+  if (!isValidId(id)) return null;
   return repo(repository).getSource(id);
 }
 

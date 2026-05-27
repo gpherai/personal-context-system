@@ -1,4 +1,3 @@
-import { slugifyName } from "@/domain/context";
 import type {
   ContextMirrorSnapshot,
   EntryRecord,
@@ -29,6 +28,7 @@ function excerpt(entry: EntryRecord): string {
 function metadataBlock(entry: EntryRecord): string {
   const themes = entry.themes.map((theme) => theme.name).join(", ") || "none";
   const projects = entry.projects.map((project) => project.name).join(", ") || "none";
+  const sources = entry.sources.map((s) => `${s.title} (${s.id})`).join(", ") || "none";
 
   return [
     `- id: ${entry.id}`,
@@ -38,7 +38,8 @@ function metadataBlock(entry: EntryRecord): string {
     `- captured: ${entry.capturedAt.toISOString()}`,
     `- occurred: ${entry.occurredAt ? entry.occurredAt.toISOString() : "unknown"}`,
     `- themes: ${themes}`,
-    `- projects: ${projects}`
+    `- projects: ${projects}`,
+    `- sources: ${sources}`
   ].join("\n");
 }
 
@@ -122,7 +123,7 @@ function recentList(entries: EntryRecord[]): string {
     .slice(0, 30)
     .map(
       (entry) =>
-        `- ${formatDate(entry.occurredAt ?? entry.capturedAt)} [${entry.type}/${entry.status}] ${entry.title} (${entry.id})`
+        `- ${formatDate(entry.occurredAt ?? entry.capturedAt)} [${entry.type}/${entry.status}/${entry.privacyLevel}] ${entry.title} (${entry.id})`
     )
     .join("\n");
 }
@@ -170,20 +171,22 @@ function bundleMarkdown({
   generatedAtIso,
   scope,
   entries,
-  questions = []
+  questions = [],
+  localOnly = false
 }: {
   title: string;
   generatedAtIso: string;
   scope: string;
   entries: EntryRecord[];
   questions?: QuestionRecord[];
+  localOnly?: boolean;
 }): string {
   return [
     `# ${title}`,
     "",
     `Generated: ${generatedAtIso}`,
     `Scope: ${scope}`,
-    "Source of truth: PostgreSQL.",
+    localOnly ? "WARNING: LOCAL ONLY — contains private/sensitive entries. Do not share." : "Source of truth: PostgreSQL.",
     "",
     "## Counts",
     "",
@@ -219,7 +222,8 @@ function entryJson(entry: EntryRecord): string {
       metadata: entry.metadata,
       themes: entry.themes,
       projects: entry.projects,
-      questions: entry.questions
+      questions: entry.questions,
+      sources: entry.sources
     },
     null,
     2
@@ -236,7 +240,12 @@ function sourceList(sources: SourceSummary[]): string {
 function sourceMarkdown(source: SourceSummary, generatedAtIso: string): string {
   const metaEntries = Object.entries(source.metadata)
     .filter(([k]) => k !== "type")
-    .map(([k, v]) => `- ${k}: ${Array.isArray(v) ? (v as string[]).join(", ") : String(v ?? "")}`);
+    .map(([k, v]) => {
+      if (v === null || v === undefined) return `- ${k}: `;
+      if (Array.isArray(v)) return `- ${k}: ${(v as unknown[]).map((item) => (typeof item === "object" ? JSON.stringify(item) : String(item))).join(", ")}`;
+      if (typeof v === "object") return `- ${k}: ${JSON.stringify(v)}`;
+      return `- ${k}: ${String(v)}`;
+    });
 
   return [
     `# ${source.title}`,
@@ -253,19 +262,34 @@ function sourceMarkdown(source: SourceSummary, generatedAtIso: string): string {
   ].join("\n");
 }
 
+function sortedEntries(entries: EntryRecord[]): EntryRecord[] {
+  return [...entries].sort(
+    (a, b) => (b.occurredAt ?? b.capturedAt).getTime() - (a.occurredAt ?? a.capturedAt).getTime()
+  );
+}
+
+function sortedNamed<T extends { name: string }>(records: T[]): T[] {
+  return [...records].sort((a, b) => a.name.localeCompare(b.name));
+}
+
 export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt = new Date()): ContextMirrorBuild {
   const generatedAtIso = generatedAt.toISOString();
   const files: ContextMirrorFile[] = [];
 
+  const entries = sortedEntries(snapshot.entries);
+  const themes = sortedNamed(snapshot.themes);
+  const projects = sortedNamed(snapshot.projects);
+  const sources = [...snapshot.sources].sort((a, b) => a.title.localeCompare(b.title));
+
   const manifest = {
     generatedAt: generatedAtIso,
     counts: {
-      entries: snapshot.entries.length,
+      entries: entries.length,
       openQuestions: snapshot.openQuestions.length,
-      themes: snapshot.themes.length,
-      projects: snapshot.projects.length,
+      themes: themes.length,
+      projects: projects.length,
       threads: snapshot.threads.length,
-      sources: snapshot.sources.length
+      sources: sources.length
     },
     files: [] as string[]
   };
@@ -281,16 +305,16 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
       "",
       "## Current Counts",
       "",
-      `- entries: ${snapshot.entries.length}`,
+      `- entries: ${entries.length}`,
       `- question queue: ${snapshot.openQuestions.length}`,
-      `- themes: ${snapshot.themes.length}`,
-      `- projects: ${snapshot.projects.length}`,
+      `- themes: ${themes.length}`,
+      `- projects: ${projects.length}`,
       `- threads: ${snapshot.threads.length}`,
-      `- sources: ${snapshot.sources.length}`,
+      `- sources: ${sources.length}`,
       "",
       "## Recent Entries",
       "",
-      recentList(snapshot.entries),
+      recentList(entries),
       "",
       "## Question Queue",
       "",
@@ -301,7 +325,7 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
 
   files.push({
     path: "recent.md",
-    contents: ["# Recent Entries", "", `Generated: ${generatedAtIso}`, "", recentList(snapshot.entries), ""].join("\n")
+    contents: ["# Recent Entries", "", `Generated: ${generatedAtIso}`, "", recentList(entries), ""].join("\n")
   });
 
   files.push({
@@ -313,7 +337,7 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
       "",
       "## Recent Entries",
       "",
-      recentList(snapshot.entries.slice(0, 12)),
+      recentList(entries.slice(0, 12)),
       "",
       "## Question Queue",
       "",
@@ -338,10 +362,10 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
       "",
       "## Current Counts",
       "",
-      `- entries: ${snapshot.entries.length}`,
+      `- entries: ${entries.length}`,
       `- question queue: ${snapshot.openQuestions.length}`,
-      `- themes: ${snapshot.themes.length}`,
-      `- projects: ${snapshot.projects.length}`,
+      `- themes: ${themes.length}`,
+      `- projects: ${projects.length}`,
       `- threads: ${snapshot.threads.length}`,
       "",
       "## Question Queue",
@@ -350,12 +374,12 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
       "",
       "## Recent Entries",
       "",
-      recentList(snapshot.entries.slice(0, 12)),
+      recentList(entries.slice(0, 12)),
       ""
     ].join("\n")
   });
 
-  const shareableEntries = snapshot.entries.filter((entry) => entry.privacyLevel === "shareable");
+  const shareableEntries = entries.filter((entry) => entry.privacyLevel === "shareable");
 
   files.push({
     path: "bundles/local-full.md",
@@ -363,8 +387,9 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
       title: "Local Full Context Bundle",
       generatedAtIso,
       scope: "local-full",
-      entries: snapshot.entries,
-      questions: snapshot.openQuestions
+      entries,
+      questions: snapshot.openQuestions,
+      localOnly: true
     })
   });
 
@@ -380,11 +405,11 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
 
   files.push({
     path: "themes/index.md",
-    contents: ["# Themes", "", `Generated: ${generatedAtIso}`, "", namedList("Themes", snapshot.themes), ""].join("\n")
+    contents: ["# Themes", "", `Generated: ${generatedAtIso}`, "", namedList("Themes", themes), ""].join("\n")
   });
 
-  for (const theme of snapshot.themes) {
-    const entries = slugSectionEntries(snapshot.entries, "theme", theme.slug);
+  for (const theme of themes) {
+    const themeEntries = slugSectionEntries(entries, "theme", theme.slug);
     files.push({
       path: `themes/${theme.slug}.md`,
       contents: [
@@ -396,7 +421,7 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
         "",
         "## Entries",
         "",
-        entryList(entries),
+        entryList(themeEntries),
         ""
       ].join("\n")
     });
@@ -404,13 +429,13 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
 
   files.push({
     path: "projects/index.md",
-    contents: ["# Projects", "", `Generated: ${generatedAtIso}`, "", namedList("Projects", snapshot.projects), ""].join("\n")
+    contents: ["# Projects", "", `Generated: ${generatedAtIso}`, "", namedList("Projects", projects), ""].join("\n")
   });
 
-  for (const project of snapshot.projects) {
-    const entries = slugSectionEntries(snapshot.entries, "project", project.slug);
+  for (const project of projects) {
+    const projectEntries = slugSectionEntries(entries, "project", project.slug);
     const projectQuestions = snapshot.openQuestions.filter((question) =>
-      entries.some((entry) => entry.questions.some((entryQuestion) => entryQuestion.id === question.id))
+      projectEntries.some((entry) => entry.questions.some((entryQuestion) => entryQuestion.id === question.id))
     );
 
     files.push({
@@ -424,7 +449,7 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
         "",
         "## Entries",
         "",
-        entryList(entries),
+        entryList(projectEntries),
         ""
       ].join("\n")
     });
@@ -435,8 +460,9 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
         title: `${project.name} Project Context Bundle`,
         generatedAtIso,
         scope: `project:${project.slug}`,
-        entries,
-        questions: projectQuestions
+        entries: projectEntries,
+        questions: projectQuestions,
+        localOnly: true
       })
     });
   }
@@ -454,20 +480,20 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
   }
 
   // Sources
-  const sourcesByType = snapshot.sources.reduce<Record<string, SourceSummary[]>>((acc, s) => {
+  const sourcesByType = sources.reduce<Record<string, SourceSummary[]>>((acc, s) => {
     (acc[s.type] ??= []).push(s);
     return acc;
   }, {});
 
   files.push({
     path: "sources/index.md",
-    contents: ["# Bronnen", "", `Generated: ${generatedAtIso}`, "", `Totaal: ${snapshot.sources.length}`, "", sourceList(snapshot.sources), ""].join("\n")
+    contents: ["# Bronnen", "", `Generated: ${generatedAtIso}`, "", `Totaal: ${sources.length}`, "", sourceList(sources), ""].join("\n")
   });
 
   files.push({
     path: "sources/index.json",
     contents: JSON.stringify(
-      snapshot.sources.map((s) => ({
+      sources.map((s) => ({
         id: s.id,
         type: s.type,
         title: s.title,
@@ -486,7 +512,7 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
     });
   }
 
-  for (const source of snapshot.sources) {
+  for (const source of sources) {
     files.push({
       path: `sources/${source.id}.md`,
       contents: sourceMarkdown(source, generatedAtIso)
@@ -494,9 +520,9 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
   }
 
   // Sanatana taxonomy map
-  const deities = snapshot.themes.filter((t) => t.metadata?.category === "deity");
-  const traditions = snapshot.themes.filter((t) => t.metadata?.category === "tradition");
-  const topics = snapshot.themes.filter((t) => t.metadata?.category === "topic");
+  const deities = themes.filter((t) => t.metadata?.category === "deity");
+  const traditions = themes.filter((t) => t.metadata?.category === "tradition");
+  const topics = themes.filter((t) => t.metadata?.category === "topic");
 
   if (deities.length || traditions.length || topics.length) {
     files.push({
@@ -525,10 +551,6 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
     });
   }
 
-  const timelineEntries = [...snapshot.entries].sort(
-    (a, b) => (b.occurredAt ?? b.capturedAt).getTime() - (a.occurredAt ?? a.capturedAt).getTime()
-  );
-
   files.push({
     path: "timeline/entries.md",
     contents: [
@@ -536,7 +558,7 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
       "",
       `Generated: ${generatedAtIso}`,
       "",
-      timelineList(timelineEntries),
+      timelineList(entries),
       ""
     ].join("\n")
   });
@@ -548,25 +570,24 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
       "",
       `Generated: ${generatedAtIso}`,
       "",
-      timelineList(timelineEntries.filter((entry) => entry.privacyLevel === "shareable")),
+      timelineList(entries.filter((entry) => entry.privacyLevel === "shareable")),
       ""
     ].join("\n")
   });
 
   for (const question of snapshot.openQuestions) {
-    const entries = snapshot.entries.filter((entry) =>
+    const questionEntries = entries.filter((entry) =>
       entry.questions.some((entryQuestion) => entryQuestion.id === question.id)
     );
-    const questionSlug = `${slugifyName(question.prompt).slice(0, 48)}-${question.id.slice(0, 8)}`;
-
     files.push({
-      path: `bundles/questions/${questionSlug}.md`,
+      path: `bundles/questions/${question.id}.md`,
       contents: bundleMarkdown({
         title: "Question Context Bundle",
         generatedAtIso,
         scope: `question:${question.id}`,
-        entries,
-        questions: [question]
+        entries: questionEntries,
+        questions: [question],
+        localOnly: true
       })
     });
   }
@@ -574,7 +595,7 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
   files.push({
     path: "entries/index.json",
     contents: JSON.stringify(
-      snapshot.entries.map((entry) => ({
+      entries.map((entry) => ({
         id: entry.id,
         path: `entries/${entry.id}.md`,
         type: entry.type,
@@ -589,9 +610,17 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
     )
   });
 
-  for (const entry of snapshot.entries) {
+  for (const entry of entries) {
     files.push({ path: `entries/${entry.id}.md`, contents: entryMarkdown(entry) });
     files.push({ path: `entries/${entry.id}.json`, contents: entryJson(entry) });
+  }
+
+  const seenPaths = new Set<string>();
+  for (const file of files) {
+    if (seenPaths.has(file.path)) {
+      throw new Error(`Duplicate mirror file path: ${file.path}`);
+    }
+    seenPaths.add(file.path);
   }
 
   manifest.files = files.map((file) => file.path).sort();
