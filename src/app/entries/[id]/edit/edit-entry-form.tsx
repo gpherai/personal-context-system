@@ -71,7 +71,7 @@ export function EditEntryForm({ entry }: { entry: EditEntryDto }) {
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid items-start gap-4 md:grid-cols-3">
         <EntryTypeField defaultValue={entry.type} />
 
         <label className="grid gap-1.5 text-sm font-medium">
