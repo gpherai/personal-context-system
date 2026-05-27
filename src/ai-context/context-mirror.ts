@@ -9,6 +9,17 @@ import type {
   ThreadRecord
 } from "@/repositories/context-repository";
 
+export interface MirrorBuildContext {
+  snapshot: ContextMirrorSnapshot;
+  entries: EntryRecord[];
+  themes: NamedRecord[];
+  projects: NamedRecord[];
+  sources: SourceSummary[];
+  generatedAtIso: string;
+}
+
+export type MirrorExtension = (ctx: MirrorBuildContext) => ContextMirrorFile[];
+
 interface EntryMirrorDto {
   id: string;
   type: EntryType;
@@ -67,7 +78,7 @@ function formatDate(value?: Date): string {
 
 // Collapse newlines to spaces so user content cannot inject headings or list items
 // into Markdown structure (headings end at first newline; list items break on newline).
-function sanitizeInline(s: string): string {
+export function sanitizeInline(s: string): string {
   return s.replace(/\r?\n|\r/g, " ").trim();
 }
 
@@ -313,7 +324,11 @@ function sortedNamed<T extends { name: string }>(records: T[]): T[] {
   return [...records].sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt = new Date()): ContextMirrorBuild {
+export function buildContextMirror(
+  snapshot: ContextMirrorSnapshot,
+  generatedAt = new Date(),
+  extensions: MirrorExtension[] = []
+): ContextMirrorBuild {
   const generatedAtIso = generatedAt.toISOString();
   const files: ContextMirrorFile[] = [];
 
@@ -457,11 +472,11 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
     files.push({
       path: `themes/${theme.slug}.md`,
       contents: [
-        `# ${theme.name}`,
+        `# ${sanitizeInline(theme.name)}`,
         "",
         `Generated: ${generatedAtIso}`,
         "",
-        theme.description ?? "",
+        theme.description ? wrapUserContent(theme.description) : "",
         "",
         "## Entries",
         "",
@@ -485,11 +500,11 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
     files.push({
       path: `projects/${project.slug}.md`,
       contents: [
-        `# ${project.name}`,
+        `# ${sanitizeInline(project.name)}`,
         "",
         `Generated: ${generatedAtIso}`,
         "",
-        project.description ?? "",
+        project.description ? wrapUserContent(project.description) : "",
         "",
         "## Entries",
         "",
@@ -563,36 +578,9 @@ export function buildContextMirror(snapshot: ContextMirrorSnapshot, generatedAt 
     });
   }
 
-  // Sanatana taxonomy map
-  const deities = themes.filter((t) => t.metadata?.category === "deity");
-  const traditions = themes.filter((t) => t.metadata?.category === "tradition");
-  const topics = themes.filter((t) => t.metadata?.category === "topic");
-
-  if (deities.length || traditions.length || topics.length) {
-    files.push({
-      path: "sanatana/taxonomy.md",
-      contents: [
-        "# Sanatana Taxonomie",
-        "",
-        `Generated: ${generatedAtIso}`,
-        "",
-        "## Tradities",
-        "",
-        traditions.length ? traditions.map((t) => `- ${sanitizeInline(t.name)} (${t.slug})`).join("\n") : "- Geen",
-        "",
-        "## Godheden",
-        "",
-        deities.length ? deities.map((t) => {
-          const aliases = Array.isArray(t.metadata?.aliases) ? ` [${(t.metadata.aliases as string[]).map((a) => sanitizeInline(a)).join(", ")}]` : "";
-          return `- ${sanitizeInline(t.name)}${aliases} (${t.slug})`;
-        }).join("\n") : "- Geen",
-        "",
-        "## Onderwerpen",
-        "",
-        topics.length ? topics.map((t) => `- ${sanitizeInline(t.name)} (${t.slug})`).join("\n") : "- Geen",
-        ""
-      ].join("\n")
-    });
+  const extensionCtx: MirrorBuildContext = { snapshot, entries, themes, projects, sources, generatedAtIso };
+  for (const extension of extensions) {
+    files.push(...extension(extensionCtx));
   }
 
   files.push({

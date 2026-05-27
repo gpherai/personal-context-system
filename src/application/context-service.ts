@@ -3,6 +3,7 @@ import "server-only";
 import { z } from "zod";
 
 import { buildContextMirror } from "@/ai-context/context-mirror";
+import { sanatanaTaxonomyExtension } from "@/ai-context/sanatana-taxonomy";
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
 import { writeContextMirror } from "@/infrastructure/files/context-mirror-writer";
 
@@ -471,6 +472,6 @@ export async function listEntries(repository: EntryRepository, params?: URLSearc
 
 export async function rebuildMirror(repository?: SnapshotRepository) {
   const snapshot = await (repository ?? createPrismaContextRepository()).getContextMirrorSnapshot();
-  const build = buildContextMirror(snapshot);
+  const build = buildContextMirror(snapshot, new Date(), [sanatanaTaxonomyExtension]);
   return writeContextMirror(build);
 }
