@@ -31,3 +31,6 @@ data/backups/
 # Logs and OS/editor noise
 *.log
 .DS_Store
+
+# Tool directories
+.antigravitycli/
