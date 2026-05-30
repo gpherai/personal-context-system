@@ -1355,7 +1355,7 @@ export class PrismaContextRepository implements ContextRepository {
 
     if (query?.type) where.type = query.type;
     if (query?.status) where.status = query.status;
-    if (query?.themeId) where.themes = { some: { themeId: query.themeId } };
+    if (query?.themeSlug) where.themes = { some: { theme: { slug: query.themeSlug } } };
 
     let searchIds: string[] | undefined;
     if (query?.search) {

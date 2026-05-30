@@ -77,8 +77,8 @@ export async function getSourceById(id: string, repository?: SourceRepository) {
   return (repository ?? createPrismaContextRepository()).getSource(id);
 }
 
-export async function getSourcesByTheme(themeId: string, repository?: SourceRepository) {
-  return (repository ?? createPrismaContextRepository()).listSources({ themeId, limit: 200 });
+export async function getSourcesByTheme(themeSlug: string, repository?: SourceRepository) {
+  return (repository ?? createPrismaContextRepository()).listSources({ themeSlug, limit: 200 });
 }
 
 export async function getSources(params?: URLSearchParams, repository?: SourceRepository) {

@@ -66,7 +66,7 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
     const [sources, themes] = await Promise.all([getSources(urlParams), listThemes()]);
 
     const activeType = param(rawSearchParams, "type");
-    const activeTheme = param(rawSearchParams, "themeId");
+    const activeTheme = param(rawSearchParams, "themeSlug");
 
     return (
       <div className="mx-auto grid max-w-6xl gap-5">
@@ -117,11 +117,11 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
               <select
                 className="field-select"
                 defaultValue={activeTheme}
-                name="themeId"
+                name="themeSlug"
               >
                 <option value="">All themes</option>
                 {themes.map((theme) => (
-                  <option key={theme.id} value={theme.id}>
+                  <option key={theme.id} value={theme.slug}>
                     {theme.name}
                   </option>
                 ))}

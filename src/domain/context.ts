@@ -292,7 +292,7 @@ export const deleteSourceCommandSchema = z.object({
 export const listSourcesQuerySchema = z.object({
   search: z.string().trim().optional(),
   type: sourceTypeSchema.optional(),
-  themeId: z.string().trim().optional(),
+  themeSlug: z.string().trim().optional(),
   status: recordStatusSchema.optional(),
   limit: z.number().int().min(1).max(200).default(50)
 });

@@ -498,7 +498,7 @@ export async function listSources(repository: SourceRepository, params?: URLSear
   const parsed = laxListSourcesQuerySchema.parse({
     search: parseOptionalString(params?.get("search") ?? null),
     type: parseOptionalString(params?.get("type") ?? null),
-    themeId: parseOptionalString(params?.get("themeId") ?? null),
+    themeSlug: parseOptionalString(params?.get("themeSlug") ?? null),
     status: parseOptionalString(params?.get("status") ?? null),
     limit: 100
   });

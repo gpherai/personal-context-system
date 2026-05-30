@@ -37,7 +37,7 @@ export default async function ThemePage({ params }: { params: Promise<{ slug: st
     const category = typeof theme.metadata?.category === "string" ? theme.metadata.category : null;
     const aliases = Array.isArray(theme.metadata?.aliases) ? (theme.metadata.aliases as string[]) : [];
 
-    const sources = await getSourcesByTheme(theme.id);
+    const sources = await getSourcesByTheme(theme.slug);
 
     return (
       <div className="mx-auto grid max-w-5xl gap-5">
