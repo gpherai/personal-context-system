@@ -378,7 +378,6 @@ function buildRawSourceMetadata(type: string, formData: FormData): Record<string
     mantras: parseLineList(formStr(formData, "mantras")),
     script: str("script"),
     aliases: parseNameList(formStr(formData, "aliases")),
-    description: str("description"),
     tradition: str("tradition"),
     lineage: str("lineage"),
     period: str("period")

@@ -219,9 +219,6 @@ function MetadataFields({
           <Field label="Mantras (one per line)" error={err("mantras")}>
             <textarea className={areaCls()} name="mantras" defaultValue={lines("mantras")} placeholder="Om Namah Shivaya&#10;Om Gam Ganapataye Namah" />
           </Field>
-          <Field label="Description" error={err("description")}>
-            <textarea className={areaCls()} name="description" defaultValue={str("description")} placeholder="Attributes, symbolism, iconography…" />
-          </Field>
         </div>
       );
     case "teacher":

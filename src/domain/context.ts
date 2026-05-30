@@ -231,8 +231,7 @@ const deityConceptMetadataSchema = z.object({
   type: z.literal("deity_concept"),
   language: z.string().trim().max(40).optional(),
   aliases: z.array(z.string().trim().min(1).max(240)).default([]),
-  mantras: z.array(z.string().trim().min(1).max(500)).default([]),
-  description: z.string().trim().max(4000).optional()
+  mantras: z.array(z.string().trim().min(1).max(500)).default([])
 });
 
 const teacherMetadataSchema = z.object({
@@ -312,7 +311,7 @@ export function metadataToSearchText(metadata: SourceMetadata): string {
       push(metadata.channel, metadata.language);
       break;
     case "book":
-      push(...metadata.authors, metadata.publisher, metadata.language, metadata.isbn, ...metadata.chapters);
+      push(...metadata.authors, metadata.publisher, metadata.language, metadata.isbn, metadata.year?.toString(), ...metadata.chapters);
       break;
     case "post":
       push(metadata.author, metadata.publishedAt);
@@ -330,7 +329,7 @@ export function metadataToSearchText(metadata: SourceMetadata): string {
       push(metadata.language, metadata.script, ...metadata.mantras);
       break;
     case "deity_concept":
-      push(metadata.language, metadata.description, ...metadata.aliases, ...metadata.mantras);
+      push(metadata.language, ...metadata.aliases, ...metadata.mantras);
       break;
     case "teacher":
       push(metadata.tradition, metadata.lineage, metadata.language, metadata.period);
@@ -464,5 +463,5 @@ export function titleFromBody(body: string): string {
     .map((line) => line.trim())
     .find(Boolean);
 
-  return firstLine?.slice(0, 120) || "Untitled entry";
+  return firstLine?.slice(0, 240) || "Untitled entry";
 }
