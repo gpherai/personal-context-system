@@ -11,6 +11,7 @@ import {
   slugifyName,
   sourceMetadataSchema,
   type ObjectType,
+  type RelationType,
   type SourceType,
   type CreateAttachmentCommand,
   type CreateEntryCommand,
@@ -147,7 +148,7 @@ type SourceWithRelations = Prisma.SourceGetPayload<{
   include: typeof sourceInclude;
 }>;
 
-function mapSource(source: SourceWithRelations): SourceRecord {
+function mapSource(source: SourceWithRelations, outgoingRelationships: RelationshipRecord[] = []): SourceRecord {
   const metadata = sourceMetadataSchema.parse(asRecord(source.metadata));
   return {
     id: source.id,
@@ -166,6 +167,7 @@ function mapSource(source: SourceWithRelations): SourceRecord {
     entries: source.entries
       .map(({ entry }) => ({ id: entry.id, title: entry.title }))
       .sort((a, b) => a.title.localeCompare(b.title)),
+    outgoingRelationships,
     createdAt: source.createdAt,
     updatedAt: source.updatedAt
   };
@@ -1005,6 +1007,17 @@ export class PrismaContextRepository implements ContextRepository {
     return mapRelationship(relationship);
   }
 
+  async replaceOutgoingRelationships(fromType: ObjectType, fromId: string, toType: ObjectType, relationType: RelationType, toIds: string[]): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.relationship.deleteMany({ where: { fromType, fromId, toType, relationType } });
+      if (toIds.length > 0) {
+        await tx.relationship.createMany({
+          data: toIds.map(toId => ({ fromType, fromId, toType, toId, relationType }))
+        });
+      }
+    });
+  }
+
   async createReference(command: CreateReferenceCommand): Promise<ReferenceRecord> {
     const reference = await this.prisma.$transaction(async (tx) => {
       const created = await tx.reference.create({
@@ -1379,8 +1392,11 @@ export class PrismaContextRepository implements ContextRepository {
   }
 
   async getSource(id: string): Promise<SourceRecord | null> {
-    const source = await this.prisma.source.findUnique({ where: { id }, include: sourceInclude });
-    return source ? mapSource(source) : null;
+    const [source, rels] = await Promise.all([
+      this.prisma.source.findUnique({ where: { id }, include: sourceInclude }),
+      this.prisma.relationship.findMany({ where: { fromType: "source", fromId: id, toType: "source" } })
+    ]);
+    return source ? mapSource(source, rels.map(mapRelationship)) : null;
   }
 
   async listSourcesByType(type: SourceType): Promise<SourceSummary[]> {

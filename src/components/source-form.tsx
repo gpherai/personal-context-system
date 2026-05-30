@@ -32,6 +32,7 @@ interface SourceFormInitial {
   metadata?: SourceMetadata;
   themes?: { id: string }[];
   references?: ReferenceRecord[];
+  outgoingRelationships?: { toId: string }[];
 }
 
 interface SourceFormProps {
@@ -73,7 +74,8 @@ function MetadataFields({
   errors,
   deities,
   teachers,
-  stotraSources
+  stotraSources,
+  linkedSourceIds
 }: {
   type: string;
   initial?: Record<string, unknown>;
@@ -81,6 +83,7 @@ function MetadataFields({
   deities: SourceOption[];
   teachers: SourceOption[];
   stotraSources: SourceOption[];
+  linkedSourceIds: string[];
 }) {
   const m = (initial ?? {}) as Record<string, unknown>;
   const str = (k: string) => (typeof m[k] === "string" ? String(m[k]) : "");
@@ -150,13 +153,13 @@ function MetadataFields({
           {deities.length > 0 && (
             <div className="grid gap-2">
               <span className="text-sm font-medium">Deity</span>
-              <SourcePicker sources={deities} selectedIds={[]} name="deitySourceIds" />
+              <SourcePicker sources={deities} selectedIds={linkedSourceIds} name="deitySourceIds" />
             </div>
           )}
           {stotraSources.length > 0 && (
             <div className="grid gap-2">
               <span className="text-sm font-medium">Included stotra</span>
-              <SourcePicker sources={stotraSources} selectedIds={[]} name="stotraSourceIds" />
+              <SourcePicker sources={stotraSources} selectedIds={linkedSourceIds} name="stotraSourceIds" />
             </div>
           )}
         </div>
@@ -181,7 +184,7 @@ function MetadataFields({
           {teachers.length > 0 && (
             <div className="grid gap-2">
               <span className="text-sm font-medium">Teacher</span>
-              <SourcePicker sources={teachers} selectedIds={[]} name="teacherSourceIds" />
+              <SourcePicker sources={teachers} selectedIds={linkedSourceIds} name="teacherSourceIds" />
             </div>
           )}
         </div>
@@ -199,7 +202,7 @@ function MetadataFields({
           {deities.length > 0 && (
             <div className="grid gap-2">
               <span className="text-sm font-medium">Deity</span>
-              <SourcePicker sources={deities} selectedIds={[]} name="deitySourceIds" />
+              <SourcePicker sources={deities} selectedIds={linkedSourceIds} name="deitySourceIds" />
             </div>
           )}
         </div>
@@ -414,6 +417,7 @@ export function SourceForm({ action, themes, deities = [], teachers = [], stotra
             deities={deities}
             teachers={teachers}
             stotraSources={stotraSources}
+            linkedSourceIds={initial?.outgoingRelationships?.map(r => r.toId) ?? []}
           />
         </fieldset>
       )}

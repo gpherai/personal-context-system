@@ -88,6 +88,7 @@ export interface SourceSummary {
 
 export interface SourceRecord extends SourceSummary {
   entries: { id: string; title: string }[];
+  outgoingRelationships: RelationshipRecord[];
 }
 
 export interface RelationshipRecord {
@@ -289,6 +290,7 @@ export interface TaxonomyRepository {
 export interface RelationshipRepository {
   listRelationshipTargets(): Promise<RelationshipTarget[]>;
   linkObjects(command: LinkObjectsCommand): Promise<RelationshipRecord>;
+  replaceOutgoingRelationships(fromType: ObjectType, fromId: string, toType: ObjectType, relationType: RelationType, toIds: string[]): Promise<void>;
 }
 
 export interface ThreadRepository {

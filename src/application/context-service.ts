@@ -433,7 +433,15 @@ async function resolveNewReferenceIds(formData: FormData, repository: SourceRepo
   return ids;
 }
 
-export async function captureSource(formData: FormData, repository: SourceRepository) {
+function extractPickerSourceIds(formData: FormData): string[] {
+  return [
+    ...formData.getAll("deitySourceIds"),
+    ...formData.getAll("teacherSourceIds"),
+    ...formData.getAll("stotraSourceIds"),
+  ].filter((v): v is string => typeof v === "string" && v.length > 0);
+}
+
+export async function captureSource(formData: FormData, repository: SourceRepository & RelationshipRepository) {
   const parsed = parseCreateSourceFormData(formData);
 
   if (!parsed.success) {
@@ -444,11 +452,15 @@ export async function captureSource(formData: FormData, repository: SourceReposi
     const newRefIds = await resolveNewReferenceIds(formData, repository);
     const command = { ...parsed.data, referenceIds: [...parsed.data.referenceIds, ...newRefIds] };
     const source = await repository.createSource(command);
+    const pickerIds = extractPickerSourceIds(formData);
+    for (const toId of pickerIds) {
+      await repository.linkObjects({ fromType: "source", fromId: source.id, toType: "source", toId, relationType: "relates_to" });
+    }
     return { ok: true as const, source };
   });
 }
 
-export async function updateSourceFromForm(id: string, formData: FormData, repository: SourceRepository) {
+export async function updateSourceFromForm(id: string, formData: FormData, repository: SourceRepository & RelationshipRepository) {
   const parsed = parseUpdateSourceFormData(id, formData);
 
   if (!parsed.success) {
@@ -459,6 +471,8 @@ export async function updateSourceFromForm(id: string, formData: FormData, repos
     const newRefIds = await resolveNewReferenceIds(formData, repository);
     const command = { ...parsed.data, referenceIds: [...parsed.data.referenceIds, ...newRefIds] };
     const source = await repository.updateSource(command);
+    const pickerIds = extractPickerSourceIds(formData);
+    await repository.replaceOutgoingRelationships("source", id, "source", "relates_to", pickerIds);
     return { ok: true as const, source };
   });
 }
