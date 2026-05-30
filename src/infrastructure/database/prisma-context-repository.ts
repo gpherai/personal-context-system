@@ -1293,7 +1293,12 @@ export class PrismaContextRepository implements ContextRepository {
         await tx.sourceTheme.create({ data: { sourceId: created.id, themeId } });
       }
 
-      for (const referenceId of [...new Set(command.referenceIds)]) {
+      const allReferenceIds = [...new Set(command.referenceIds)];
+      for (const { title, url } of command.newReferenceUrls) {
+        const ref = await tx.reference.create({ data: { kind: "url", title, url } });
+        allReferenceIds.push(ref.id);
+      }
+      for (const referenceId of allReferenceIds) {
         await tx.sourceReference.create({ data: { sourceId: created.id, referenceId } });
       }
 
@@ -1330,7 +1335,12 @@ export class PrismaContextRepository implements ContextRepository {
       }
 
       await tx.sourceReference.deleteMany({ where: { sourceId: command.id } });
-      for (const referenceId of [...new Set(command.referenceIds)]) {
+      const allReferenceIds = [...new Set(command.referenceIds)];
+      for (const { title, url } of command.newReferenceUrls) {
+        const ref = await tx.reference.create({ data: { kind: "url", title, url } });
+        allReferenceIds.push(ref.id);
+      }
+      for (const referenceId of allReferenceIds) {
         await tx.sourceReference.create({ data: { sourceId: command.id, referenceId } });
       }
 
@@ -1407,13 +1417,6 @@ export class PrismaContextRepository implements ContextRepository {
       take: 200
     });
     return sources.map(mapSourceSummary);
-  }
-
-  async createStandaloneReference(title: string, url: string): Promise<ReferenceRecord> {
-    const reference = await this.prisma.reference.create({
-      data: { kind: "url", title, url }
-    });
-    return mapReference(reference);
   }
 
   async linkSourceToReference(sourceId: string, referenceId: string): Promise<void> {

@@ -384,6 +384,22 @@ function buildRawSourceMetadata(type: string, formData: FormData): Record<string
   };
 }
 
+function parseNewReferenceUrls(formData: FormData): { title: string; url: string }[] {
+  const titles = formData.getAll("newRefTitle");
+  const urls = formData.getAll("newRefUrl");
+  const result: { title: string; url: string }[] = [];
+  for (let i = 0; i < urls.length; i++) {
+    const url = typeof urls[i] === "string" ? (urls[i] as string).trim() : "";
+    if (!url) continue;
+    try {
+      new URL(url);
+      const title = (typeof titles[i] === "string" ? (titles[i] as string).trim() : "") || url;
+      result.push({ title, url });
+    } catch { /* invalid URL — skip */ }
+  }
+  return result;
+}
+
 export function parseCreateSourceFormData(formData: FormData) {
   const type = parseOptionalString(formStr(formData, "type")) ?? "";
   return createSourceCommandSchema.safeParse({
@@ -394,7 +410,8 @@ export function parseCreateSourceFormData(formData: FormData) {
     status: parseOptionalString(formStr(formData, "status")) ?? "active",
     metadata: buildRawSourceMetadata(type, formData),
     themeIds: parseIdList(formStr(formData, "themeIds")),
-    referenceIds: parseIdList(formStr(formData, "referenceIds"))
+    referenceIds: parseIdList(formStr(formData, "referenceIds")),
+    newReferenceUrls: parseNewReferenceUrls(formData)
   });
 }
 
@@ -408,28 +425,9 @@ export function parseUpdateSourceFormData(id: string, formData: FormData) {
     status: parseOptionalString(formStr(formData, "status")),
     metadata: buildRawSourceMetadata(type, formData),
     themeIds: parseIdList(formStr(formData, "themeIds")),
-    referenceIds: parseIdList(formStr(formData, "referenceIds"))
+    referenceIds: parseIdList(formStr(formData, "referenceIds")),
+    newReferenceUrls: parseNewReferenceUrls(formData)
   });
-}
-
-async function resolveNewReferenceIds(formData: FormData, repository: SourceRepository): Promise<string[]> {
-  const raw = formData.get("newReferenceUrls");
-  if (typeof raw !== "string" || !raw.trim()) return [];
-
-  const ids: string[] = [];
-  for (const entry of raw.split(";;;")) {
-    const parts = entry.split("||");
-    if (parts.length < 2) continue;
-    const title = parts[0]?.trim();
-    const url = parts[1]?.trim();
-    if (!url) continue;
-    try {
-      new URL(url);
-      const ref = await repository.createStandaloneReference(title || url, url);
-      ids.push(ref.id);
-    } catch { /* invalid URL — skip */ }
-  }
-  return ids;
 }
 
 function extractPickerSourceIds(formData: FormData): string[] {
@@ -448,9 +446,7 @@ export async function captureSource(formData: FormData, repository: SourceReposi
   }
 
   return withDbErrorHandling(async () => {
-    const newRefIds = await resolveNewReferenceIds(formData, repository);
-    const command = { ...parsed.data, referenceIds: [...parsed.data.referenceIds, ...newRefIds] };
-    const source = await repository.createSource(command);
+    const source = await repository.createSource(parsed.data);
     const pickerIds = extractPickerSourceIds(formData);
     for (const toId of pickerIds) {
       await repository.linkObjects({ fromType: "source", fromId: source.id, toType: "source", toId, relationType: "relates_to" });
@@ -467,9 +463,7 @@ export async function updateSourceFromForm(id: string, formData: FormData, repos
   }
 
   return withDbErrorHandling(async () => {
-    const newRefIds = await resolveNewReferenceIds(formData, repository);
-    const command = { ...parsed.data, referenceIds: [...parsed.data.referenceIds, ...newRefIds] };
-    const source = await repository.updateSource(command);
+    const source = await repository.updateSource(parsed.data);
     const pickerIds = extractPickerSourceIds(formData);
     await repository.replaceOutgoingRelationships("source", id, "source", "relates_to", pickerIds);
     return { ok: true as const, source };

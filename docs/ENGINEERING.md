@@ -1,6 +1,6 @@
 # Engineering Practices
 
-Updated: 2026-04-30
+Updated: 2026-05-30
 
 ## Purpose
 
@@ -32,6 +32,7 @@ Rules:
 
 - `src/app` and `src/components` may call application services or typed query helpers.
 - UI code must not call Prisma directly.
+- Server Actions must map Web APIs (like `FormData` or `URLSearchParams`) into pure TypeScript DTOs or Commands before passing them to Application Services.
 - Application services own validation, invariants, and workflow decisions.
 - Domain modules define enums, schemas, types, and small pure helpers.
 - Infrastructure modules adapt Prisma, files, process env, and future external systems.

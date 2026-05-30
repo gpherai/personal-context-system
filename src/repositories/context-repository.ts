@@ -266,7 +266,6 @@ export interface SourceRepository {
   listSources(query?: ListSourcesQuery): Promise<SourceSummary[]>;
   listSourcesByType(type: SourceType): Promise<SourceSummary[]>;
   getSource(id: string): Promise<SourceRecord | null>;
-  createStandaloneReference(title: string, url: string): Promise<ReferenceRecord>;
   linkEntryToSource(entryId: string, sourceId: string): Promise<void>;
   unlinkEntryFromSource(entryId: string, sourceId: string): Promise<void>;
   linkSourceToTheme(sourceId: string, themeId: string): Promise<void>;

@@ -263,12 +263,15 @@ function ReferencesSection({ existingReferences }: { existingReferences: Referen
     setNewRefs((prev) => prev.filter((r) => r.url !== url));
   }
 
-  const newReferenceUrls = newRefs.map((r) => `${r.title}||${r.url}`).join(";;;");
-
   return (
     <div className="grid gap-3">
       <input type="hidden" name="referenceIds" value={existingIds.join(",")} />
-      <input type="hidden" name="newReferenceUrls" value={newReferenceUrls} />
+      {newRefs.map((r) => (
+        <span key={r.url}>
+          <input type="hidden" name="newRefTitle" value={r.title} />
+          <input type="hidden" name="newRefUrl" value={r.url} />
+        </span>
+      ))}
 
       {(existing.length > 0 || newRefs.length > 0) && (
         <div className="grid gap-2">

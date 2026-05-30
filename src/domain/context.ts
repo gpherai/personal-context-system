@@ -263,7 +263,8 @@ const sourceCommandBaseSchema = z.object({
   status: recordStatusSchema.default("active"),
   metadata: sourceMetadataSchema,
   themeIds: z.array(z.string().trim().min(1)).default([]),
-  referenceIds: z.array(z.string().trim().min(1)).default([])
+  referenceIds: z.array(z.string().trim().min(1)).default([]),
+  newReferenceUrls: z.array(z.object({ title: z.string(), url: z.string() })).default([])
 });
 
 export const createSourceCommandSchema = sourceCommandBaseSchema
