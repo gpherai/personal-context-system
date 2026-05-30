@@ -192,6 +192,26 @@ export async function captureEntry(formData: FormData, repository: EntryReposito
 
   return withDbErrorHandling(async () => {
     const entry = await repository.createEntry(parsed.data);
+
+    const rawUrl = parseOptionalString(formData.get("url") as string | null);
+    if (rawUrl) {
+      try {
+        new URL(rawUrl);
+        let title = rawUrl;
+        try { title = new URL(rawUrl).hostname; } catch { /* keep full url */ }
+        const refParsed = createReferenceCommandSchema.safeParse({
+          entryId: entry.id,
+          kind: "url",
+          title,
+          url: rawUrl,
+          metadata: {}
+        });
+        if (refParsed.success) {
+          await repository.createReference(refParsed.data);
+        }
+      } catch { /* invalid URL — skip */ }
+    }
+
     return { ok: true as const, entry };
   });
 }
@@ -341,7 +361,6 @@ function buildRawSourceMetadata(type: string, formData: FormData): Record<string
   const num = (key: string) => parseOptionalNumber(formStr(formData, key));
   return {
     type,
-    url: str("url"),
     duration: num("duration"),
     channel: str("channel"),
     language: str("language"),
@@ -353,17 +372,16 @@ function buildRawSourceMetadata(type: string, formData: FormData): Record<string
     publishedAt: str("publishedAt"),
     alt: str("alt"),
     photographer: str("photographer"),
-    tradition: str("tradition"),
-    deity: str("deity"),
     format: str("format"),
-    teacher: str("teacher"),
     chapters: parseLineList(formStr(formData, "chapters")),
     steps: parseLineList(formStr(formData, "steps")),
     mantras: parseLineList(formStr(formData, "mantras")),
     script: str("script"),
-    text: str("text"),
     aliases: parseNameList(formStr(formData, "aliases")),
-    description: str("description")
+    description: str("description"),
+    tradition: str("tradition"),
+    lineage: str("lineage"),
+    period: str("period")
   };
 }
 
@@ -373,9 +391,11 @@ export function parseCreateSourceFormData(formData: FormData) {
     type,
     title: parseOptionalString(formStr(formData, "title")),
     description: parseOptionalString(formStr(formData, "description")),
+    body: parseOptionalString(formStr(formData, "body")),
     status: parseOptionalString(formStr(formData, "status")) ?? "active",
     metadata: buildRawSourceMetadata(type, formData),
-    themeIds: parseIdList(formStr(formData, "themeIds"))
+    themeIds: parseIdList(formStr(formData, "themeIds")),
+    referenceIds: parseIdList(formStr(formData, "referenceIds"))
   });
 }
 
@@ -385,10 +405,32 @@ export function parseUpdateSourceFormData(id: string, formData: FormData) {
     id,
     title: parseOptionalString(formStr(formData, "title")),
     description: parseOptionalString(formStr(formData, "description")),
+    body: parseOptionalString(formStr(formData, "body")),
     status: parseOptionalString(formStr(formData, "status")),
     metadata: buildRawSourceMetadata(type, formData),
-    themeIds: parseIdList(formStr(formData, "themeIds"))
+    themeIds: parseIdList(formStr(formData, "themeIds")),
+    referenceIds: parseIdList(formStr(formData, "referenceIds"))
   });
+}
+
+async function resolveNewReferenceIds(formData: FormData, repository: SourceRepository): Promise<string[]> {
+  const raw = formData.get("newReferenceUrls");
+  if (typeof raw !== "string" || !raw.trim()) return [];
+
+  const ids: string[] = [];
+  for (const entry of raw.split(";;;")) {
+    const parts = entry.split("||");
+    if (parts.length < 2) continue;
+    const title = parts[0]?.trim();
+    const url = parts[1]?.trim();
+    if (!url) continue;
+    try {
+      new URL(url);
+      const ref = await repository.createStandaloneReference(title || url, url);
+      ids.push(ref.id);
+    } catch { /* invalid URL — skip */ }
+  }
+  return ids;
 }
 
 export async function captureSource(formData: FormData, repository: SourceRepository) {
@@ -399,7 +441,9 @@ export async function captureSource(formData: FormData, repository: SourceReposi
   }
 
   return withDbErrorHandling(async () => {
-    const source = await repository.createSource(parsed.data);
+    const newRefIds = await resolveNewReferenceIds(formData, repository);
+    const command = { ...parsed.data, referenceIds: [...parsed.data.referenceIds, ...newRefIds] };
+    const source = await repository.createSource(command);
     return { ok: true as const, source };
   });
 }
@@ -412,7 +456,9 @@ export async function updateSourceFromForm(id: string, formData: FormData, repos
   }
 
   return withDbErrorHandling(async () => {
-    const source = await repository.updateSource(parsed.data);
+    const newRefIds = await resolveNewReferenceIds(formData, repository);
+    const command = { ...parsed.data, referenceIds: [...parsed.data.referenceIds, ...newRefIds] };
+    const source = await repository.updateSource(command);
     return { ok: true as const, source };
   });
 }

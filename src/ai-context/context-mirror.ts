@@ -299,6 +299,10 @@ function sourceMarkdown(source: SourceSummary, generatedAtIso: string): string {
       return `- ${k}: ${sanitizeInline(String(v))}`;
     });
 
+  const referencesLines = source.references.length
+    ? source.references.map((r) => `- ${sanitizeInline(r.title)}${r.url ? ": " + r.url : ""}`)
+    : [];
+
   return [
     `# ${sanitizeInline(source.title)}`,
     "",
@@ -310,7 +314,9 @@ function sourceMarkdown(source: SourceSummary, generatedAtIso: string): string {
     `- themes: ${source.themes.map((t) => sanitizeInline(t.name)).join(", ") || "none"}`,
     "",
     ...(metaEntries.length ? ["## Metadata", "", ...metaEntries, ""] : []),
-    ...(source.description ? ["## Beschrijving", "", wrapUserContent(source.description), ""] : [])
+    ...(source.description ? ["## Beschrijving", "", wrapUserContent(source.description), ""] : []),
+    ...(referencesLines.length ? ["## References", "", ...referencesLines, ""] : []),
+    ...(source.body ? ["## Body", "", wrapUserContent(source.body), ""] : [])
   ].join("\n");
 }
 

@@ -141,7 +141,7 @@ export function CaptureForm() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         <label className="grid gap-1.5 text-sm font-medium">
           Occurred at
           <input
@@ -149,14 +149,6 @@ export function CaptureForm() {
             name="occurredAt"
             type="date"
             max={new Date().toISOString().split("T")[0]}
-          />
-        </label>
-        <label className="grid gap-1.5 text-sm font-medium">
-          Source
-          <input
-            className="field-input"
-            name="source"
-            placeholder="self, Codex, article, conversation"
           />
         </label>
         <div className="grid gap-1.5">
@@ -180,6 +172,26 @@ export function CaptureForm() {
             Certainty score from 0 (guess) to 1 (verified).
           </p>
         </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="grid gap-1.5 text-sm font-medium">
+          URL
+          <input
+            className="field-input"
+            name="url"
+            placeholder="https://… creates a reference linked to this entry"
+            type="url"
+          />
+        </label>
+        <label className="grid gap-1.5 text-sm font-medium">
+          Source
+          <input
+            className="field-input"
+            name="source"
+            placeholder="self, conversation, article"
+          />
+        </label>
       </div>
 
       <div className="flex justify-end border-t border-border pt-5">

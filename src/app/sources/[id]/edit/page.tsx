@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { isRecoverableReadError } from "@/application/errors";
-import { getSourceById, listThemes } from "@/application/query-service";
+import { getSourceById, getSourcesByType, listThemes } from "@/application/query-service";
 import { SetupNotice } from "@/components/setup-notice";
 import { isValidId } from "@/lib/format";
 import { SourceForm } from "@/components/source-form";
@@ -16,7 +16,13 @@ export default async function EditSourcePage({ params }: { params: Promise<{ id:
   if (!isValidId(id)) notFound();
 
   try {
-    const [source, themes] = await Promise.all([getSourceById(id), listThemes()]);
+    const [source, themes, deities, teachers, stotraSources] = await Promise.all([
+      getSourceById(id),
+      listThemes(),
+      getSourcesByType("deity_concept"),
+      getSourcesByType("teacher"),
+      getSourcesByType("stotra")
+    ]);
 
     if (!source) {
       notFound();
@@ -32,7 +38,7 @@ export default async function EditSourcePage({ params }: { params: Promise<{ id:
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{source.title}</p>
         </header>
         <section className="mt-6 border border-border bg-surface p-5">
-          <SourceForm action={boundAction} themes={themes} initial={source} isEdit />
+          <SourceForm action={boundAction} themes={themes} deities={deities} teachers={teachers} stotraSources={stotraSources} initial={source} isEdit />
         </section>
       </div>
     );

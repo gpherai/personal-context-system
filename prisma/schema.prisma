@@ -68,6 +68,7 @@ enum SourceType {
   upadesha
   stotra
   deity_concept
+  teacher
 }
 
 enum RelationType {
@@ -204,6 +205,7 @@ model Reference {
   updatedAt   DateTime      @updatedAt @db.Timestamptz(6)
 
   entries EntryReference[]
+  sources SourceReference[]
 
   @@index([kind])
 }
@@ -257,14 +259,16 @@ model Source {
   type        SourceType
   title       String       @db.VarChar(320)
   description String?      @db.Text
+  body        String?      @db.Text
   status      RecordStatus @default(active)
   metadata    Json         @default("{}")
   searchText  String?      @db.Text
   createdAt   DateTime     @default(now()) @db.Timestamptz(6)
   updatedAt   DateTime     @updatedAt @db.Timestamptz(6)
 
-  themes  SourceTheme[]
-  entries EntrySource[]
+  themes      SourceTheme[]
+  entries     EntrySource[]
+  references  SourceReference[]
 
   @@index([type])
   @@index([status])
@@ -366,4 +370,16 @@ model EntryAttachment {
 
   @@id([entryId, attachmentId])
   @@index([attachmentId])
+}
+
+model SourceReference {
+  sourceId    String
+  referenceId String
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+
+  source    Source    @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  reference Reference @relation(fields: [referenceId], references: [id], onDelete: Cascade)
+
+  @@id([sourceId, referenceId])
+  @@index([referenceId])
 }

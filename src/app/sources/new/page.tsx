@@ -1,5 +1,5 @@
 import { isRecoverableReadError } from "@/application/errors";
-import { listThemes } from "@/application/query-service";
+import { getSourcesByType, listThemes } from "@/application/query-service";
 import { SetupNotice } from "@/components/setup-notice";
 import { SourceForm } from "@/components/source-form";
 
@@ -9,7 +9,12 @@ export const dynamic = "force-dynamic";
 
 export default async function NewSourcePage() {
   try {
-    const themes = await listThemes();
+    const [themes, deities, teachers, stotraSources] = await Promise.all([
+      listThemes(),
+      getSourcesByType("deity_concept"),
+      getSourcesByType("teacher"),
+      getSourcesByType("stotra")
+    ]);
 
     return (
       <div className="mx-auto max-w-4xl">
@@ -21,7 +26,7 @@ export default async function NewSourcePage() {
           </p>
         </header>
         <section className="mt-6 border border-border bg-surface p-5">
-          <SourceForm action={createSourceAction} themes={themes} />
+          <SourceForm action={createSourceAction} themes={themes} deities={deities} teachers={teachers} stotraSources={stotraSources} />
         </section>
       </div>
     );

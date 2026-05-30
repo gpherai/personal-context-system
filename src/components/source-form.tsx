@@ -3,11 +3,13 @@
 import { useActionState, useState } from "react";
 
 import { initialMutationState } from "@/application/action-states";
+import { SourcePicker } from "@/components/source-picker";
 import { TaxonomyPicker } from "@/components/taxonomy-picker";
 import { Button } from "@/components/ui/button";
 import { sourceTypes, type SourceType, type RecordStatus, type SourceMetadata } from "@/domain/context";
 import { sourceTypeDetails } from "@/domain/taxonomy";
 import type { MutationState } from "@/application/action-states";
+import type { ReferenceRecord } from "@/repositories/context-repository";
 
 interface Theme {
   id: string;
@@ -15,18 +17,29 @@ interface Theme {
   slug: string;
 }
 
+interface SourceOption {
+  id: string;
+  type: SourceType;
+  title: string;
+}
+
 interface SourceFormInitial {
   type?: SourceType;
   status?: RecordStatus;
   title?: string;
   description?: string;
+  body?: string;
   metadata?: SourceMetadata;
   themes?: { id: string }[];
+  references?: ReferenceRecord[];
 }
 
 interface SourceFormProps {
   action: (state: MutationState, formData: FormData) => Promise<MutationState>;
   themes: Theme[];
+  deities?: SourceOption[];
+  teachers?: SourceOption[];
+  stotraSources?: SourceOption[];
   initial?: SourceFormInitial;
   isEdit?: boolean;
 }
@@ -54,7 +67,21 @@ function areaCls() {
   return "min-h-20 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30";
 }
 
-function MetadataFields({ type, initial, errors }: { type: string; initial?: Record<string, unknown>; errors?: Record<string, string[] | undefined> }) {
+function MetadataFields({
+  type,
+  initial,
+  errors,
+  deities,
+  teachers,
+  stotraSources
+}: {
+  type: string;
+  initial?: Record<string, unknown>;
+  errors?: Record<string, string[] | undefined>;
+  deities: SourceOption[];
+  teachers: SourceOption[];
+  stotraSources: SourceOption[];
+}) {
   const m = (initial ?? {}) as Record<string, unknown>;
   const str = (k: string) => (typeof m[k] === "string" ? String(m[k]) : "");
   const num = (k: string) => (typeof m[k] === "number" ? String(m[k]) : "");
@@ -66,7 +93,6 @@ function MetadataFields({ type, initial, errors }: { type: string; initial?: Rec
     case "video":
       return (
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="URL" error={err("url")}><input className={inputCls()} name="url" defaultValue={str("url")} type="url" /></Field>
           <Field label="Channel" error={err("channel")}><input className={inputCls()} name="channel" defaultValue={str("channel")} /></Field>
           <Field label="Duration (s)" error={err("duration")}><input className={inputCls()} name="duration" defaultValue={num("duration")} type="number" min="0" /></Field>
           <Field label="Language" error={err("language")}><input className={inputCls()} name="language" defaultValue={str("language")} /></Field>
@@ -90,7 +116,6 @@ function MetadataFields({ type, initial, errors }: { type: string; initial?: Rec
     case "post":
       return (
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="URL" error={err("url")}><input className={inputCls()} name="url" defaultValue={str("url")} type="url" /></Field>
           <Field label="Author" error={err("author")}><input className={inputCls()} name="author" defaultValue={str("author")} /></Field>
           <Field label="Published" error={err("publishedAt")}><input className={inputCls()} name="publishedAt" defaultValue={str("publishedAt")} /></Field>
         </div>
@@ -98,7 +123,6 @@ function MetadataFields({ type, initial, errors }: { type: string; initial?: Rec
     case "image":
       return (
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="URL" error={err("url")}><input className={inputCls()} name="url" defaultValue={str("url")} type="url" /></Field>
           <Field label="Alt text" error={err("alt")}><input className={inputCls()} name="alt" defaultValue={str("alt")} /></Field>
           <Field label="Photographer" error={err("photographer")}><input className={inputCls()} name="photographer" defaultValue={str("photographer")} /></Field>
         </div>
@@ -107,8 +131,6 @@ function MetadataFields({ type, initial, errors }: { type: string; initial?: Rec
       return (
         <div className="grid gap-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Tradition" error={err("tradition")}><input className={inputCls()} name="tradition" defaultValue={str("tradition")} /></Field>
-            <Field label="Deity" error={err("deity")}><input className={inputCls()} name="deity" defaultValue={str("deity")} /></Field>
             <Field label="Language" error={err("language")}><input className={inputCls()} name="language" defaultValue={str("language")} /></Field>
             <Field label="Format" error={err("format")}>
               <select className={inputCls()} name="format" defaultValue={str("format")}>
@@ -125,14 +147,24 @@ function MetadataFields({ type, initial, errors }: { type: string; initial?: Rec
           <Field label="Mantras (one per line)" error={err("mantras")}>
             <textarea className={areaCls()} name="mantras" defaultValue={lines("mantras")} placeholder="Om Namah Shivaya&#10;Om Gam Ganapataye Namah" />
           </Field>
+          {deities.length > 0 && (
+            <div className="grid gap-2">
+              <span className="text-sm font-medium">Deity</span>
+              <SourcePicker sources={deities} selectedIds={[]} name="deitySourceIds" />
+            </div>
+          )}
+          {stotraSources.length > 0 && (
+            <div className="grid gap-2">
+              <span className="text-sm font-medium">Included stotra</span>
+              <SourcePicker sources={stotraSources} selectedIds={[]} name="stotraSourceIds" />
+            </div>
+          )}
         </div>
       );
     case "upadesha":
       return (
         <div className="grid gap-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Teacher" error={err("teacher")}><input className={inputCls()} name="teacher" defaultValue={str("teacher")} /></Field>
-            <Field label="Tradition" error={err("tradition")}><input className={inputCls()} name="tradition" defaultValue={str("tradition")} /></Field>
             <Field label="Language" error={err("language")}><input className={inputCls()} name="language" defaultValue={str("language")} /></Field>
             <Field label="Format" error={err("format")}>
               <select className={inputCls()} name="format" defaultValue={str("format")}>
@@ -146,30 +178,36 @@ function MetadataFields({ type, initial, errors }: { type: string; initial?: Rec
           <Field label="Chapters / sections (one per line)" error={err("chapters")}>
             <textarea className={areaCls()} name="chapters" defaultValue={lines("chapters")} placeholder="Introduction&#10;Chapter 1" />
           </Field>
+          {teachers.length > 0 && (
+            <div className="grid gap-2">
+              <span className="text-sm font-medium">Teacher</span>
+              <SourcePicker sources={teachers} selectedIds={[]} name="teacherSourceIds" />
+            </div>
+          )}
         </div>
       );
     case "stotra":
       return (
         <div className="grid gap-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Deity" error={err("deity")}><input className={inputCls()} name="deity" defaultValue={str("deity")} /></Field>
-            <Field label="Tradition" error={err("tradition")}><input className={inputCls()} name="tradition" defaultValue={str("tradition")} /></Field>
             <Field label="Language" error={err("language")}><input className={inputCls()} name="language" defaultValue={str("language")} /></Field>
             <Field label="Script" error={err("script")}><input className={inputCls()} name="script" defaultValue={str("script")} /></Field>
           </div>
           <Field label="Mantras / shlokas (one per line)" error={err("mantras")}>
             <textarea className={areaCls()} name="mantras" defaultValue={lines("mantras")} placeholder="Om Namah Shivaya&#10;Shri Ram Jai Ram" />
           </Field>
-          <Field label="Text (full stotra)" error={err("text")}>
-            <textarea className="min-h-32 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" name="text" defaultValue={str("text")} placeholder="Full text of the stotra…" />
-          </Field>
+          {deities.length > 0 && (
+            <div className="grid gap-2">
+              <span className="text-sm font-medium">Deity</span>
+              <SourcePicker sources={deities} selectedIds={[]} name="deitySourceIds" />
+            </div>
+          )}
         </div>
       );
     case "deity_concept":
       return (
         <div className="grid gap-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Tradition" error={err("tradition")}><input className={inputCls()} name="tradition" defaultValue={str("tradition")} /></Field>
             <Field label="Language" error={err("language")}><input className={inputCls()} name="language" defaultValue={str("language")} /></Field>
             <Field label="Aliases (comma-separated)" error={err("aliases")}>
               <input className={inputCls()} name="aliases" defaultValue={csv("aliases")} />
@@ -178,9 +216,18 @@ function MetadataFields({ type, initial, errors }: { type: string; initial?: Rec
           <Field label="Mantras (one per line)" error={err("mantras")}>
             <textarea className={areaCls()} name="mantras" defaultValue={lines("mantras")} placeholder="Om Namah Shivaya&#10;Om Gam Ganapataye Namah" />
           </Field>
-          <Field label="Description of the deity form" error={err("description")}>
+          <Field label="Description" error={err("description")}>
             <textarea className={areaCls()} name="description" defaultValue={str("description")} placeholder="Attributes, symbolism, iconography…" />
           </Field>
+        </div>
+      );
+    case "teacher":
+      return (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Tradition" error={err("tradition")}><input className={inputCls()} name="tradition" defaultValue={str("tradition")} /></Field>
+          <Field label="Lineage" error={err("lineage")}><input className={inputCls()} name="lineage" defaultValue={str("lineage")} /></Field>
+          <Field label="Language" error={err("language")}><input className={inputCls()} name="language" defaultValue={str("language")} /></Field>
+          <Field label="Period" error={err("period")}><input className={inputCls()} name="period" defaultValue={str("period")} placeholder="e.g. 1879–1950" /></Field>
         </div>
       );
     default:
@@ -188,12 +235,102 @@ function MetadataFields({ type, initial, errors }: { type: string; initial?: Rec
   }
 }
 
-export function SourceForm({ action, themes, initial, isEdit = false }: SourceFormProps) {
+interface NewRef { title: string; url: string }
+
+function ReferencesSection({ existingReferences }: { existingReferences: ReferenceRecord[] }) {
+  const [existingIds, setExistingIds] = useState<string[]>(existingReferences.map((r) => r.id));
+  const [existing, setExisting] = useState<ReferenceRecord[]>(existingReferences);
+  const [newRefs, setNewRefs] = useState<NewRef[]>([]);
+  const [urlInput, setUrlInput] = useState("");
+  const [titleInput, setTitleInput] = useState("");
+
+  function addUrl() {
+    const trimmedUrl = urlInput.trim();
+    if (!trimmedUrl) return;
+    let hostname = trimmedUrl;
+    try { hostname = new URL(trimmedUrl).hostname; } catch { /* keep as-is */ }
+    setNewRefs((prev) => [...prev, { title: titleInput.trim() || hostname, url: trimmedUrl }]);
+    setUrlInput("");
+    setTitleInput("");
+  }
+
+  function removeExisting(id: string) {
+    setExisting((prev) => prev.filter((r) => r.id !== id));
+    setExistingIds((prev) => prev.filter((i) => i !== id));
+  }
+
+  function removeNew(url: string) {
+    setNewRefs((prev) => prev.filter((r) => r.url !== url));
+  }
+
+  const newReferenceUrls = newRefs.map((r) => `${r.title}||${r.url}`).join(";;;");
+
+  return (
+    <div className="grid gap-3">
+      <input type="hidden" name="referenceIds" value={existingIds.join(",")} />
+      <input type="hidden" name="newReferenceUrls" value={newReferenceUrls} />
+
+      {(existing.length > 0 || newRefs.length > 0) && (
+        <div className="grid gap-2">
+          {existing.map((ref) => (
+            <div key={ref.id} className="flex items-center justify-between gap-3 rounded-md border border-border bg-surface px-3 py-2 text-sm">
+              <div className="min-w-0">
+                <p className="font-medium truncate">{ref.title}</p>
+                {ref.url && <p className="truncate text-xs text-muted-foreground">{ref.url}</p>}
+              </div>
+              <button type="button" onClick={() => removeExisting(ref.id)} className="shrink-0 text-xs text-danger hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30">
+                Remove
+              </button>
+            </div>
+          ))}
+          {newRefs.map((ref) => (
+            <div key={ref.url} className="flex items-center justify-between gap-3 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm">
+              <div className="min-w-0">
+                <p className="font-medium truncate">{ref.title}</p>
+                <p className="truncate text-xs text-muted-foreground">{ref.url}</p>
+              </div>
+              <button type="button" onClick={() => removeNew(ref.url)} className="shrink-0 text-xs text-danger hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30">
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="grid gap-2 sm:grid-cols-[1fr_180px]">
+        <input
+          className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          onChange={(e) => setUrlInput(e.target.value)}
+          placeholder="https://…"
+          type="url"
+          value={urlInput}
+        />
+        <input
+          className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          onChange={(e) => setTitleInput(e.target.value)}
+          placeholder="Title (optional)"
+          type="text"
+          value={titleInput}
+        />
+      </div>
+      <button
+        type="button"
+        onClick={addUrl}
+        className="inline-flex h-9 w-fit items-center rounded-md border border-border bg-surface px-3 text-sm font-medium transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+      >
+        Add URL
+      </button>
+    </div>
+  );
+}
+
+export function SourceForm({ action, themes, deities = [], teachers = [], stotraSources = [], initial, isEdit = false }: SourceFormProps) {
   const [state, formAction, pending] = useActionState(action, initialMutationState);
   const [selectedType, setSelectedType] = useState<string>(initial?.type ?? "");
 
   const selectedThemeIds = initial?.themes?.map((t) => t.id) ?? [];
   const initialMeta = initial?.metadata as Record<string, unknown> | undefined;
+  const existingReferences = initial?.references ?? [];
 
   return (
     <form action={formAction} className="grid gap-5">
@@ -252,7 +389,16 @@ export function SourceForm({ action, themes, initial, isEdit = false }: SourceFo
           className="min-h-24 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
           name="description"
           defaultValue={initial?.description ?? ""}
-          placeholder="Optional description"
+          placeholder="Optional short description"
+        />
+      </Field>
+
+      <Field label="Body / full text">
+        <textarea
+          className="min-h-32 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          name="body"
+          defaultValue={initial?.body ?? ""}
+          placeholder="Full text, katha, article body, or extended notes…"
         />
       </Field>
 
@@ -261,7 +407,14 @@ export function SourceForm({ action, themes, initial, isEdit = false }: SourceFo
           <legend className="px-1 text-xs font-medium text-muted-foreground">
             {selectedType ? sourceTypeDetails[selectedType as keyof typeof sourceTypeDetails]?.label ?? selectedType : ""} details
           </legend>
-          <MetadataFields type={isEdit ? (initial?.type ?? "") : selectedType} initial={initialMeta} errors={state.fieldErrors} />
+          <MetadataFields
+            type={isEdit ? (initial?.type ?? "") : selectedType}
+            initial={initialMeta}
+            errors={state.fieldErrors}
+            deities={deities}
+            teachers={teachers}
+            stotraSources={stotraSources}
+          />
         </fieldset>
       )}
 
@@ -269,6 +422,11 @@ export function SourceForm({ action, themes, initial, isEdit = false }: SourceFo
         <span className="text-sm font-medium">Themes</span>
         <TaxonomyPicker themes={themes} selectedIds={selectedThemeIds} />
       </div>
+
+      <fieldset className="grid gap-3 rounded-md border border-border p-4">
+        <legend className="px-1 text-xs font-medium text-muted-foreground">References (URLs)</legend>
+        <ReferencesSection existingReferences={existingReferences} />
+      </fieldset>
 
       <div className="flex justify-end gap-3 border-t border-border pt-5">
         <Button type="submit" disabled={pending}>

@@ -115,5 +115,9 @@ export const sourceTypeDetails = {
   deity_concept: {
     label: "Deity / concept",
     description: "Description or study of a deity, concept, or philosophical idea."
+  },
+  teacher: {
+    label: "Teacher",
+    description: "Teacher, guru, or tradition lineage holder as a named entity."
   }
 } satisfies Record<SourceType, TaxonomyDetail>;

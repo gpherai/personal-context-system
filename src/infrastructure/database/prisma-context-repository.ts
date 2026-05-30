@@ -11,6 +11,7 @@ import {
   slugifyName,
   sourceMetadataSchema,
   type ObjectType,
+  type SourceType,
   type CreateAttachmentCommand,
   type CreateEntryCommand,
   type CreateReferenceCommand,
@@ -134,6 +135,11 @@ const sourceInclude = {
         select: { id: true, title: true }
       }
     }
+  },
+  references: {
+    include: {
+      reference: true
+    }
   }
 } satisfies Prisma.SourceInclude;
 
@@ -148,11 +154,15 @@ function mapSource(source: SourceWithRelations): SourceRecord {
     type: source.type,
     title: source.title,
     description: optional(source.description),
+    body: optional(source.body),
     status: source.status,
     metadata,
     themes: source.themes
       .map(({ theme }) => ({ id: theme.id, slug: theme.slug, name: theme.name }))
       .sort((a, b) => a.name.localeCompare(b.name)),
+    references: source.references
+      .map(({ reference }) => mapReference(reference))
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()),
     entries: source.entries
       .map(({ entry }) => ({ id: entry.id, title: entry.title }))
       .sort((a, b) => a.title.localeCompare(b.title)),
@@ -161,18 +171,22 @@ function mapSource(source: SourceWithRelations): SourceRecord {
   };
 }
 
-function mapSourceSummary(source: Omit<SourceWithRelations, "entries"> & { entries?: SourceWithRelations["entries"] }): SourceSummary {
+function mapSourceSummary(source: SourceWithRelations): SourceSummary {
   const metadata = sourceMetadataSchema.parse(asRecord(source.metadata));
   return {
     id: source.id,
     type: source.type,
     title: source.title,
     description: optional(source.description),
+    body: optional(source.body),
     status: source.status,
     metadata,
     themes: source.themes
       .map(({ theme }) => ({ id: theme.id, slug: theme.slug, name: theme.name }))
       .sort((a, b) => a.name.localeCompare(b.name)),
+    references: source.references
+      .map(({ reference }) => mapReference(reference))
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()),
     createdAt: source.createdAt,
     updatedAt: source.updatedAt
   };
@@ -1255,6 +1269,7 @@ export class PrismaContextRepository implements ContextRepository {
           type: command.type,
           title: command.title,
           description: command.description ?? null,
+          body: command.body ?? null,
           status: command.status,
           metadata: command.metadata as Prisma.InputJsonValue,
           searchText: searchText || null
@@ -1263,6 +1278,10 @@ export class PrismaContextRepository implements ContextRepository {
 
       for (const themeId of [...new Set(command.themeIds)]) {
         await tx.sourceTheme.create({ data: { sourceId: created.id, themeId } });
+      }
+
+      for (const referenceId of [...new Set(command.referenceIds)]) {
+        await tx.sourceReference.create({ data: { sourceId: created.id, referenceId } });
       }
 
       return tx.source.findUniqueOrThrow({ where: { id: created.id }, include: sourceInclude });
@@ -1285,6 +1304,7 @@ export class PrismaContextRepository implements ContextRepository {
         data: {
           title: command.title,
           description: command.description ?? null,
+          body: command.body ?? null,
           status: command.status,
           metadata: command.metadata as Prisma.InputJsonValue,
           searchText: searchText || null
@@ -1294,6 +1314,11 @@ export class PrismaContextRepository implements ContextRepository {
       await tx.sourceTheme.deleteMany({ where: { sourceId: command.id } });
       for (const themeId of [...new Set(command.themeIds)]) {
         await tx.sourceTheme.create({ data: { sourceId: command.id, themeId } });
+      }
+
+      await tx.sourceReference.deleteMany({ where: { sourceId: command.id } });
+      for (const referenceId of [...new Set(command.referenceIds)]) {
+        await tx.sourceReference.create({ data: { sourceId: command.id, referenceId } });
       }
 
       return tx.source.findUniqueOrThrow({ where: { id: command.id }, include: sourceInclude });
@@ -1324,10 +1349,10 @@ export class PrismaContextRepository implements ContextRepository {
       const rows = await this.prisma.$queryRaw<{ id: string }[]>`
         SELECT "id"
         FROM "Source"
-        WHERE to_tsvector('simple', coalesce("title", '') || ' ' || coalesce("searchText", ''))
+        WHERE to_tsvector('simple', coalesce("title", '') || ' ' || coalesce("body", '') || ' ' || coalesce("searchText", ''))
           @@ plainto_tsquery('simple', ${query.search})
         ORDER BY ts_rank(
-          to_tsvector('simple', coalesce("title", '') || ' ' || coalesce("searchText", '')),
+          to_tsvector('simple', coalesce("title", '') || ' ' || coalesce("body", '') || ' ' || coalesce("searchText", '')),
           plainto_tsquery('simple', ${query.search})
         ) DESC
         LIMIT ${limit}
@@ -1338,7 +1363,7 @@ export class PrismaContextRepository implements ContextRepository {
 
     const sources = await this.prisma.source.findMany({
       where,
-      include: { themes: { include: { theme: true } } },
+      include: sourceInclude,
       orderBy: [{ title: "asc" }],
       take: limit
     });
@@ -1356,6 +1381,35 @@ export class PrismaContextRepository implements ContextRepository {
   async getSource(id: string): Promise<SourceRecord | null> {
     const source = await this.prisma.source.findUnique({ where: { id }, include: sourceInclude });
     return source ? mapSource(source) : null;
+  }
+
+  async listSourcesByType(type: SourceType): Promise<SourceSummary[]> {
+    const sources = await this.prisma.source.findMany({
+      where: { type, status: "active" },
+      include: sourceInclude,
+      orderBy: [{ title: "asc" }],
+      take: 200
+    });
+    return sources.map(mapSourceSummary);
+  }
+
+  async createStandaloneReference(title: string, url: string): Promise<ReferenceRecord> {
+    const reference = await this.prisma.reference.create({
+      data: { kind: "url", title, url }
+    });
+    return mapReference(reference);
+  }
+
+  async linkSourceToReference(sourceId: string, referenceId: string): Promise<void> {
+    await this.prisma.sourceReference.upsert({
+      where: { sourceId_referenceId: { sourceId, referenceId } },
+      update: {},
+      create: { sourceId, referenceId }
+    });
+  }
+
+  async unlinkSourceFromReference(sourceId: string, referenceId: string): Promise<void> {
+    await this.prisma.sourceReference.deleteMany({ where: { sourceId, referenceId } });
   }
 
   async linkEntryToSource(entryId: string, sourceId: string): Promise<void> {

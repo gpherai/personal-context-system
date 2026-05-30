@@ -36,7 +36,6 @@ function SourceMetadataSection({ metadata }: { metadata: SourceMetadata }) {
     case "video":
       return (
         <dl className="grid gap-3 sm:grid-cols-2">
-          <MetadataField label="URL" value={metadata.url} />
           <MetadataField label="Channel" value={metadata.channel} />
           <MetadataField label="Duration (s)" value={metadata.duration} />
           <MetadataField label="Language" value={metadata.language} />
@@ -55,7 +54,6 @@ function SourceMetadataSection({ metadata }: { metadata: SourceMetadata }) {
     case "post":
       return (
         <dl className="grid gap-3 sm:grid-cols-2">
-          <MetadataField label="URL" value={metadata.url} />
           <MetadataField label="Author" value={metadata.author} />
           <MetadataField label="Published" value={metadata.publishedAt} />
         </dl>
@@ -63,7 +61,6 @@ function SourceMetadataSection({ metadata }: { metadata: SourceMetadata }) {
     case "image":
       return (
         <dl className="grid gap-3 sm:grid-cols-2">
-          <MetadataField label="URL" value={metadata.url} />
           <MetadataField label="Alt text" value={metadata.alt} />
           <MetadataField label="Photographer" value={metadata.photographer} />
         </dl>
@@ -71,8 +68,6 @@ function SourceMetadataSection({ metadata }: { metadata: SourceMetadata }) {
     case "sadhana":
       return (
         <dl className="grid gap-3 sm:grid-cols-2">
-          <MetadataField label="Tradition" value={metadata.tradition} />
-          <MetadataField label="Deity" value={metadata.deity} />
           <MetadataField label="Language" value={metadata.language} />
           <MetadataField label="Format" value={metadata.format} />
         </dl>
@@ -80,8 +75,6 @@ function SourceMetadataSection({ metadata }: { metadata: SourceMetadata }) {
     case "upadesha":
       return (
         <dl className="grid gap-3 sm:grid-cols-2">
-          <MetadataField label="Teacher" value={metadata.teacher} />
-          <MetadataField label="Tradition" value={metadata.tradition} />
           <MetadataField label="Language" value={metadata.language} />
           <MetadataField label="Format" value={metadata.format} />
         </dl>
@@ -89,8 +82,6 @@ function SourceMetadataSection({ metadata }: { metadata: SourceMetadata }) {
     case "stotra":
       return (
         <dl className="grid gap-3 sm:grid-cols-2">
-          <MetadataField label="Deity" value={metadata.deity} />
-          <MetadataField label="Tradition" value={metadata.tradition} />
           <MetadataField label="Language" value={metadata.language} />
           <MetadataField label="Script" value={metadata.script} />
         </dl>
@@ -98,9 +89,17 @@ function SourceMetadataSection({ metadata }: { metadata: SourceMetadata }) {
     case "deity_concept":
       return (
         <dl className="grid gap-3 sm:grid-cols-2">
-          <MetadataField label="Tradition" value={metadata.tradition} />
           <MetadataField label="Language" value={metadata.language} />
           <MetadataList label="Aliases" values={metadata.aliases} />
+        </dl>
+      );
+    case "teacher":
+      return (
+        <dl className="grid gap-3 sm:grid-cols-2">
+          <MetadataField label="Tradition" value={metadata.tradition} />
+          <MetadataField label="Lineage" value={metadata.lineage} />
+          <MetadataField label="Language" value={metadata.language} />
+          <MetadataField label="Period" value={metadata.period} />
         </dl>
       );
   }
@@ -152,6 +151,36 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
           <h2 className="text-sm font-semibold">{typeDetail.label} details</h2>
           <SourceMetadataSection metadata={source.metadata} />
         </section>
+
+        {source.body && (
+          <section className="grid gap-3 border border-border bg-surface p-4">
+            <h2 className="text-sm font-semibold">Body</h2>
+            <div className="whitespace-pre-wrap text-sm leading-7">{source.body}</div>
+          </section>
+        )}
+
+        {source.references.length > 0 && (
+          <section className="grid gap-3">
+            <h2 className="text-sm font-semibold">References</h2>
+            <div className="grid gap-2">
+              {source.references.map((ref) => (
+                <div key={ref.id} className="rounded-md border border-border bg-surface px-3 py-2 text-sm">
+                  <p className="font-medium">{ref.title}</p>
+                  {ref.url && (
+                    <a
+                      href={ref.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 block break-all text-xs text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                    >
+                      {ref.url}
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {source.themes.length > 0 && (
           <section className="grid gap-3">

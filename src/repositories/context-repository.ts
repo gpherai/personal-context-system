@@ -77,9 +77,11 @@ export interface SourceSummary {
   type: SourceType;
   title: string;
   description?: string;
+  body?: string;
   status: RecordStatus;
   metadata: SourceMetadata;
   themes: LinkedName[];
+  references: ReferenceRecord[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -261,11 +263,15 @@ export interface SourceRepository {
   updateSource(command: UpdateSourceCommand): Promise<SourceRecord>;
   deleteSource(id: string): Promise<void>;
   listSources(query?: ListSourcesQuery): Promise<SourceSummary[]>;
+  listSourcesByType(type: SourceType): Promise<SourceSummary[]>;
   getSource(id: string): Promise<SourceRecord | null>;
+  createStandaloneReference(title: string, url: string): Promise<ReferenceRecord>;
   linkEntryToSource(entryId: string, sourceId: string): Promise<void>;
   unlinkEntryFromSource(entryId: string, sourceId: string): Promise<void>;
   linkSourceToTheme(sourceId: string, themeId: string): Promise<void>;
   unlinkSourceFromTheme(sourceId: string, themeId: string): Promise<void>;
+  linkSourceToReference(sourceId: string, referenceId: string): Promise<void>;
+  unlinkSourceFromReference(sourceId: string, referenceId: string): Promise<void>;
 }
 
 export interface QuestionRepository {
