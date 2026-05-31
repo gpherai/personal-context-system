@@ -1497,7 +1497,7 @@ export class PrismaContextRepository implements ContextRepository {
   }
 
   async getContextMirrorSnapshot(): Promise<ContextMirrorSnapshot> {
-    const [entries, openQuestions, themes, projects, threads, sources] = await Promise.all([
+    const [entries, openQuestions, themes, projects, threads, rawSources, sourceRelationships] = await Promise.all([
       this.prisma.entry.findMany({
         include: entryInclude,
         orderBy: [{ capturedAt: "desc" }, { createdAt: "desc" }],
@@ -1529,8 +1529,23 @@ export class PrismaContextRepository implements ContextRepository {
         },
         orderBy: [{ updatedAt: "desc" }]
       }),
-      this.listSources({ limit: 200 })
+      this.prisma.source.findMany({
+        include: sourceInclude,
+        orderBy: [{ title: "asc" }],
+        take: 500
+      }),
+      this.prisma.relationship.findMany({
+        where: { fromType: "source", toType: "source" }
+      })
     ]);
+
+    const relsBySourceId = new Map<string, RelationshipRecord[]>();
+    for (const rel of sourceRelationships) {
+      const mapped = mapRelationship(rel);
+      const bucket = relsBySourceId.get(rel.fromId);
+      if (bucket) bucket.push(mapped);
+      else relsBySourceId.set(rel.fromId, [mapped]);
+    }
 
     return {
       entries: entries.map((entry) => mapEntry(entry)),
@@ -1543,7 +1558,7 @@ export class PrismaContextRepository implements ContextRepository {
           thread.entries.map(({ entry }) => mapEntry(entry))
         )
       ),
-      sources
+      sources: rawSources.map((s) => mapSource(s, relsBySourceId.get(s.id) ?? []))
     };
   }
 }

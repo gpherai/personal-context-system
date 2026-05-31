@@ -215,7 +215,7 @@ export interface ContextMirrorSnapshot {
   themes: NamedRecord[];
   projects: NamedRecord[];
   threads: ThreadRecord[];
-  sources: SourceSummary[];
+  sources: SourceRecord[];
 }
 
 export interface NamedRecordContext extends NamedRecord {

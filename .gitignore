@@ -1,4 +1,5 @@
 # Local assistant/config state
+.agent/
 .claude/
 .codex/
 .gemini/

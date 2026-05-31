@@ -5,7 +5,7 @@ import type {
   JsonObject,
   NamedRecord,
   QuestionRecord,
-  SourceSummary,
+  SourceRecord,
   ThreadRecord
 } from "@/repositories/context-repository";
 
@@ -14,7 +14,7 @@ export interface MirrorBuildContext {
   entries: EntryRecord[];
   themes: NamedRecord[];
   projects: NamedRecord[];
-  sources: SourceSummary[];
+  sources: SourceRecord[];
   generatedAtIso: string;
 }
 
@@ -282,14 +282,14 @@ function entryJson(entry: EntryRecord): string {
   return JSON.stringify(toEntryMirrorDto(entry), null, 2);
 }
 
-function sourceList(sources: SourceSummary[]): string {
+function sourceList(sources: SourceRecord[]): string {
   if (!sources.length) return "- None";
   return sources
     .map((s) => `- [${s.type}] ${sanitizeInline(s.title)} (${s.id})${s.themes.length ? " — " + s.themes.map((t) => sanitizeInline(t.name)).join(", ") : ""}`)
     .join("\n");
 }
 
-function sourceMarkdown(source: SourceSummary, generatedAtIso: string): string {
+function sourceMarkdown(source: SourceRecord, generatedAtIso: string, sourceById: Map<string, SourceRecord>): string {
   const metaEntries = Object.entries(source.metadata)
     .filter(([k]) => k !== "type")
     .map(([k, v]) => {
@@ -303,6 +303,11 @@ function sourceMarkdown(source: SourceSummary, generatedAtIso: string): string {
     ? source.references.map((r) => `- ${sanitizeInline(r.title)}${r.url ? ": " + r.url : ""}`)
     : [];
 
+  const linkedLines = source.outgoingRelationships.map((r) => {
+    const linked = sourceById.get(r.toId);
+    return `- [${r.relationType}] ${linked ? sanitizeInline(linked.title) + " " : ""}(${r.toId})`;
+  });
+
   return [
     `# ${sanitizeInline(source.title)}`,
     "",
@@ -314,7 +319,8 @@ function sourceMarkdown(source: SourceSummary, generatedAtIso: string): string {
     `- themes: ${source.themes.map((t) => sanitizeInline(t.name)).join(", ") || "none"}`,
     "",
     ...(metaEntries.length ? ["## Metadata", "", ...metaEntries, ""] : []),
-    ...(source.description ? ["## Beschrijving", "", wrapUserContent(source.description), ""] : []),
+    ...(source.description ? ["## Description", "", wrapUserContent(source.description), ""] : []),
+    ...(linkedLines.length ? ["## Linked Sources", "", ...linkedLines, ""] : []),
     ...(referencesLines.length ? ["## References", "", ...referencesLines, ""] : []),
     ...(source.body ? ["## Body", "", wrapUserContent(source.body), ""] : [])
   ].join("\n");
@@ -545,7 +551,8 @@ export function buildContextMirror(
   }
 
   // Sources
-  const sourcesByType = sources.reduce<Record<string, SourceSummary[]>>((acc, s) => {
+  const sourceById = new Map(sources.map((s) => [s.id, s]));
+  const sourcesByType = sources.reduce<Record<string, SourceRecord[]>>((acc, s) => {
     (acc[s.type] ??= []).push(s);
     return acc;
   }, {});
@@ -580,7 +587,7 @@ export function buildContextMirror(
   for (const source of sources) {
     files.push({
       path: `sources/${source.id}.md`,
-      contents: sourceMarkdown(source, generatedAtIso)
+      contents: sourceMarkdown(source, generatedAtIso, sourceById)
     });
   }
 
