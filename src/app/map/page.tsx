@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { BookMarked, GitBranch, Layers, Library, MessageSquareText } from "lucide-react";
 
-import { isRecoverableReadError } from "@/application/errors";
+import { isDatabaseUnavailable } from "@/application/errors";
 import { getGraphSnapshot } from "@/application/query-service";
 import { EmptyState } from "@/components/empty-state";
 import { SetupNotice } from "@/components/setup-notice";
@@ -216,7 +216,7 @@ export default async function MapPage() {
       </div>
     );
   } catch (error) {
-    if (isRecoverableReadError(error)) {
+    if (isDatabaseUnavailable(error)) {
       return (
         <div className="mx-auto max-w-4xl">
           <SetupNotice />

@@ -137,6 +137,52 @@ html[data-theme="stone"].dark {
 }
 
 /* ============================================================
+   THEME: BRUTALISM · light
+   Terminal hacker vibe, sharp contrast.
+   ============================================================ */
+html[data-theme="brutalism"] {
+  --font-sans: var(--font-space-mono), monospace;
+  --font-mono: var(--font-space-mono), monospace;
+  --color-background:       oklch(98%   0.005 255);
+  --color-surface:          oklch(100%  0     0  );
+  --color-surface-muted:    oklch(95%   0.01  255);
+  --color-foreground:       oklch(20%   0.04  255);
+  --color-muted:            oklch(50%   0.03  255);
+  --color-muted-foreground: oklch(45%   0.03  255);
+  --color-border:           oklch(85%   0.02  255);
+  --color-primary:          oklch(60%   0.16  143); /* Run green */
+  --color-primary-strong:   oklch(55%   0.16  143);
+  --color-accent:           oklch(60%   0.16  143);
+  --color-caution:          oklch(75%   0.17   75);
+  --color-danger:           oklch(62%   0.21   25);
+  --color-danger-strong:    oklch(56%   0.21   25);
+  --color-success:          oklch(60%   0.16  143);
+}
+
+/* ============================================================
+   THEME: BRUTALISM · dark
+   Terminal hacker vibe, deep slate and neon green.
+   ============================================================ */
+html[data-theme="brutalism"].dark {
+  --font-sans: var(--font-space-mono), monospace;
+  --font-mono: var(--font-space-mono), monospace;
+  --color-background:       oklch(18%   0.04  255);
+  --color-surface:          oklch(22%   0.04  255);
+  --color-surface-muted:    oklch(27%   0.05  255);
+  --color-foreground:       oklch(98%   0.005 255);
+  --color-muted:            oklch(60%   0.04  255);
+  --color-muted-foreground: oklch(70%   0.04  255);
+  --color-border:           oklch(35%   0.04  255);
+  --color-primary:          oklch(71%   0.16  143); /* Neon green */
+  --color-primary-strong:   oklch(65%   0.16  143);
+  --color-accent:           oklch(71%   0.16  143);
+  --color-caution:          oklch(80%   0.17   75);
+  --color-danger:           oklch(65%   0.21   25);
+  --color-danger-strong:    oklch(70%   0.21   25);
+  --color-success:          oklch(71%   0.16  143);
+}
+
+/* ============================================================
    BASE
    ============================================================ */
 
@@ -210,5 +256,18 @@ body {
   .field-textarea:focus-visible {
     box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-primary) 22%, transparent);
     border-color: color-mix(in oklch, var(--color-primary) 55%, transparent);
+  }
+
+  /* Brutalism overrides for primitive components */
+  html[data-theme="brutalism"] .field-input,
+  html[data-theme="brutalism"] .field-select,
+  html[data-theme="brutalism"] .field-textarea {
+    @apply rounded-none border-2;
+  }
+  
+  html[data-theme="brutalism"] .field-input:focus-visible,
+  html[data-theme="brutalism"] .field-select:focus-visible,
+  html[data-theme="brutalism"] .field-textarea:focus-visible {
+    box-shadow: 4px 4px 0px 0px var(--color-primary);
   }
 }

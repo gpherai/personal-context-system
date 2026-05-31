@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Plus, Search } from "lucide-react";
 
-import { isRecoverableReadError } from "@/application/errors";
+import { isDatabaseUnavailable } from "@/application/errors";
 import { getSources, listThemes } from "@/application/query-service";
 import { EmptyState } from "@/components/empty-state";
 import { SetupNotice } from "@/components/setup-notice";
@@ -20,16 +20,13 @@ function param(raw: SearchParams, key: string): string {
   return Array.isArray(v) ? (v[0] ?? "") : (v ?? "");
 }
 
-function toUrlSearchParams(raw: SearchParams): URLSearchParams {
-  const params = new URLSearchParams();
+function toStringRecord(raw: SearchParams): Record<string, string> {
+  const result: Record<string, string> = {};
   for (const [key, value] of Object.entries(raw)) {
-    if (Array.isArray(value)) {
-      value.forEach((item) => params.append(key, item));
-    } else if (value) {
-      params.set(key, value);
-    }
+    if (Array.isArray(value)) { if (value[0]) result[key] = value[0]; }
+    else if (value) result[key] = value;
   }
-  return params;
+  return result;
 }
 
 function SourceCard({ source }: { source: SourceSummary }) {
@@ -60,7 +57,7 @@ function SourceCard({ source }: { source: SourceSummary }) {
 
 export default async function SourcesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const rawSearchParams = await searchParams;
-  const urlParams = toUrlSearchParams(rawSearchParams);
+  const urlParams = toStringRecord(rawSearchParams);
 
   try {
     const [sources, themes] = await Promise.all([getSources(urlParams), listThemes()]);
@@ -89,7 +86,7 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" aria-hidden="true" />
                 <input
                   className="field-input w-48 pl-9"
-                  defaultValue={urlParams.get("search") ?? ""}
+                  defaultValue={urlParams["search"] ?? ""}
                   name="search"
                   placeholder="title, metadata…"
                 />
@@ -165,7 +162,7 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
       </div>
     );
   } catch (error) {
-    if (isRecoverableReadError(error)) {
+    if (isDatabaseUnavailable(error)) {
       return (
         <div className="mx-auto max-w-4xl">
           <SetupNotice />

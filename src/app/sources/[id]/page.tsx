@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { isRecoverableReadError } from "@/application/errors";
+import { isDatabaseUnavailable } from "@/application/errors";
 import { getSourceById } from "@/application/query-service";
 import { SetupNotice } from "@/components/setup-notice";
 import { Badge } from "@/components/ui/badge";
@@ -222,7 +222,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
       </article>
     );
   } catch (error) {
-    if (isRecoverableReadError(error)) {
+    if (isDatabaseUnavailable(error)) {
       return (
         <div className="mx-auto max-w-4xl">
           <SetupNotice />

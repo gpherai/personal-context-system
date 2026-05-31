@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Bot, FileText, FolderTree, ShieldCheck, Terminal } from "lucide-react";
 
-import { isRecoverableReadError } from "@/application/errors";
+import { isDatabaseUnavailable } from "@/application/errors";
 import { getContextMirrorStatus, getSavedFilters } from "@/application/query-service";
 import { formatDateTime } from "@/lib/format";
 import { savedFilterHref, systemSavedFilters } from "@/lib/saved-filter-url";
@@ -14,7 +14,7 @@ export default async function CommandPage() {
   const [mirrorStatus, savedFilters] = await Promise.all([
     getContextMirrorStatus(),
     getSavedFilters().catch((error: unknown) => {
-      if (isRecoverableReadError(error)) return [];
+      if (isDatabaseUnavailable(error)) return [];
       throw error;
     }),
   ]);

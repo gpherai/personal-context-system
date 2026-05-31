@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Plus_Jakarta_Sans, Space_Mono } from "next/font/google";
 
 import { AppShell } from "@/components/app-shell";
 
@@ -11,6 +11,13 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta",
   display: "swap",
   weight: ["400", "500", "600", "700"],
+});
+
+const spaceMono = Space_Mono({
+  subsets: ["latin"],
+  variable: "--font-space-mono",
+  display: "swap",
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {
@@ -26,7 +33,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html
       lang="en"
-      className={`${plusJakartaSans.variable}${mode === "dark" ? " dark" : ""}`}
+      className={`${plusJakartaSans.variable} ${spaceMono.variable}${mode === "dark" ? " dark" : ""}`}
       data-theme={theme}
     >
       <body>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { isRecoverableReadError } from "@/application/errors";
+import { isDatabaseUnavailable } from "@/application/errors";
 import { getThreadBySlug } from "@/application/query-service";
 import { EntryList } from "@/components/entry-list";
 import { SetupNotice } from "@/components/setup-notice";
@@ -41,7 +41,7 @@ export default async function ThreadPage({ params }: { params: Promise<{ slug: s
       </div>
     );
   } catch (error) {
-    if (isRecoverableReadError(error)) {
+    if (isDatabaseUnavailable(error)) {
       return (
         <div className="mx-auto max-w-4xl">
           <SetupNotice />

@@ -7,7 +7,7 @@ import { sanatanaTaxonomyExtension } from "@/ai-context/sanatana-taxonomy";
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
 import { writeContextMirror } from "@/infrastructure/files/context-mirror-writer";
 
-import { databaseMutationErrorState, isRecoverableReadError } from "./errors";
+import { databaseMutationErrorState, isDatabaseUnavailable } from "./errors";
 import {
   createAttachmentCommandSchema,
   createEntryCommandSchema,
@@ -46,8 +46,8 @@ import type {
 } from "@/repositories/context-repository";
 import type { MutationState } from "./action-states";
 
-export type { CaptureEntryState, MutationState } from "./action-states";
-export { initialCaptureEntryState, initialMutationState } from "./action-states";
+export type { MutationState } from "./action-states";
+export { initialMutationState } from "./action-states";
 
 function formStr(formData: FormData, key: string): string | null {
   const value = formData.get(key);
@@ -245,7 +245,7 @@ async function withDbErrorHandling<T extends { ok: true }>(
   try {
     return await fn();
   } catch (error) {
-    if (isRecoverableReadError(error)) {
+    if (isDatabaseUnavailable(error)) {
       return { ok: false, state: databaseMutationErrorState() };
     }
     throw error;
@@ -409,8 +409,8 @@ export function parseCreateSourceFormData(formData: FormData) {
     body: parseOptionalString(formStr(formData, "body")),
     status: parseOptionalString(formStr(formData, "status")) ?? "active",
     metadata: buildRawSourceMetadata(type, formData),
-    themeIds: parseIdList(formStr(formData, "themeIds")),
-    referenceIds: parseIdList(formStr(formData, "referenceIds")),
+    themeIds: formData.getAll("themeIds").filter((v): v is string => typeof v === "string" && v.trim().length > 0),
+    referenceIds: formData.getAll("referenceId").filter((v): v is string => typeof v === "string" && v.trim().length > 0),
     newReferenceUrls: parseNewReferenceUrls(formData)
   });
 }
@@ -424,13 +424,13 @@ export function parseUpdateSourceFormData(id: string, formData: FormData) {
     body: parseOptionalString(formStr(formData, "body")),
     status: parseOptionalString(formStr(formData, "status")),
     metadata: buildRawSourceMetadata(type, formData),
-    themeIds: parseIdList(formStr(formData, "themeIds")),
-    referenceIds: parseIdList(formStr(formData, "referenceIds")),
+    themeIds: formData.getAll("themeIds").filter((v): v is string => typeof v === "string" && v.trim().length > 0),
+    referenceIds: formData.getAll("referenceId").filter((v): v is string => typeof v === "string" && v.trim().length > 0),
     newReferenceUrls: parseNewReferenceUrls(formData)
   });
 }
 
-function extractPickerSourceIds(formData: FormData): string[] {
+export function extractPickerSourceIds(formData: FormData): string[] {
   return [
     ...formData.getAll("deitySourceIds"),
     ...formData.getAll("teacherSourceIds"),
@@ -438,34 +438,32 @@ function extractPickerSourceIds(formData: FormData): string[] {
   ].filter((v): v is string => typeof v === "string" && v.length > 0);
 }
 
-export async function captureSource(formData: FormData, repository: SourceRepository & RelationshipRepository) {
-  const parsed = parseCreateSourceFormData(formData);
+export function makeSourceErrorState(error: z.ZodError): MutationState {
+  return sourceErrorState("Check the highlighted fields.", error);
+}
 
-  if (!parsed.success) {
-    return { ok: false as const, state: sourceErrorState("Check the highlighted fields.", parsed.error) };
-  }
-
+export async function captureSource(
+  command: z.infer<typeof createSourceCommandSchema>,
+  linkedSourceIds: string[],
+  repository: SourceRepository & RelationshipRepository
+) {
   return withDbErrorHandling(async () => {
-    const source = await repository.createSource(parsed.data);
-    const pickerIds = extractPickerSourceIds(formData);
-    for (const toId of pickerIds) {
+    const source = await repository.createSource(command);
+    for (const toId of linkedSourceIds) {
       await repository.linkObjects({ fromType: "source", fromId: source.id, toType: "source", toId, relationType: "relates_to" });
     }
     return { ok: true as const, source };
   });
 }
 
-export async function updateSourceFromForm(id: string, formData: FormData, repository: SourceRepository & RelationshipRepository) {
-  const parsed = parseUpdateSourceFormData(id, formData);
-
-  if (!parsed.success) {
-    return { ok: false as const, state: sourceErrorState("Check the highlighted fields.", parsed.error) };
-  }
-
+export async function updateSource(
+  command: z.infer<typeof updateSourceCommandSchema>,
+  linkedSourceIds: string[],
+  repository: SourceRepository & RelationshipRepository
+) {
   return withDbErrorHandling(async () => {
-    const source = await repository.updateSource(parsed.data);
-    const pickerIds = extractPickerSourceIds(formData);
-    await repository.replaceOutgoingRelationships("source", id, "source", "relates_to", pickerIds);
+    const source = await repository.updateSource(command);
+    await repository.replaceOutgoingRelationships("source", command.id, "source", "relates_to", linkedSourceIds);
     return { ok: true as const, source };
   });
 }
@@ -488,12 +486,12 @@ const laxListSourcesQuerySchema = listSourcesQuerySchema.extend({
   status: recordStatusSchema.optional().catch(undefined)
 });
 
-export async function listSources(repository: SourceRepository, params?: URLSearchParams) {
+export async function listSources(repository: SourceRepository, params?: Record<string, string | undefined>) {
   const parsed = laxListSourcesQuerySchema.parse({
-    search: parseOptionalString(params?.get("search") ?? null),
-    type: parseOptionalString(params?.get("type") ?? null),
-    themeSlug: parseOptionalString(params?.get("themeSlug") ?? null),
-    status: parseOptionalString(params?.get("status") ?? null),
+    search: parseOptionalString(params?.["search"] ?? null),
+    type: parseOptionalString(params?.["type"] ?? null),
+    themeSlug: parseOptionalString(params?.["themeSlug"] ?? null),
+    status: parseOptionalString(params?.["status"] ?? null),
     limit: 100
   });
 
@@ -506,17 +504,17 @@ const laxListEntriesQuerySchema = listEntriesQuerySchema.extend({
   privacyLevel: privacyLevelSchema.optional().catch(undefined)
 });
 
-export async function listEntries(repository: EntryRepository, params?: URLSearchParams) {
+export async function listEntries(repository: EntryRepository, params?: Record<string, string | undefined>) {
   const parsed = laxListEntriesQuerySchema.parse({
-    search: parseOptionalString(params?.get("search") ?? null),
-    type: parseOptionalString(params?.get("type") ?? null),
-    status: parseOptionalString(params?.get("status") ?? null),
-    privacyLevel: parseOptionalString(params?.get("privacyLevel") ?? null),
-    themeSlug: parseOptionalString(params?.get("themeSlug") ?? null),
-    projectSlug: parseOptionalString(params?.get("projectSlug") ?? null),
-    questionId: parseOptionalString(params?.get("questionId") ?? null),
-    occurredFrom: parseOptionalDate(params?.get("occurredFrom") ?? null),
-    occurredTo: parseOptionalDate(params?.get("occurredTo") ?? null),
+    search: parseOptionalString(params?.["search"] ?? null),
+    type: parseOptionalString(params?.["type"] ?? null),
+    status: parseOptionalString(params?.["status"] ?? null),
+    privacyLevel: parseOptionalString(params?.["privacyLevel"] ?? null),
+    themeSlug: parseOptionalString(params?.["themeSlug"] ?? null),
+    projectSlug: parseOptionalString(params?.["projectSlug"] ?? null),
+    questionId: parseOptionalString(params?.["questionId"] ?? null),
+    occurredFrom: parseOptionalDate(params?.["occurredFrom"] ?? null),
+    occurredTo: parseOptionalDate(params?.["occurredTo"] ?? null),
     limit: 100
   });
 

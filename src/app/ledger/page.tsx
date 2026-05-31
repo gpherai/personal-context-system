@@ -3,7 +3,7 @@ import { Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
-import { isRecoverableReadError } from "@/application/errors";
+import { isDatabaseUnavailable } from "@/application/errors";
 import { getDashboardOverview, getLedgerEntries, getSavedFilters } from "@/application/query-service";
 import { EntryList } from "@/components/entry-list";
 import { SetupNotice } from "@/components/setup-notice";
@@ -18,26 +18,26 @@ export const dynamic = "force-dynamic";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
-function toUrlSearchParams(raw: SearchParams): URLSearchParams {
-  const params = new URLSearchParams();
+function toStringRecord(raw: SearchParams): Record<string, string> {
+  const result: Record<string, string> = {};
   for (const [key, value] of Object.entries(raw)) {
-    if (Array.isArray(value)) value.forEach((item) => params.append(key, item));
-    else if (value) params.set(key, value);
+    if (Array.isArray(value)) { if (value[0]) result[key] = value[0]; }
+    else if (value) result[key] = value;
   }
-  return params;
+  return result;
 }
 
-function toSavedFilterParams(params: URLSearchParams): SavedFilterParams {
+function toSavedFilterParams(params: Record<string, string>): SavedFilterParams {
   const filterParams = {
-    search:       params.get("search")       || undefined,
-    type:         params.get("type")         || undefined,
-    status:       params.get("status")       || undefined,
-    privacyLevel: params.get("privacyLevel") || undefined,
-    themeSlug:    params.get("themeSlug")    || undefined,
-    projectSlug:  params.get("projectSlug")  || undefined,
-    questionId:   params.get("questionId")   || undefined,
-    occurredFrom: params.get("occurredFrom") || undefined,
-    occurredTo:   params.get("occurredTo")   || undefined,
+    search:       params["search"]       || undefined,
+    type:         params["type"]         || undefined,
+    status:       params["status"]       || undefined,
+    privacyLevel: params["privacyLevel"] || undefined,
+    themeSlug:    params["themeSlug"]    || undefined,
+    projectSlug:  params["projectSlug"]  || undefined,
+    questionId:   params["questionId"]   || undefined,
+    occurredFrom: params["occurredFrom"] || undefined,
+    occurredTo:   params["occurredTo"]   || undefined,
   };
   const parsed = savedFilterParamsSchema.safeParse(
     Object.fromEntries(Object.entries(filterParams).filter(([, v]) => v !== undefined))
@@ -47,7 +47,7 @@ function toSavedFilterParams(params: URLSearchParams): SavedFilterParams {
 
 export default async function LedgerPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const rawSearchParams = await searchParams;
-  const params = toUrlSearchParams(rawSearchParams);
+  const params = toStringRecord(rawSearchParams);
 
   try {
     const [entries, overview, savedFilters] = await Promise.all([
@@ -113,7 +113,7 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden="true" />
               <input
                 className="field-input pl-9"
-                defaultValue={params.get("search") ?? ""}
+                defaultValue={params["search"] ?? ""}
                 name="search"
                 placeholder="title, body, summary"
               />
@@ -121,7 +121,7 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
           </label>
           <label className="grid gap-1.5 text-sm font-medium">
             Type
-            <select className="field-select" defaultValue={params.get("type") ?? ""} name="type">
+            <select className="field-select" defaultValue={params["type"] ?? ""} name="type">
               <option value="">Any</option>
               {entryTypes.map((t) => (
                 <option key={t} value={t}>{labelize(t)}</option>
@@ -130,7 +130,7 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
           </label>
           <label className="grid gap-1.5 text-sm font-medium">
             Status
-            <select className="field-select" defaultValue={params.get("status") ?? ""} name="status">
+            <select className="field-select" defaultValue={params["status"] ?? ""} name="status">
               <option value="">Any</option>
               {entryStatuses.map((s) => (
                 <option key={s} value={s}>{s}</option>
@@ -139,7 +139,7 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
           </label>
           <label className="grid gap-1.5 text-sm font-medium">
             Privacy
-            <select className="field-select" defaultValue={params.get("privacyLevel") ?? ""} name="privacyLevel">
+            <select className="field-select" defaultValue={params["privacyLevel"] ?? ""} name="privacyLevel">
               <option value="">Any</option>
               {privacyLevels.map((p) => (
                 <option key={p} value={p}>{p}</option>
@@ -148,7 +148,7 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
           </label>
           <label className="grid gap-1.5 text-sm font-medium">
             Theme
-            <select className="field-select" defaultValue={params.get("themeSlug") ?? ""} name="themeSlug">
+            <select className="field-select" defaultValue={params["themeSlug"] ?? ""} name="themeSlug">
               <option value="">Any</option>
               {overview.activeThemes.map((t) => (
                 <option key={t.id} value={t.slug}>{t.name}</option>
@@ -157,7 +157,7 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
           </label>
           <label className="grid gap-1.5 text-sm font-medium">
             Project
-            <select className="field-select" defaultValue={params.get("projectSlug") ?? ""} name="projectSlug">
+            <select className="field-select" defaultValue={params["projectSlug"] ?? ""} name="projectSlug">
               <option value="">Any</option>
               {overview.activeProjects.map((p) => (
                 <option key={p.id} value={p.slug}>{p.name}</option>
@@ -166,7 +166,7 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
           </label>
           <label className="grid gap-1.5 text-sm font-medium">
             Question
-            <select className="field-select" defaultValue={params.get("questionId") ?? ""} name="questionId">
+            <select className="field-select" defaultValue={params["questionId"] ?? ""} name="questionId">
               <option value="">Any</option>
               {overview.openQuestions.map((q) => (
                 <option key={q.id} value={q.id}>{q.prompt}</option>
@@ -175,11 +175,11 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
           </label>
           <label className="grid gap-1.5 text-sm font-medium">
             From
-            <input className="field-input" defaultValue={params.get("occurredFrom") ?? ""} name="occurredFrom" type="date" />
+            <input className="field-input" defaultValue={params["occurredFrom"] ?? ""} name="occurredFrom" type="date" />
           </label>
           <label className="grid gap-1.5 text-sm font-medium">
             To
-            <input className="field-input" defaultValue={params.get("occurredTo") ?? ""} name="occurredTo" type="date" />
+            <input className="field-input" defaultValue={params["occurredTo"] ?? ""} name="occurredTo" type="date" />
           </label>
           <div className="flex items-end gap-2">
             <Button type="submit">Apply</Button>
@@ -196,7 +196,7 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
       </div>
     );
   } catch (error) {
-    if (isRecoverableReadError(error)) {
+    if (isDatabaseUnavailable(error)) {
       return (
         <div className="mx-auto max-w-xl">
           <SetupNotice />

@@ -264,7 +264,7 @@ export interface SourceRepository {
   updateSource(command: UpdateSourceCommand): Promise<SourceRecord>;
   deleteSource(id: string): Promise<void>;
   listSources(query?: ListSourcesQuery): Promise<SourceSummary[]>;
-  listSourcesByType(type: SourceType): Promise<SourceSummary[]>;
+  listSourcesByType(type: SourceType, limit?: number): Promise<SourceSummary[]>;
   getSource(id: string): Promise<SourceRecord | null>;
   linkEntryToSource(entryId: string, sourceId: string): Promise<void>;
   unlinkEntryFromSource(entryId: string, sourceId: string): Promise<void>;

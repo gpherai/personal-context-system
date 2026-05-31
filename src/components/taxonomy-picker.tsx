@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 
 interface Theme {
   id: string;
@@ -17,9 +17,11 @@ interface TaxonomyPickerProps {
 export function TaxonomyPicker({ themes, selectedIds, name = "themeIds" }: TaxonomyPickerProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set(selectedIds));
   const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
 
-  const filtered = themes.filter((t) =>
-    t.name.toLowerCase().includes(search.toLowerCase())
+  const filtered = useMemo(
+    () => themes.filter((t) => t.name.toLowerCase().includes(deferredSearch.toLowerCase())),
+    [themes, deferredSearch]
   );
 
   function toggle(id: string) {
@@ -33,12 +35,9 @@ export function TaxonomyPicker({ themes, selectedIds, name = "themeIds" }: Taxon
 
   return (
     <div className="grid gap-2">
-      <input
-        aria-hidden="true"
-        name={name}
-        type="hidden"
-        value={Array.from(selected).join(",")}
-      />
+      {Array.from(selected).map((id) => (
+        <input key={id} type="hidden" name={name} value={id} />
+      ))}
       <input
         aria-label="Zoek thema's"
         className="h-9 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"

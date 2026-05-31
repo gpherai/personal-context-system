@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useId } from "react";
 
-import { initialCaptureEntryState } from "@/application/action-states";
+import { initialMutationState } from "@/application/action-states";
 import { EntryTypeField } from "@/components/entry-type-field";
 import { entryStatuses, privacyLevels } from "@/domain/context";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ function FieldError({ id, errors }: { id?: string; errors?: string[] }) {
 }
 
 export function CaptureForm() {
-  const [state, formAction, pending] = useActionState(createEntryAction, initialCaptureEntryState);
+  const [state, formAction, pending] = useActionState(createEntryAction, initialMutationState);
   const formId = useId();
 
   const ids = {

@@ -3,13 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { captureEntry, type CaptureEntryState } from "@/application/context-service";
+import { captureEntry, type MutationState } from "@/application/context-service";
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
 
 export async function createEntryAction(
-  _previousState: CaptureEntryState,
+  _previousState: MutationState,
   formData: FormData
-): Promise<CaptureEntryState> {
+): Promise<MutationState> {
   const result = await captureEntry(formData, createPrismaContextRepository());
 
   if (!result.ok) {

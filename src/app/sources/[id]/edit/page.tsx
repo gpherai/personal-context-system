@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { isRecoverableReadError } from "@/application/errors";
+import { isDatabaseUnavailable } from "@/application/errors";
 import { getSourceById, getSourcesByType, listThemes } from "@/application/query-service";
 import { SetupNotice } from "@/components/setup-notice";
 import { isValidId } from "@/lib/format";
@@ -43,7 +43,7 @@ export default async function EditSourcePage({ params }: { params: Promise<{ id:
       </div>
     );
   } catch (error) {
-    if (isRecoverableReadError(error)) {
+    if (isDatabaseUnavailable(error)) {
       return (
         <div className="mx-auto max-w-4xl">
           <SetupNotice />

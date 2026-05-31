@@ -3,7 +3,16 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { captureSource, deleteSource, updateSourceFromForm, type MutationState } from "@/application/context-service";
+import {
+  captureSource,
+  deleteSource,
+  extractPickerSourceIds,
+  makeSourceErrorState,
+  parseCreateSourceFormData,
+  parseUpdateSourceFormData,
+  updateSource,
+  type MutationState
+} from "@/application/context-service";
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
 import { isValidId } from "@/lib/format";
 
@@ -11,11 +20,11 @@ export async function createSourceAction(
   _previousState: MutationState,
   formData: FormData
 ): Promise<MutationState> {
-  const result = await captureSource(formData, createPrismaContextRepository());
+  const parsed = parseCreateSourceFormData(formData);
+  if (!parsed.success) return makeSourceErrorState(parsed.error);
 
-  if (!result.ok) {
-    return result.state;
-  }
+  const result = await captureSource(parsed.data, extractPickerSourceIds(formData), createPrismaContextRepository());
+  if (!result.ok) return result.state;
 
   revalidatePath("/sources");
   revalidatePath("/cabinet");
@@ -31,11 +40,11 @@ export async function updateSourceAction(
     return { status: "error", message: "Invalid source id." };
   }
 
-  const result = await updateSourceFromForm(id, formData, createPrismaContextRepository());
+  const parsed = parseUpdateSourceFormData(id, formData);
+  if (!parsed.success) return makeSourceErrorState(parsed.error);
 
-  if (!result.ok) {
-    return result.state;
-  }
+  const result = await updateSource(parsed.data, extractPickerSourceIds(formData), createPrismaContextRepository());
+  if (!result.ok) return result.state;
 
   revalidatePath("/sources");
   revalidatePath(`/sources/${id}`);

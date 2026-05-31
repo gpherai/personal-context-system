@@ -265,7 +265,9 @@ function ReferencesSection({ existingReferences }: { existingReferences: Referen
 
   return (
     <div className="grid gap-3">
-      <input type="hidden" name="referenceIds" value={existingIds.join(",")} />
+      {existingIds.map((id) => (
+        <input key={id} type="hidden" name="referenceId" value={id} />
+      ))}
       {newRefs.map((r) => (
         <span key={r.url}>
           <input type="hidden" name="newRefTitle" value={r.title} />

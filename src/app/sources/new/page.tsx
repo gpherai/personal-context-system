@@ -1,4 +1,4 @@
-import { isRecoverableReadError } from "@/application/errors";
+import { isDatabaseUnavailable } from "@/application/errors";
 import { getSourcesByType, listThemes } from "@/application/query-service";
 import { SetupNotice } from "@/components/setup-notice";
 import { SourceForm } from "@/components/source-form";
@@ -31,7 +31,7 @@ export default async function NewSourcePage() {
       </div>
     );
   } catch (error) {
-    if (isRecoverableReadError(error)) {
+    if (isDatabaseUnavailable(error)) {
       return (
         <div className="mx-auto max-w-4xl">
           <SetupNotice />

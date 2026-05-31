@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { Prisma, PrismaClient } from "@/generated/prisma/client";
+import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 
 import {
   entryStatuses,
@@ -50,6 +50,7 @@ import type {
   ThreadRecord
 } from "@/repositories/context-repository";
 
+import { DatabaseUnavailableError } from "@/application/errors";
 import { getPrismaClient } from "./client";
 
 const entryInclude = {
@@ -1008,6 +1009,8 @@ export class PrismaContextRepository implements ContextRepository {
   }
 
   async replaceOutgoingRelationships(fromType: ObjectType, fromId: string, toType: ObjectType, relationType: RelationType, toIds: string[]): Promise<void> {
+    await this.validateObjectExists(fromType, fromId);
+    await Promise.all(toIds.map(id => this.validateObjectExists(toType, id)));
     await this.prisma.$transaction(async (tx) => {
       await tx.relationship.deleteMany({ where: { fromType, fromId, toType, relationType } });
       if (toIds.length > 0) {
@@ -1409,12 +1412,12 @@ export class PrismaContextRepository implements ContextRepository {
     return source ? mapSource(source, rels.map(mapRelationship)) : null;
   }
 
-  async listSourcesByType(type: SourceType): Promise<SourceSummary[]> {
+  async listSourcesByType(type: SourceType, limit = 500): Promise<SourceSummary[]> {
     const sources = await this.prisma.source.findMany({
       where: { type, status: "active" },
       include: sourceInclude,
       orderBy: [{ title: "asc" }],
-      take: 200
+      take: limit
     });
     return sources.map(mapSourceSummary);
   }
@@ -1545,6 +1548,28 @@ export class PrismaContextRepository implements ContextRepository {
   }
 }
 
+function wrapDbErrors<T extends object>(repo: T): T {
+  return new Proxy(repo, {
+    get(target, prop, receiver) {
+      const value = Reflect.get(target, prop, receiver);
+      if (typeof value !== "function") return value;
+      return async function (...args: unknown[]) {
+        try {
+          return await (value as (...a: unknown[]) => unknown).apply(target, args);
+        } catch (error) {
+          if (
+            error instanceof Prisma.PrismaClientInitializationError ||
+            (error instanceof Prisma.PrismaClientKnownRequestError && error.code.startsWith("P1"))
+          ) {
+            throw new DatabaseUnavailableError();
+          }
+          throw error;
+        }
+      };
+    }
+  });
+}
+
 export function createPrismaContextRepository(): ContextRepository {
-  return new PrismaContextRepository();
+  return wrapDbErrors(new PrismaContextRepository());
 }

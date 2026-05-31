@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Archive, BookMarked, BookOpen, CircleHelp, Layers, Library, Rows3 } from "lucide-react";
 
-import { isRecoverableReadError } from "@/application/errors";
+import { isDatabaseUnavailable } from "@/application/errors";
 import { getCabinetOverview } from "@/application/query-service";
 import { EntryList } from "@/components/entry-list";
 import { EmptyState } from "@/components/empty-state";
@@ -212,7 +212,7 @@ export default async function CabinetPage() {
       </div>
     );
   } catch (error) {
-    if (isRecoverableReadError(error)) {
+    if (isDatabaseUnavailable(error)) {
       return (
         <div className="mx-auto max-w-xl">
           <SetupNotice />

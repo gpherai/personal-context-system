@@ -5,13 +5,14 @@ import { Moon, Sun } from "lucide-react";
 
 import { cn } from "@/lib/cn";
 
-export type ThemeName = "ink" | "saffron" | "stone";
+export type ThemeName = "ink" | "saffron" | "stone" | "brutalism";
 export type ThemeMode = "light" | "dark";
 
 const themes: { name: ThemeName; label: string; color: string }[] = [
-  { name: "ink",     label: "Ink",     color: "oklch(53% 0.22 255)" },
-  { name: "saffron", label: "Saffron", color: "oklch(58% 0.22 50)"  },
-  { name: "stone",   label: "Stone",   color: "oklch(52% 0.18 195)" },
+  { name: "ink",       label: "Ink",       color: "oklch(53% 0.22 255)" },
+  { name: "saffron",   label: "Saffron",   color: "oklch(58% 0.22 50)"  },
+  { name: "stone",     label: "Stone",     color: "oklch(52% 0.18 195)" },
+  { name: "brutalism", label: "Brutalism", color: "oklch(71% 0.16 143)" },
 ];
 
 function readCookie(name: string): string | undefined {

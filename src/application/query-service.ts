@@ -60,7 +60,7 @@ export async function getGraphSnapshot(repository?: SnapshotRepository) {
   return (repository ?? createPrismaContextRepository()).getGraphSnapshot();
 }
 
-export async function getLedgerEntries(params?: URLSearchParams, repository?: EntryRepository) {
+export async function getLedgerEntries(params?: Record<string, string | undefined>, repository?: EntryRepository) {
   return listEntries(repository ?? createPrismaContextRepository(), params);
 }
 
@@ -81,12 +81,12 @@ export async function getSourcesByTheme(themeSlug: string, repository?: SourceRe
   return (repository ?? createPrismaContextRepository()).listSources({ themeSlug, limit: 200 });
 }
 
-export async function getSources(params?: URLSearchParams, repository?: SourceRepository) {
+export async function getSources(params?: Record<string, string | undefined>, repository?: SourceRepository) {
   return listSources(repository ?? createPrismaContextRepository(), params);
 }
 
-export async function getSourcesByType(type: SourceType, repository?: SourceRepository) {
-  return (repository ?? createPrismaContextRepository()).listSourcesByType(type);
+export async function getSourcesByType(type: SourceType, repository?: SourceRepository, limit?: number) {
+  return (repository ?? createPrismaContextRepository()).listSourcesByType(type, limit);
 }
 
 export function getContextMirrorStatus() {

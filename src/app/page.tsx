@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, CircleHelp, Layers, PenLine } from "lucide-react";
 
-import { isRecoverableReadError } from "@/application/errors";
+import { isDatabaseUnavailable } from "@/application/errors";
 import { getDashboardOverview } from "@/application/query-service";
 import { EntryList } from "@/components/entry-list";
 import { SetupNotice } from "@/components/setup-notice";
@@ -18,7 +18,7 @@ async function loadDashboard(): Promise<DashboardLoad> {
   try {
     return { kind: "ready", overview: await getDashboardOverview() };
   } catch (error) {
-    if (isRecoverableReadError(error)) return { kind: "setup" };
+    if (isDatabaseUnavailable(error)) return { kind: "setup" };
     throw error;
   }
 }

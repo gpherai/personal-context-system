@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 
 import type { SourceType } from "@/domain/context";
 
@@ -20,9 +20,11 @@ interface SourcePickerProps {
 export function SourcePicker({ sources, selectedIds, name, label }: SourcePickerProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set(selectedIds));
   const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
 
-  const filtered = sources.filter((s) =>
-    s.title.toLowerCase().includes(search.toLowerCase())
+  const filtered = useMemo(
+    () => sources.filter((s) => s.title.toLowerCase().includes(deferredSearch.toLowerCase())),
+    [sources, deferredSearch]
   );
 
   function toggle(id: string) {
@@ -36,7 +38,9 @@ export function SourcePicker({ sources, selectedIds, name, label }: SourcePicker
 
   return (
     <div className="grid gap-2">
-      <input aria-hidden="true" name={name} type="hidden" value={Array.from(selected).join(",")} />
+      {Array.from(selected).map((id) => (
+        <input key={id} type="hidden" name={name} value={id} />
+      ))}
       {label && <span className="text-sm font-medium">{label}</span>}
       <input
         aria-label={`Zoek ${label ?? "bronnen"}`}

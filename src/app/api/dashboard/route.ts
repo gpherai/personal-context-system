@@ -1,4 +1,4 @@
-import { isRecoverableReadError } from "@/application/errors";
+import { isDatabaseUnavailable } from "@/application/errors";
 import { getDashboardOverview } from "@/application/query-service";
 import type { DashboardOverview } from "@/repositories/context-repository";
 
@@ -36,7 +36,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    if (isRecoverableReadError(error)) {
+    if (isDatabaseUnavailable(error)) {
       return Response.json(
         { error: "The local database is not available." },
         {
