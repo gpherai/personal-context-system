@@ -33,7 +33,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
 
           {/* Nav */}
-          <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 pb-2 lg:px-3">
+          <div className="flex-1 overflow-y-auto px-2 pb-2 lg:px-3">
             <NavLinks />
           </div>
 

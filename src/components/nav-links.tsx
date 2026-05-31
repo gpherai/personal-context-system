@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import {
   Archive,
@@ -30,6 +31,11 @@ const navItems = [
 
 export function NavLinks() {
   const pathname = usePathname();
+  const activeRef = useRef<HTMLAnchorElement>(null);
+
+  useEffect(() => {
+    activeRef.current?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }, [pathname]);
 
   return (
     <nav
@@ -45,6 +51,7 @@ export function NavLinks() {
           <Link
             key={item.href}
             href={item.href}
+            ref={isActive ? activeRef : undefined}
             aria-current={isActive ? "page" : undefined}
             className={cn(
               "inline-flex h-9 shrink-0 cursor-pointer items-center gap-2.5 rounded-md px-3 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 lg:flex",
