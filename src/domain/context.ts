@@ -120,6 +120,19 @@ export const updateQuestionCommandSchema = z.object({
   summary: z.string().trim().max(4000).optional()
 });
 
+export const createQuestionCommandSchema = z.object({
+  prompt: z.string().trim().min(1, "Prompt is required").max(4000),
+  status: questionStatusSchema.default("open"),
+  privacyLevel: privacyLevelSchema.default("private"),
+  summary: z.string().trim().max(4000).optional()
+});
+
+export const listQuestionsQuerySchema = z.object({
+  status: questionStatusSchema.optional(),
+  privacyLevel: privacyLevelSchema.optional(),
+  limit: z.number().int().min(1).max(200).default(50)
+});
+
 export const promoteEntryToQuestionCommandSchema = z.object({
   id: z.string().min(1)
 });
@@ -355,6 +368,8 @@ export type SavedFilterParams = z.infer<typeof savedFilterParamsSchema>;
 export type CreateSavedFilterCommand = z.infer<typeof createSavedFilterCommandSchema>;
 export type UpdateEntryCommand = z.infer<typeof updateEntryCommandSchema>;
 export type UpdateQuestionCommand = z.infer<typeof updateQuestionCommandSchema>;
+export type CreateQuestionCommand = z.infer<typeof createQuestionCommandSchema>;
+export type ListQuestionsQuery = z.infer<typeof listQuestionsQuerySchema>;
 export type PromoteEntryToQuestionCommand = z.infer<typeof promoteEntryToQuestionCommandSchema>;
 export type LinkObjectsCommand = z.infer<typeof linkObjectsCommandSchema>;
 export type CreateReferenceCommand = z.infer<typeof createReferenceCommandSchema>;

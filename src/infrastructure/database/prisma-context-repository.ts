@@ -15,11 +15,13 @@ import {
   type SourceType,
   type CreateAttachmentCommand,
   type CreateEntryCommand,
+  type CreateQuestionCommand,
   type CreateReferenceCommand,
   type CreateSavedFilterCommand,
   type CreateSourceCommand,
   type CreateThreadCommand,
   type ListEntriesQuery,
+  type ListQuestionsQuery,
   type ListSourcesQuery,
   type LinkObjectsCommand,
   type PromoteEntryToQuestionCommand,
@@ -714,6 +716,15 @@ export class PrismaContextRepository implements ContextRepository {
     return entry ? mapEntry(entry, relationships) : null;
   }
 
+  async deleteEntry(id: string): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.relationship.deleteMany({
+        where: { OR: [{ fromType: "entry", fromId: id }, { toType: "entry", toId: id }] }
+      });
+      await tx.entry.delete({ where: { id } });
+    });
+  }
+
   async getThemeBySlug(slug: string): Promise<NamedRecordContext | null> {
     const theme = await this.prisma.theme.findUnique({
       where: { slug },
@@ -956,6 +967,44 @@ export class PrismaContextRepository implements ContextRepository {
     });
 
     return mapQuestion(question);
+  }
+
+  async listQuestions(query?: ListQuestionsQuery): Promise<QuestionRecord[]> {
+    const limit = Math.min(query?.limit ?? 50, 200);
+    const where: Prisma.QuestionWhereInput = {};
+
+    if (query?.status) where.status = query.status;
+    if (query?.privacyLevel) where.privacyLevel = query.privacyLevel;
+
+    const questions = await this.prisma.question.findMany({
+      where,
+      orderBy: [{ updatedAt: "desc" }],
+      take: limit
+    });
+
+    return questions.map(mapQuestion);
+  }
+
+  async createQuestion(command: CreateQuestionCommand): Promise<QuestionRecord> {
+    const question = await this.prisma.question.create({
+      data: {
+        prompt: command.prompt,
+        status: command.status,
+        privacyLevel: command.privacyLevel,
+        summary: command.summary ?? null
+      }
+    });
+
+    return mapQuestion(question);
+  }
+
+  async deleteQuestion(id: string): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.relationship.deleteMany({
+        where: { OR: [{ fromType: "question", fromId: id }, { toType: "question", toId: id }] }
+      });
+      await tx.question.delete({ where: { id } });
+    });
   }
 
   async promoteEntryToQuestion(command: PromoteEntryToQuestionCommand): Promise<QuestionRecord> {

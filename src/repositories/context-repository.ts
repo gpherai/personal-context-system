@@ -1,6 +1,7 @@
 import type {
   CreateAttachmentCommand,
   CreateEntryCommand,
+  CreateQuestionCommand,
   CreateReferenceCommand,
   CreateSavedFilterCommand,
   CreateSourceCommand,
@@ -8,6 +9,7 @@ import type {
   EntryStatus,
   EntryType,
   ListEntriesQuery,
+  ListQuestionsQuery,
   ListSourcesQuery,
   LinkObjectsCommand,
   PrivacyLevel,
@@ -253,6 +255,7 @@ export interface GraphSnapshot {
 export interface EntryRepository {
   createEntry(command: CreateEntryCommand): Promise<EntryRecord>;
   updateEntry(command: UpdateEntryCommand): Promise<EntryRecord>;
+  deleteEntry(id: string): Promise<void>;
   listEntries(query?: ListEntriesQuery): Promise<EntryListItem[]>;
   getEntry(id: string): Promise<EntryRecord | null>;
   promoteEntryToQuestion(command: PromoteEntryToQuestionCommand): Promise<QuestionRecord>;
@@ -276,8 +279,11 @@ export interface SourceRepository {
 }
 
 export interface QuestionRepository {
+  listQuestions(query?: ListQuestionsQuery): Promise<QuestionRecord[]>;
+  createQuestion(command: CreateQuestionCommand): Promise<QuestionRecord>;
   getQuestion(id: string): Promise<QuestionContext | null>;
   updateQuestion(command: UpdateQuestionCommand): Promise<QuestionRecord>;
+  deleteQuestion(id: string): Promise<void>;
 }
 
 export interface TaxonomyRepository {
