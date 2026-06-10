@@ -116,6 +116,7 @@ export const updateEntryCommandSchema = createEntryCommandSchema.omit({ metadata
 export const updateQuestionCommandSchema = z.object({
   id: z.string().min(1),
   status: questionStatusSchema,
+  privacyLevel: privacyLevelSchema.default("private"),
   summary: z.string().trim().max(4000).optional()
 });
 

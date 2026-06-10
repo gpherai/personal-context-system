@@ -5,7 +5,7 @@ import { useActionState } from "react";
 import { QuestionStatusField } from "@/components/question-status-field";
 import { RelationshipTargetSelect } from "@/components/relationship-target-select";
 import { Button } from "@/components/ui/button";
-import { relationTypes, type QuestionStatus } from "@/domain/context";
+import { privacyLevels, relationTypes, type PrivacyLevel, type QuestionStatus } from "@/domain/context";
 import { labelize } from "@/lib/format";
 import type { RelationshipTarget } from "@/repositories/context-repository";
 
@@ -16,6 +16,7 @@ import { linkFromQuestionAction, updateQuestionAction } from "./actions";
 interface QuestionUpdateDto {
   id: string;
   status: QuestionStatus;
+  privacyLevel: PrivacyLevel;
   summary?: string;
 }
 
@@ -34,6 +35,14 @@ export function QuestionUpdateForm({ question }: { question: QuestionUpdateDto }
   return (
     <form action={action} className="grid gap-3">
       <QuestionStatusField defaultValue={question.status} />
+      <label className="grid gap-1.5 text-sm font-medium">
+        Privacy
+        <select className="field-select" name="privacyLevel" defaultValue={question.privacyLevel}>
+          {privacyLevels.map((p) => (
+            <option key={p} value={p}>{p}</option>
+          ))}
+        </select>
+      </label>
       <label className="grid gap-1.5 text-sm font-medium">
         Summary
         <textarea

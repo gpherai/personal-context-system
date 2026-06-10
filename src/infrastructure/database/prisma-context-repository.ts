@@ -350,6 +350,7 @@ function mapQuestion(question: {
   id: string;
   prompt: string;
   status: QuestionRecord["status"];
+  privacyLevel: QuestionRecord["privacyLevel"];
   summary: string | null;
   originEntryId: string | null;
   createdAt: Date;
@@ -359,6 +360,7 @@ function mapQuestion(question: {
     id: question.id,
     prompt: question.prompt,
     status: question.status,
+    privacyLevel: question.privacyLevel,
     summary: optional(question.summary),
     originEntryId: optional(question.originEntryId),
     createdAt: question.createdAt,
@@ -948,6 +950,7 @@ export class PrismaContextRepository implements ContextRepository {
       where: { id: command.id },
       data: {
         status: command.status,
+        privacyLevel: command.privacyLevel,
         summary: command.summary ?? null
       }
     });

@@ -167,6 +167,7 @@ model Question {
   id            String         @id @default(cuid())
   prompt        String         @db.Text
   status        QuestionStatus @default(open)
+  privacyLevel  PrivacyLevel   @default(private)
   summary       String?        @db.Text
   originEntryId String?         @unique
   metadata      Json           @default("{}")
@@ -177,6 +178,7 @@ model Question {
   entries     EntryQuestion[]
 
   @@index([status])
+  @@index([privacyLevel])
 }
 
 model Thread {

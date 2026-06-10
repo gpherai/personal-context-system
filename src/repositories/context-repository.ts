@@ -154,6 +154,7 @@ export interface QuestionRecord {
   id: string;
   prompt: string;
   status: QuestionStatus;
+  privacyLevel: PrivacyLevel;
   summary?: string;
   originEntryId?: string;
   createdAt: Date;

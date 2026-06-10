@@ -97,6 +97,7 @@ export function parseUpdateQuestionFormData(id: string, formData: FormData) {
   return updateQuestionCommandSchema.safeParse({
     id,
     status: parseOptionalString(formStr(formData, "status")),
+    privacyLevel: parseOptionalString(formStr(formData, "privacyLevel")),
     summary: parseOptionalString(formStr(formData, "summary"))
   });
 }
