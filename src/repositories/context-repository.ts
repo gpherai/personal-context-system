@@ -310,8 +310,16 @@ export interface FilterRepository {
   listSavedFilters(): Promise<SavedFilterRecord[]>;
 }
 
+export interface DashboardHome {
+  recentEntries: Pick<EntryListItem, "id" | "title" | "type" | "capturedAt" | "privacyLevel">[];
+  openQuestions: Pick<QuestionRecord, "id" | "prompt" | "status" | "privacyLevel" | "summary">[];
+  activeProjects: NamedRecord[];
+  counts: { entries: number; openQuestions: number; activeProjects: number };
+}
+
 export interface SnapshotRepository {
   getDashboardOverview(): Promise<DashboardOverview>;
+  getDashboardHome(): Promise<DashboardHome>;
   getCabinetOverview(): Promise<CabinetOverview>;
   getGraphSnapshot(): Promise<GraphSnapshot>;
   getContextMirrorSnapshot(): Promise<ContextMirrorSnapshot>;

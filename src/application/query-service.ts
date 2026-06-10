@@ -18,6 +18,10 @@ export async function getDashboardOverview(repository?: SnapshotRepository) {
   return (repository ?? createPrismaContextRepository()).getDashboardOverview();
 }
 
+export async function getDashboardHome(repository?: SnapshotRepository) {
+  return (repository ?? createPrismaContextRepository()).getDashboardHome();
+}
+
 export async function getCabinetOverview(repository?: SnapshotRepository) {
   return (repository ?? createPrismaContextRepository()).getCabinetOverview();
 }

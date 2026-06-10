@@ -34,6 +34,7 @@ import type {
   CabinetOverview,
   ContextMirrorSnapshot,
   ContextRepository,
+  DashboardHome,
   DashboardOverview,
   EntryListItem,
   EntryRecord,
@@ -1287,6 +1288,38 @@ export class PrismaContextRepository implements ContextRepository {
         themes: counts[2],
         projects: counts[3]
       }
+    };
+  }
+
+  async getDashboardHome(): Promise<DashboardHome> {
+    const [recentEntries, openQuestions, activeProjects, counts] = await Promise.all([
+      this.listEntries({ privacyLevel: "shareable", limit: 8 }),
+      this.prisma.question.findMany({
+        where: {
+          status: { in: ["open", "active", "parked"] },
+          privacyLevel: "shareable"
+        },
+        orderBy: [{ updatedAt: "desc" }],
+        take: 8
+      }),
+      this.prisma.project.findMany({
+        where: { status: "active" },
+        include: { _count: { select: { entries: true } } },
+        orderBy: [{ updatedAt: "desc" }],
+        take: 8
+      }),
+      Promise.all([
+        this.prisma.entry.count({ where: { privacyLevel: "shareable" } }),
+        this.prisma.question.count({ where: { status: { in: ["open", "active", "parked"] }, privacyLevel: "shareable" } }),
+        this.prisma.project.count({ where: { status: "active" } })
+      ])
+    ]);
+
+    return {
+      recentEntries: recentEntries.map(({ id, title, type, capturedAt, privacyLevel }) => ({ id, title, type, capturedAt, privacyLevel })),
+      openQuestions: openQuestions.map(({ id, prompt, status, privacyLevel, summary }) => ({ id, prompt, status, privacyLevel, summary: summary ?? undefined })),
+      activeProjects: activeProjects.map(mapNamed),
+      counts: { entries: counts[0], openQuestions: counts[1], activeProjects: counts[2] }
     };
   }
 
