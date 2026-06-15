@@ -17,7 +17,6 @@ import {
   createThreadCommandSchema,
   deleteSourceCommandSchema,
   entryTypeSchema,
-  linkObjectsCommandSchema,
   listEntriesQuerySchema,
   listSourcesQuerySchema,
   parseIdList,
@@ -39,7 +38,6 @@ import type {
   EntryRepository,
   FilterRepository,
   QuestionRepository,
-  RelationshipRepository,
   SnapshotRepository,
   SourceRepository,
   ThreadRepository
@@ -104,22 +102,6 @@ export function parseUpdateQuestionFormData(id: string, formData: FormData) {
 
 export function parsePromoteEntryToQuestion(id: string) {
   return promoteEntryToQuestionCommandSchema.safeParse({ id });
-}
-
-export function parseLinkObjectsFormData(formData: FormData) {
-  const target = parseOptionalString(formStr(formData, "target"));
-  const separatorIndex = target?.indexOf(":") ?? -1;
-  const targetType = separatorIndex > 0 ? target?.slice(0, separatorIndex) : undefined;
-  const targetId = separatorIndex > 0 ? target?.slice(separatorIndex + 1) : undefined;
-
-  return linkObjectsCommandSchema.safeParse({
-    fromType: parseOptionalString(formStr(formData, "fromType")),
-    fromId: parseOptionalString(formStr(formData, "fromId")),
-    toType: targetType,
-    toId: targetId,
-    relationType: parseOptionalString(formStr(formData, "relationType")) ?? "relates_to",
-    note: parseOptionalString(formStr(formData, "note"))
-  });
 }
 
 export function parseCreateReferenceFormData(entryId: string, formData: FormData) {
@@ -279,19 +261,6 @@ export async function updateQuestionFromForm(id: string, formData: FormData, rep
   });
 }
 
-export async function linkObjectsFromForm(formData: FormData, repository: RelationshipRepository) {
-  const parsed = parseLinkObjectsFormData(formData);
-
-  if (!parsed.success) {
-    return { ok: false as const, state: errorState("Check the relationship fields.", parsed.error) };
-  }
-
-  return withDbErrorHandling(async () => {
-    const relationship = await repository.linkObjects(parsed.data);
-    return { ok: true as const, relationship };
-  });
-}
-
 export async function createReferenceFromForm(entryId: string, formData: FormData, repository: EntryRepository) {
   const parsed = parseCreateReferenceFormData(entryId, formData);
 
@@ -431,40 +400,26 @@ export function parseUpdateSourceFormData(id: string, formData: FormData) {
   });
 }
 
-export function extractPickerSourceIds(formData: FormData): string[] {
-  return [
-    ...formData.getAll("deitySourceIds"),
-    ...formData.getAll("teacherSourceIds"),
-    ...formData.getAll("stotraSourceIds"),
-  ].filter((v): v is string => typeof v === "string" && v.length > 0);
-}
-
 export function makeSourceErrorState(error: z.ZodError): MutationState {
   return sourceErrorState("Check the highlighted fields.", error);
 }
 
 export async function captureSource(
   command: z.infer<typeof createSourceCommandSchema>,
-  linkedSourceIds: string[],
-  repository: SourceRepository & RelationshipRepository
+  repository: SourceRepository
 ) {
   return withDbErrorHandling(async () => {
     const source = await repository.createSource(command);
-    for (const toId of linkedSourceIds) {
-      await repository.linkObjects({ fromType: "source", fromId: source.id, toType: "source", toId, relationType: "relates_to" });
-    }
     return { ok: true as const, source };
   });
 }
 
 export async function updateSource(
   command: z.infer<typeof updateSourceCommandSchema>,
-  linkedSourceIds: string[],
-  repository: SourceRepository & RelationshipRepository
+  repository: SourceRepository
 ) {
   return withDbErrorHandling(async () => {
     const source = await repository.updateSource(command);
-    await repository.replaceOutgoingRelationships("source", command.id, "source", "relates_to", linkedSourceIds);
     return { ok: true as const, source };
   });
 }

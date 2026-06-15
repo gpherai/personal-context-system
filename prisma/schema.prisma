@@ -15,11 +15,6 @@ enum EntryType {
   reflection
   open_loop
   decision
-  project_note
-  media_note
-  event_reflection
-  practice_note
-  ai_conversation_note
 }
 
 enum EntryStatus {
@@ -48,17 +43,6 @@ enum QuestionStatus {
   abandoned
 }
 
-enum ObjectType {
-  entry
-  theme
-  project
-  question
-  thread
-  reference
-  attachment
-  source
-}
-
 enum SourceType {
   video
   book
@@ -69,20 +53,6 @@ enum SourceType {
   stotra
   deity_concept
   teacher
-}
-
-enum RelationType {
-  relates_to
-  mentions
-  expands
-  contradicts
-  supports
-  questions
-  answers
-  reframes
-  part_of
-  inspired_by
-  external_reference
 }
 
 enum ReferenceKind {
@@ -227,21 +197,6 @@ model Attachment {
   entries EntryAttachment[]
 
   @@index([checksum])
-}
-
-model Relationship {
-  id           String       @id @default(cuid())
-  fromType     ObjectType
-  fromId       String
-  toType       ObjectType
-  toId         String
-  relationType RelationType
-  note         String?      @db.Text
-  createdAt    DateTime     @default(now()) @db.Timestamptz(6)
-
-  @@index([fromType, fromId])
-  @@index([toType, toId])
-  @@index([relationType])
 }
 
 model SavedFilter {

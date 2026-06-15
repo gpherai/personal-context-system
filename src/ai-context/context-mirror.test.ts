@@ -25,9 +25,7 @@ describe("context mirror", () => {
             threads: [],
             references: [],
             attachments: [],
-            sources: [],
-            outgoingRelationships: [],
-            incomingRelationships: []
+            sources: []
           }
         ],
         openQuestions: [],

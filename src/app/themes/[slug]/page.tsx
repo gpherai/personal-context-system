@@ -7,6 +7,7 @@ import { EntryList } from "@/components/entry-list";
 import { SetupNotice } from "@/components/setup-notice";
 import { Badge } from "@/components/ui/badge";
 import { sourceTypeDetails } from "@/domain/taxonomy";
+import { deleteThemeAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -42,19 +43,36 @@ export default async function ThemePage({ params }: { params: Promise<{ slug: st
     return (
       <div className="mx-auto grid max-w-5xl gap-5">
         <header className="border-b border-border pb-5">
-          <Link
-            href="/cabinet"
-            className="text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
-          >
-            ← Cabinet
-          </Link>
+          <div className="flex items-start justify-between gap-4">
+            <Link
+              href="/cabinet"
+              className="text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+            >
+              ← Cabinet
+            </Link>
+            {theme.entries.length === 0 && (
+              <form
+                action={deleteThemeAction.bind(null, theme.id)}
+                onSubmit={(e) => {
+                  if (!confirm(`Thema "${theme.name}" permanent verwijderen?`)) e.preventDefault();
+                }}
+              >
+                <button
+                  type="submit"
+                  className="inline-flex h-8 items-center justify-center rounded-md border border-danger/30 bg-danger/8 px-3 text-xs font-medium text-danger transition-colors duration-200 hover:bg-danger/12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30"
+                >
+                  Verwijderen
+                </button>
+              </form>
+            )}
+          </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {category ? (
               <Badge tone={categoryTones[category] ?? "neutral"}>
                 {categoryLabels[category] ?? category}
               </Badge>
             ) : (
-              <Badge tone="teal">Theme</Badge>
+              <Badge tone="teal">Thema</Badge>
             )}
           </div>
           <h1 className="mt-3 text-3xl font-semibold">{theme.name}</h1>
@@ -63,7 +81,7 @@ export default async function ThemePage({ params }: { params: Promise<{ slug: st
           )}
           {aliases.length > 0 && (
             <p className="mt-2 text-sm text-muted-foreground">
-              <span className="font-medium">Also known as:</span> {aliases.join(", ")}
+              <span className="font-medium">Ook bekend als:</span> {aliases.join(", ")}
             </p>
           )}
         </header>

@@ -46,11 +46,6 @@ interface KbTag {
   slug: string;
 }
 
-interface KbDeityTradition {
-  deityId: string;
-  traditionId: string;
-}
-
 const pool = new pg.Pool({ connectionString: KB_DATABASE_URL });
 
 async function queryKb<T>(sql: string): Promise<T[]> {
@@ -72,12 +67,11 @@ async function upsertTheme(slug: string, name: string, description: string | nul
 async function main() {
   console.log("Ophalen KB taxonomy...");
 
-  const [deities, traditions, topics, tags, deityTraditions] = await Promise.all([
+  const [deities, traditions, topics, tags] = await Promise.all([
     queryKb<KbDeity>('SELECT id, name, "otherNames", description, "parentId" FROM "Deity" ORDER BY name'),
     queryKb<KbTradition>('SELECT id, name, description, "parentId" FROM "Tradition" ORDER BY name'),
     queryKb<KbTopic>("SELECT id, name, description FROM \"Topic\" ORDER BY name"),
-    queryKb<KbTag>("SELECT id, name, slug FROM \"Tag\" ORDER BY name"),
-    queryKb<KbDeityTradition>('SELECT "deityId", "traditionId" FROM "DeityTradition"')
+    queryKb<KbTag>("SELECT id, name, slug FROM \"Tag\" ORDER BY name")
   ]);
 
   console.log(`  ${deities.length} deities, ${traditions.length} tradities, ${topics.length} onderwerpen, ${tags.length} tags`);
@@ -147,30 +141,7 @@ async function main() {
   }
   console.log();
 
-  // --- DeityTradition relaties ---
-  console.log("Deity-Traditie relaties aanmaken...");
-  let relCount = 0;
-  for (const dt of deityTraditions) {
-    const fromId = deityThemeId.get(dt.deityId);
-    const toId = traditionThemeId.get(dt.traditionId);
-    if (!fromId || !toId) continue;
-
-    const existing = await prisma.relationship.findFirst({
-      where: { fromType: "theme", fromId, toType: "theme", toId, relationType: "relates_to" },
-      select: { id: true }
-    });
-
-    if (!existing) {
-      await prisma.relationship.create({
-        data: { fromType: "theme", fromId, toType: "theme", toId, relationType: "relates_to" }
-      });
-      relCount++;
-    }
-    process.stdout.write(".");
-  }
-  console.log();
-
-  console.log(`\nKlaar. ${deities.length} deities, ${traditions.length} tradities, ${topics.length} onderwerpen, ${tags.length} tags, ${relCount} relaties aangemaakt.`);
+  console.log(`\nKlaar. ${deities.length} deities, ${traditions.length} tradities, ${topics.length} onderwerpen, ${tags.length} tags aangemaakt.`);
 }
 
 main()

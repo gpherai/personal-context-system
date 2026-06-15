@@ -10,8 +10,6 @@ import {
   savedFilterParamsSchema,
   slugifyName,
   sourceMetadataSchema,
-  type ObjectType,
-  type RelationType,
   type SourceType,
   type CreateAttachmentCommand,
   type CreateEntryCommand,
@@ -23,7 +21,6 @@ import {
   type ListEntriesQuery,
   type ListQuestionsQuery,
   type ListSourcesQuery,
-  type LinkObjectsCommand,
   type PromoteEntryToQuestionCommand,
   type UpdateEntryCommand,
   type UpdateQuestionCommand,
@@ -45,8 +42,6 @@ import type {
   QuestionContext,
   QuestionRecord,
   ReferenceRecord,
-  RelationshipRecord,
-  RelationshipTarget,
   SavedFilterRecord,
   SourceRecord,
   SourceSummary,
@@ -152,7 +147,7 @@ type SourceWithRelations = Prisma.SourceGetPayload<{
   include: typeof sourceInclude;
 }>;
 
-function mapSource(source: SourceWithRelations, outgoingRelationships: RelationshipRecord[] = []): SourceRecord | null {
+function mapSource(source: SourceWithRelations): SourceRecord | null {
   const metadataParsed = sourceMetadataSchema.safeParse(asRecord(source.metadata));
   if (!metadataParsed.success) {
     console.warn(`[mapSource] invalid metadata on source ${source.id}, skipping:`, metadataParsed.error.message);
@@ -175,7 +170,6 @@ function mapSource(source: SourceWithRelations, outgoingRelationships: Relations
     entries: source.entries
       .map(({ entry }) => ({ id: entry.id, title: entry.title }))
       .sort((a, b) => a.title.localeCompare(b.title)),
-    outgoingRelationships,
     createdAt: source.createdAt,
     updatedAt: source.updatedAt
   };
@@ -270,32 +264,7 @@ function mapAttachment(attachment: {
   };
 }
 
-function mapRelationship(relationship: {
-  id: string;
-  fromType: RelationshipRecord["fromType"];
-  fromId: string;
-  toType: RelationshipRecord["toType"];
-  toId: string;
-  relationType: RelationshipRecord["relationType"];
-  note: string | null;
-  createdAt: Date;
-}): RelationshipRecord {
-  return {
-    id: relationship.id,
-    fromType: relationship.fromType,
-    fromId: relationship.fromId,
-    toType: relationship.toType,
-    toId: relationship.toId,
-    relationType: relationship.relationType,
-    note: optional(relationship.note),
-    createdAt: relationship.createdAt
-  };
-}
-
-function mapEntry(
-  entry: EntryWithRelations,
-  relationships: { outgoing?: RelationshipRecord[]; incoming?: RelationshipRecord[] } = {}
-): EntryRecord {
+function mapEntry(entry: EntryWithRelations): EntryRecord {
   return {
     id: entry.id,
     type: entry.type,
@@ -331,9 +300,7 @@ function mapEntry(
       .sort((a, b) => (a.title ?? a.path).localeCompare(b.title ?? b.path)),
     sources: entry.sources
       .map(({ source }) => ({ id: source.id, type: source.type, title: source.title }))
-      .sort((a, b) => a.title.localeCompare(b.title)),
-    outgoingRelationships: relationships.outgoing ?? [],
-    incomingRelationships: relationships.incoming ?? []
+      .sort((a, b) => a.title.localeCompare(b.title))
   };
 }
 
@@ -508,24 +475,6 @@ export class PrismaContextRepository implements ContextRepository {
     return rows.map((row) => row.id);
   }
 
-  private async getRelationshipsForObject(type: RelationshipRecord["fromType"], id: string) {
-    const [outgoing, incoming] = await Promise.all([
-      this.prisma.relationship.findMany({
-        where: { fromType: type, fromId: id },
-        orderBy: { createdAt: "desc" }
-      }),
-      this.prisma.relationship.findMany({
-        where: { toType: type, toId: id },
-        orderBy: { createdAt: "desc" }
-      })
-    ]);
-
-    return {
-      outgoing: outgoing.map(mapRelationship),
-      incoming: incoming.map(mapRelationship)
-    };
-  }
-
   private async syncEntryNames(tx: Prisma.TransactionClient, entryId: string, themeNames: string[], projectNames: string[]) {
     await tx.entryTheme.deleteMany({ where: { entryId } });
     await tx.entryProject.deleteMany({ where: { entryId } });
@@ -689,8 +638,7 @@ export class PrismaContextRepository implements ContextRepository {
       });
     });
 
-    const relationships = await this.getRelationshipsForObject("entry", entry.id);
-    return mapEntry(entry, relationships);
+    return mapEntry(entry);
   }
 
   async listEntries(query?: ListEntriesQuery): Promise<EntryListItem[]> {
@@ -715,24 +663,16 @@ export class PrismaContextRepository implements ContextRepository {
   }
 
   async getEntry(id: string): Promise<EntryRecord | null> {
-    const [entry, relationships] = await Promise.all([
-      this.prisma.entry.findUnique({
-        where: { id },
-        include: entryInclude
-      }),
-      this.getRelationshipsForObject("entry", id)
-    ]);
+    const entry = await this.prisma.entry.findUnique({
+      where: { id },
+      include: entryInclude
+    });
 
-    return entry ? mapEntry(entry, relationships) : null;
+    return entry ? mapEntry(entry) : null;
   }
 
   async deleteEntry(id: string): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
-      await tx.relationship.deleteMany({
-        where: { OR: [{ fromType: "entry", fromId: id }, { toType: "entry", toId: id }] }
-      });
-      await tx.entry.delete({ where: { id } });
-    });
+    await this.prisma.entry.delete({ where: { id } });
   }
 
   async getThemeBySlug(slug: string): Promise<NamedRecordContext | null> {
@@ -758,6 +698,18 @@ export class PrismaContextRepository implements ContextRepository {
       ...mapNamed(theme),
       entries: theme.entries.map(({ entry }) => mapEntry(entry))
     };
+  }
+
+  async deleteTheme(id: string): Promise<void> {
+    const count = await this.prisma.entryTheme.count({ where: { themeId: id } });
+    if (count > 0) throw new Error(`Thema heeft nog ${count} gekoppelde notities.`);
+    await this.prisma.theme.delete({ where: { id } });
+  }
+
+  async deleteProject(id: string): Promise<void> {
+    const count = await this.prisma.entryProject.count({ where: { projectId: id } });
+    if (count > 0) throw new Error(`Project heeft nog ${count} gekoppelde notities.`);
+    await this.prisma.project.delete({ where: { id } });
   }
 
   async getProjectBySlug(slug: string): Promise<NamedRecordContext | null> {
@@ -786,21 +738,18 @@ export class PrismaContextRepository implements ContextRepository {
   }
 
   async getQuestion(id: string): Promise<QuestionContext | null> {
-    const [question, relationships] = await Promise.all([
-      this.prisma.question.findUnique({
-        where: { id },
-        include: {
-          entries: {
-            include: {
-              entry: {
-                include: entryInclude
-              }
+    const question = await this.prisma.question.findUnique({
+      where: { id },
+      include: {
+        entries: {
+          include: {
+            entry: {
+              include: entryInclude
             }
           }
         }
-      }),
-      this.getRelationshipsForObject("question", id)
-    ]);
+      }
+    });
 
     if (!question) {
       return null;
@@ -808,137 +757,8 @@ export class PrismaContextRepository implements ContextRepository {
 
     return {
       ...mapQuestion(question),
-      entries: question.entries.map(({ entry }) => mapEntry(entry)),
-      outgoingRelationships: relationships.outgoing,
-      incomingRelationships: relationships.incoming
+      entries: question.entries.map(({ entry }) => mapEntry(entry))
     };
-  }
-
-  async listRelationshipTargets(): Promise<RelationshipTarget[]> {
-    const [entries, themes, projects, questions, threads, references, attachments, sources] = await Promise.all([
-      this.prisma.entry.findMany({
-        orderBy: [{ capturedAt: "desc" }, { createdAt: "desc" }],
-        select: {
-          id: true,
-          title: true,
-          type: true,
-          status: true,
-          privacyLevel: true
-        },
-        take: 80
-      }),
-      this.prisma.theme.findMany({
-        where: { status: "active" },
-        include: { _count: { select: { entries: true } } },
-        orderBy: [{ updatedAt: "desc" }],
-        take: 80
-      }),
-      this.prisma.project.findMany({
-        where: { status: "active" },
-        include: { _count: { select: { entries: true } } },
-        orderBy: [{ updatedAt: "desc" }],
-        take: 80
-      }),
-      this.prisma.question.findMany({
-        orderBy: [{ updatedAt: "desc" }],
-        select: {
-          id: true,
-          prompt: true,
-          status: true
-        },
-        take: 80
-      }),
-      this.prisma.thread.findMany({
-        orderBy: [{ updatedAt: "desc" }],
-        select: {
-          id: true,
-          title: true,
-          status: true
-        },
-        take: 80
-      }),
-      this.prisma.reference.findMany({
-        orderBy: [{ updatedAt: "desc" }],
-        select: {
-          id: true,
-          kind: true,
-          title: true,
-          url: true
-        },
-        take: 80
-      }),
-      this.prisma.attachment.findMany({
-        orderBy: [{ updatedAt: "desc" }],
-        select: {
-          id: true,
-          path: true,
-          mediaType: true,
-          title: true
-        },
-        take: 80
-      }),
-      this.prisma.source.findMany({
-        orderBy: [{ updatedAt: "desc" }],
-        select: {
-          id: true,
-          type: true,
-          title: true,
-          status: true
-        },
-        take: 80
-      })
-    ]);
-
-    return [
-      ...entries.map((entry) => ({
-        objectType: "entry" as const,
-        objectId: entry.id,
-        label: entry.title,
-        detail: `${entry.type} / ${entry.status} / ${entry.privacyLevel}`
-      })),
-      ...themes.map((theme) => ({
-        objectType: "theme" as const,
-        objectId: theme.id,
-        label: theme.name,
-        detail: `${theme._count.entries} entries`
-      })),
-      ...projects.map((project) => ({
-        objectType: "project" as const,
-        objectId: project.id,
-        label: project.name,
-        detail: `${project._count.entries} entries`
-      })),
-      ...questions.map((question) => ({
-        objectType: "question" as const,
-        objectId: question.id,
-        label: question.prompt,
-        detail: question.status
-      })),
-      ...threads.map((thread) => ({
-        objectType: "thread" as const,
-        objectId: thread.id,
-        label: thread.title,
-        detail: thread.status
-      })),
-      ...references.map((reference) => ({
-        objectType: "reference" as const,
-        objectId: reference.id,
-        label: reference.title,
-        detail: [reference.kind, reference.url].filter(Boolean).join(" / ")
-      })),
-      ...attachments.map((attachment) => ({
-        objectType: "attachment" as const,
-        objectId: attachment.id,
-        label: attachment.title ?? attachment.path,
-        detail: [attachment.mediaType, attachment.path].filter(Boolean).join(" / ")
-      })),
-      ...sources.map((source) => ({
-        objectType: "source" as const,
-        objectId: source.id,
-        label: source.title,
-        detail: `${source.type} / ${source.status}`
-      }))
-    ];
   }
 
   async createSavedFilter(command: CreateSavedFilterCommand): Promise<SavedFilterRecord> {
@@ -1009,12 +829,7 @@ export class PrismaContextRepository implements ContextRepository {
   }
 
   async deleteQuestion(id: string): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
-      await tx.relationship.deleteMany({
-        where: { OR: [{ fromType: "question", fromId: id }, { toType: "question", toId: id }] }
-      });
-      await tx.question.delete({ where: { id } });
-    });
+    await this.prisma.question.delete({ where: { id } });
   }
 
   async promoteEntryToQuestion(command: PromoteEntryToQuestionCommand): Promise<QuestionRecord> {
@@ -1033,54 +848,6 @@ export class PrismaContextRepository implements ContextRepository {
     });
 
     return mapQuestion(question);
-  }
-
-  private async validateObjectExists(type: ObjectType, id: string): Promise<void> {
-    let exists: boolean;
-    switch (type) {
-      case "entry": exists = !!(await this.prisma.entry.findUnique({ where: { id }, select: { id: true } })); break;
-      case "theme": exists = !!(await this.prisma.theme.findUnique({ where: { id }, select: { id: true } })); break;
-      case "project": exists = !!(await this.prisma.project.findUnique({ where: { id }, select: { id: true } })); break;
-      case "question": exists = !!(await this.prisma.question.findUnique({ where: { id }, select: { id: true } })); break;
-      case "thread": exists = !!(await this.prisma.thread.findUnique({ where: { id }, select: { id: true } })); break;
-      case "reference": exists = !!(await this.prisma.reference.findUnique({ where: { id }, select: { id: true } })); break;
-      case "attachment": exists = !!(await this.prisma.attachment.findUnique({ where: { id }, select: { id: true } })); break;
-      case "source": exists = !!(await this.prisma.source.findUnique({ where: { id }, select: { id: true } })); break;
-    }
-    if (!exists) throw new Error(`${type} "${id}" not found.`);
-  }
-
-  async linkObjects(command: LinkObjectsCommand): Promise<RelationshipRecord> {
-    await Promise.all([
-      this.validateObjectExists(command.fromType, command.fromId),
-      this.validateObjectExists(command.toType, command.toId)
-    ]);
-
-    const relationship = await this.prisma.relationship.create({
-      data: {
-        fromType: command.fromType,
-        fromId: command.fromId,
-        toType: command.toType,
-        toId: command.toId,
-        relationType: command.relationType,
-        note: command.note
-      }
-    });
-
-    return mapRelationship(relationship);
-  }
-
-  async replaceOutgoingRelationships(fromType: ObjectType, fromId: string, toType: ObjectType, relationType: RelationType, toIds: string[]): Promise<void> {
-    await this.validateObjectExists(fromType, fromId);
-    await Promise.all(toIds.map(id => this.validateObjectExists(toType, id)));
-    await this.prisma.$transaction(async (tx) => {
-      await tx.relationship.deleteMany({ where: { fromType, fromId, toType, relationType } });
-      if (toIds.length > 0) {
-        await tx.relationship.createMany({
-          data: toIds.map(toId => ({ fromType, fromId, toType, toId, relationType }))
-        });
-      }
-    });
   }
 
   async createReference(command: CreateReferenceCommand): Promise<ReferenceRecord> {
@@ -1224,8 +991,12 @@ export class PrismaContextRepository implements ContextRepository {
     );
   }
 
+  async deleteThread(id: string): Promise<void> {
+    await this.prisma.thread.delete({ where: { id } });
+  }
+
   async getGraphSnapshot(): Promise<GraphSnapshot> {
-    const [entries, themes, projects, questions, threads, relationships, sources] = await Promise.all([
+    const [entries, themes, projects, questions, threads, sources] = await Promise.all([
       this.listEntries({ limit: 120 }),
       this.prisma.theme.findMany({
         include: { _count: { select: { entries: true } } },
@@ -1240,10 +1011,6 @@ export class PrismaContextRepository implements ContextRepository {
         take: 120
       }),
       this.listThreads(),
-      this.prisma.relationship.findMany({
-        orderBy: { createdAt: "desc" },
-        take: 240
-      }),
       this.listSources({ limit: 200 })
     ]);
 
@@ -1253,7 +1020,6 @@ export class PrismaContextRepository implements ContextRepository {
       projects: projects.map(mapNamed),
       questions: questions.map(mapQuestion),
       threads,
-      relationships: relationships.map(mapRelationship),
       sources
     };
   }
@@ -1452,12 +1218,7 @@ export class PrismaContextRepository implements ContextRepository {
   }
 
   async deleteSource(id: string): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
-      await tx.relationship.deleteMany({
-        where: { OR: [{ fromType: "source", fromId: id }, { toType: "source", toId: id }] }
-      });
-      await tx.source.delete({ where: { id } });
-    });
+    await this.prisma.source.delete({ where: { id } });
   }
 
   async listSources(query?: ListSourcesQuery): Promise<SourceSummary[]> {
@@ -1504,11 +1265,8 @@ export class PrismaContextRepository implements ContextRepository {
   }
 
   async getSource(id: string): Promise<SourceRecord | null> {
-    const [source, rels] = await Promise.all([
-      this.prisma.source.findUnique({ where: { id }, include: sourceInclude }),
-      this.prisma.relationship.findMany({ where: { fromType: "source", fromId: id, toType: "source" } })
-    ]);
-    return source ? mapSource(source, rels.map(mapRelationship)) : null;
+    const source = await this.prisma.source.findUnique({ where: { id }, include: sourceInclude });
+    return source ? mapSource(source) : null;
   }
 
   async listSourcesByType(type: SourceType, limit = 500): Promise<SourceSummary[]> {
@@ -1596,7 +1354,7 @@ export class PrismaContextRepository implements ContextRepository {
   }
 
   async getContextMirrorSnapshot(): Promise<ContextMirrorSnapshot> {
-    const [entries, openQuestions, themes, projects, threads, rawSources, sourceRelationships] = await Promise.all([
+    const [entries, openQuestions, themes, projects, threads, rawSources] = await Promise.all([
       this.prisma.entry.findMany({
         include: entryInclude,
         orderBy: [{ capturedAt: "desc" }, { createdAt: "desc" }],
@@ -1632,19 +1390,8 @@ export class PrismaContextRepository implements ContextRepository {
         include: sourceInclude,
         orderBy: [{ title: "asc" }],
         take: 500
-      }),
-      this.prisma.relationship.findMany({
-        where: { fromType: "source", toType: "source" }
       })
     ]);
-
-    const relsBySourceId = new Map<string, RelationshipRecord[]>();
-    for (const rel of sourceRelationships) {
-      const mapped = mapRelationship(rel);
-      const bucket = relsBySourceId.get(rel.fromId);
-      if (bucket) bucket.push(mapped);
-      else relsBySourceId.set(rel.fromId, [mapped]);
-    }
 
     return {
       entries: entries.map((entry) => mapEntry(entry)),
@@ -1657,7 +1404,7 @@ export class PrismaContextRepository implements ContextRepository {
           thread.entries.map(({ entry }) => mapEntry(entry))
         )
       ),
-      sources: rawSources.map((s) => mapSource(s, relsBySourceId.get(s.id) ?? [])).filter((s): s is SourceRecord => s !== null)
+      sources: rawSources.map(mapSource).filter((s): s is SourceRecord => s !== null)
     };
   }
 }

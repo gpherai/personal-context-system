@@ -4,7 +4,6 @@ import {
   createEntryCommandSchema,
   createReferenceCommandSchema,
   createSourceCommandSchema,
-  linkObjectsCommandSchema,
   parseNameList,
   parseOptionalDate,
   slugifyName,
@@ -132,38 +131,4 @@ describe("context domain validation", () => {
     });
   });
 
-  describe("linkObjectsCommandSchema", () => {
-    it("accepts valid link between different objects", () => {
-      const result = linkObjectsCommandSchema.safeParse({
-        fromType: "entry",
-        fromId: "1",
-        toType: "question",
-        toId: "2",
-        relationType: "relates_to"
-      });
-      expect(result.success).toBe(true);
-    });
-
-    it("rejects self-relation (same type and id)", () => {
-      const result = linkObjectsCommandSchema.safeParse({
-        fromType: "entry",
-        fromId: "1",
-        toType: "entry",
-        toId: "1",
-        relationType: "relates_to"
-      });
-      expect(result.success).toBe(false);
-    });
-
-    it("allows same type with different ids", () => {
-      const result = linkObjectsCommandSchema.safeParse({
-        fromType: "entry",
-        fromId: "1",
-        toType: "entry",
-        toId: "2",
-        relationType: "relates_to"
-      });
-      expect(result.success).toBe(true);
-    });
-  });
 });

@@ -11,14 +11,11 @@ import type {
   ListEntriesQuery,
   ListQuestionsQuery,
   ListSourcesQuery,
-  LinkObjectsCommand,
   PrivacyLevel,
   PromoteEntryToQuestionCommand,
   QuestionStatus,
   RecordStatus,
   ReferenceKind,
-  RelationType,
-  ObjectType,
   SavedFilterParams,
   SourceMetadata,
   SourceType,
@@ -90,27 +87,6 @@ export interface SourceSummary {
 
 export interface SourceRecord extends SourceSummary {
   entries: { id: string; title: string }[];
-  outgoingRelationships: RelationshipRecord[];
-}
-
-export interface RelationshipRecord {
-  id: string;
-  fromType: ObjectType;
-  fromId: string;
-  toType: ObjectType;
-  toId: string;
-  relationType: RelationType;
-  note?: string;
-  createdAt: Date;
-}
-
-export type RelationshipTargetType = ObjectType;
-
-export interface RelationshipTarget {
-  objectType: RelationshipTargetType;
-  objectId: string;
-  label: string;
-  detail?: string;
 }
 
 export interface SavedFilterRecord {
@@ -148,8 +124,6 @@ export interface EntryRecord extends EntryListItem {
   references: ReferenceRecord[];
   attachments: AttachmentRecord[];
   sources: { id: string; type: SourceType; title: string }[];
-  outgoingRelationships: RelationshipRecord[];
-  incomingRelationships: RelationshipRecord[];
 }
 
 export interface QuestionRecord {
@@ -227,8 +201,6 @@ export interface NamedRecordContext extends NamedRecord {
 
 export interface QuestionContext extends QuestionRecord {
   entries: EntryRecord[];
-  outgoingRelationships: RelationshipRecord[];
-  incomingRelationships: RelationshipRecord[];
 }
 
 export interface ThreadRecord {
@@ -248,7 +220,6 @@ export interface GraphSnapshot {
   projects: NamedRecord[];
   questions: QuestionRecord[];
   threads: Omit<ThreadRecord, "entries">[];
-  relationships: RelationshipRecord[];
   sources: SourceSummary[];
 }
 
@@ -291,18 +262,15 @@ export interface TaxonomyRepository {
   getProjectBySlug(slug: string): Promise<NamedRecordContext | null>;
   listThemes(): Promise<NamedRecord[]>;
   setThemeParent(themeId: string, parentThemeId: string | null): Promise<void>;
-}
-
-export interface RelationshipRepository {
-  listRelationshipTargets(): Promise<RelationshipTarget[]>;
-  linkObjects(command: LinkObjectsCommand): Promise<RelationshipRecord>;
-  replaceOutgoingRelationships(fromType: ObjectType, fromId: string, toType: ObjectType, relationType: RelationType, toIds: string[]): Promise<void>;
+  deleteTheme(id: string): Promise<void>;
+  deleteProject(id: string): Promise<void>;
 }
 
 export interface ThreadRepository {
   createThread(command: CreateThreadCommand): Promise<ThreadRecord>;
   listThreads(): Promise<Omit<ThreadRecord, "entries">[]>;
   getThreadBySlug(slug: string): Promise<ThreadRecord | null>;
+  deleteThread(id: string): Promise<void>;
 }
 
 export interface FilterRepository {
@@ -330,7 +298,6 @@ export interface ContextRepository extends
   SourceRepository,
   QuestionRepository,
   TaxonomyRepository,
-  RelationshipRepository,
   ThreadRepository,
   FilterRepository,
   SnapshotRepository {}

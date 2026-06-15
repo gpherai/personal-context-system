@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS "Relationship";
+DROP TYPE IF EXISTS "ObjectType";
+DROP TYPE IF EXISTS "RelationType";

@@ -1,14 +1,12 @@
 import Link from "next/link";
-import { BookMarked, GitBranch, Layers, Library, MessageSquareText } from "lucide-react";
+import { BookMarked, Layers, Library, MessageSquareText } from "lucide-react";
 
 import { isDatabaseUnavailable } from "@/application/errors";
 import { getGraphSnapshot } from "@/application/query-service";
-import { EmptyState } from "@/components/empty-state";
 import { SetupNotice } from "@/components/setup-notice";
 import { Badge } from "@/components/ui/badge";
 import { sourceTypeDetails } from "@/domain/taxonomy";
 import type { NamedRecord } from "@/repositories/context-repository";
-import { labelize } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -39,14 +37,6 @@ export default async function MapPage() {
       return acc;
     }, {});
 
-    const labelMap = new Map<string, string>([
-      ...snapshot.entries.map((e) => [e.id, e.title] as [string, string]),
-      ...snapshot.themes.map((t) => [t.id, t.name] as [string, string]),
-      ...snapshot.questions.map((q) => [q.id, q.prompt] as [string, string]),
-      ...snapshot.sources.map((s) => [s.id, s.title] as [string, string]),
-      ...snapshot.projects.map((p) => [p.id, p.name] as [string, string]),
-    ]);
-
     return (
       <div className="mx-auto grid max-w-7xl gap-6">
         <header className="border-b border-border pb-5">
@@ -63,7 +53,6 @@ export default async function MapPage() {
           <Stat label="Projecten" value={snapshot.projects.length} />
           <Stat label="Vragen" value={snapshot.questions.length} />
           <Stat label="Bronnen" value={snapshot.sources.length} />
-          <Stat label="Relaties" value={snapshot.relationships.length} />
         </section>
 
         {(deities.length > 0 || traditions.length > 0 || topics.length > 0) && (
@@ -135,32 +124,6 @@ export default async function MapPage() {
         )}
 
         <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
-          <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
-            <div className="mb-4 flex items-center gap-2">
-              <GitBranch className="h-4 w-4 text-primary" aria-hidden="true" />
-              <h2 className="text-sm font-semibold">Explicit relationships</h2>
-            </div>
-            {snapshot.relationships.length ? (
-              <div className="divide-y divide-border">
-                {snapshot.relationships.map((relationship) => (
-                  <article key={relationship.id} className="grid gap-2 py-3 first:pt-0 last:pb-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge tone="blue">{labelize(relationship.relationType)}</Badge>
-                      <span className="text-sm text-muted-foreground">
-                        {relationship.fromType}: {labelMap.get(relationship.fromId) ?? relationship.fromId}
-                        {" → "}
-                        {relationship.toType}: {labelMap.get(relationship.toId) ?? relationship.toId}
-                      </span>
-                    </div>
-                    {relationship.note && <p className="text-sm leading-6 text-muted-foreground">{relationship.note}</p>}
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <EmptyState title="Geen relaties" body="Maak koppelingen aan via de detail-pagina van een notitie of vraag." />
-            )}
-          </div>
-
           <aside className="grid content-start gap-4">
             {otherThemes.length > 0 && (
               <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">

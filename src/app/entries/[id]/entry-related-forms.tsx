@@ -2,19 +2,16 @@
 
 import { useActionState } from "react";
 
-import { RelationshipTargetSelect } from "@/components/relationship-target-select";
 import { Button } from "@/components/ui/button";
-import { referenceKinds, relationTypes } from "@/domain/context";
+import { referenceKinds } from "@/domain/context";
 import { labelize } from "@/lib/format";
-import type { RelationshipTarget } from "@/repositories/context-repository";
 
 import { initialMutationState } from "@/application/action-states";
 
 import {
   addAttachmentAction,
   addReferenceAction,
-  createThreadWithEntryAction,
-  linkFromEntryAction
+  createThreadWithEntryAction
 } from "./actions";
 
 function Message({ state }: { state: typeof initialMutationState }) {
@@ -23,47 +20,6 @@ function Message({ state }: { state: typeof initialMutationState }) {
   }
 
   return <p className={state.status === "error" ? "text-sm text-danger" : "text-sm text-accent"}>{state.message}</p>;
-}
-
-export function RelationshipForm({ entryId, targets }: { entryId: string; targets: RelationshipTarget[] }) {
-  const actionWithEntry = linkFromEntryAction.bind(null, entryId);
-  const [state, action, pending] = useActionState(actionWithEntry, initialMutationState);
-
-  return (
-    <form action={action} className="grid gap-3">
-      <div className="grid gap-3 md:grid-cols-[1fr_180px]">
-        <RelationshipTargetSelect targets={targets} source={{ objectType: "entry", objectId: entryId }} />
-        <label className="grid gap-1.5 text-sm font-medium">
-          Relation
-          <select
-            className="field-select"
-            name="relationType"
-            defaultValue="relates_to"
-          >
-            {relationTypes.map((type) => (
-              <option key={type} value={type}>
-                {labelize(type)}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <label className="grid gap-1.5 text-sm font-medium">
-        Note
-        <input
-          className="field-input"
-          name="note"
-          placeholder="Why these objects are connected"
-        />
-      </label>
-      <div className="flex items-center gap-3">
-        <Button type="submit" variant="secondary" disabled={pending}>
-          {pending ? "Linking..." : "Create link"}
-        </Button>
-        <Message state={state} />
-      </div>
-    </form>
-  );
 }
 
 export function ReferenceForm({ entryId }: { entryId: string }) {

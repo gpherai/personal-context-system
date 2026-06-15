@@ -2,13 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { isDatabaseUnavailable } from "@/application/errors";
-import { getEntryById, getRelationshipTargets } from "@/application/query-service";
+import { getEntryById } from "@/application/query-service";
 import { SetupNotice } from "@/components/setup-notice";
 import { Badge } from "@/components/ui/badge";
 import { formatDateTime, isValidId, labelize } from "@/lib/format";
 
-import { AttachmentForm, ReferenceForm, RelationshipForm, ThreadForm } from "./entry-related-forms";
+import { AttachmentForm, ReferenceForm, ThreadForm } from "./entry-related-forms";
 import { PromoteQuestionForm } from "./promote-question-form";
+import { deleteEntryAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
   if (!isValidId(id)) notFound();
 
   try {
-    const [entry, relationshipTargets] = await Promise.all([getEntryById(id), getRelationshipTargets()]);
+    const entry = await getEntryById(id);
 
     if (!entry) {
       notFound();
@@ -26,9 +27,6 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
 
     const trackedQuestion = entry.type === "question" ? entry.questions[0] : undefined;
     const canPromoteToQuestion = !trackedQuestion && entry.questions.length === 0;
-    const targetLabelMap = new Map(
-      relationshipTargets.map((t) => [`${t.objectType}:${t.objectId}`, t.label])
-    );
 
     return (
       <article className="mx-auto grid max-w-4xl gap-6">
@@ -57,8 +55,21 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
                 href={`/entries/${entry.id}/edit`}
                 className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-surface px-4 text-sm font-medium text-foreground transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               >
-                Edit
+                Bewerken
               </Link>
+              <form
+                action={deleteEntryAction.bind(null, entry.id)}
+                onSubmit={(e) => {
+                  if (!confirm("Notitie permanent verwijderen?")) e.preventDefault();
+                }}
+              >
+                <button
+                  type="submit"
+                  className="inline-flex h-10 w-full items-center justify-center rounded-md border border-danger/30 bg-danger/8 px-4 text-sm font-medium text-danger transition-colors duration-200 hover:bg-danger/12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30"
+                >
+                  Verwijderen
+                </button>
+              </form>
             </div>
           </div>
           <dl className="mt-4 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
@@ -219,47 +230,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
           </div>
         </section>
 
-        <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
-          <h2 className="text-sm font-semibold">Relationships</h2>
-          <div className="mt-3 grid gap-3 md:grid-cols-2">
-            <div>
-              <h3 className="text-xs font-semibold uppercase text-muted-foreground">Outgoing</h3>
-              <div className="mt-2 grid gap-2">
-                {entry.outgoingRelationships.length ? (
-                  entry.outgoingRelationships.map((relationship) => (
-                    <p key={relationship.id} className="text-sm text-muted-foreground">
-                      <span className="font-medium text-foreground">{labelize(relationship.relationType)}</span>{" "}
-                      {targetLabelMap.get(`${relationship.toType}:${relationship.toId}`) ?? `${relationship.toType}:${relationship.toId}`}
-                    </p>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground">No outgoing relationships.</p>
-                )}
-              </div>
-            </div>
-            <div>
-              <h3 className="text-xs font-semibold uppercase text-muted-foreground">Incoming</h3>
-              <div className="mt-2 grid gap-2">
-                {entry.incomingRelationships.length ? (
-                  entry.incomingRelationships.map((relationship) => (
-                    <p key={relationship.id} className="text-sm text-muted-foreground">
-                      {targetLabelMap.get(`${relationship.fromType}:${relationship.fromId}`) ?? `${relationship.fromType}:${relationship.fromId}`}{" "}
-                      <span className="font-medium text-foreground">{labelize(relationship.relationType)}</span>
-                    </p>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground">No incoming relationships.</p>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
-
         <section className="grid gap-4">
-          <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
-            <h2 className="mb-3 text-sm font-semibold">Create relationship</h2>
-            <RelationshipForm entryId={entry.id} targets={relationshipTargets} />
-          </div>
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
               <h2 className="mb-3 text-sm font-semibold">Add reference</h2>

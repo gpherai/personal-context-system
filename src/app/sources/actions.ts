@@ -6,7 +6,6 @@ import { redirect } from "next/navigation";
 import {
   captureSource,
   deleteSource,
-  extractPickerSourceIds,
   makeSourceErrorState,
   parseCreateSourceFormData,
   parseUpdateSourceFormData,
@@ -23,7 +22,7 @@ export async function createSourceAction(
   const parsed = parseCreateSourceFormData(formData);
   if (!parsed.success) return makeSourceErrorState(parsed.error);
 
-  const result = await captureSource(parsed.data, extractPickerSourceIds(formData), createPrismaContextRepository());
+  const result = await captureSource(parsed.data, createPrismaContextRepository());
   if (!result.ok) return result.state;
 
   revalidatePath("/sources");
@@ -43,7 +42,7 @@ export async function updateSourceAction(
   const parsed = parseUpdateSourceFormData(id, formData);
   if (!parsed.success) return makeSourceErrorState(parsed.error);
 
-  const result = await updateSource(parsed.data, extractPickerSourceIds(formData), createPrismaContextRepository());
+  const result = await updateSource(parsed.data, createPrismaContextRepository());
   if (!result.ok) return result.state;
 
   revalidatePath("/sources");

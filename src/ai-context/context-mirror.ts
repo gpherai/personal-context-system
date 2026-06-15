@@ -289,7 +289,7 @@ function sourceList(sources: SourceRecord[]): string {
     .join("\n");
 }
 
-function sourceMarkdown(source: SourceRecord, generatedAtIso: string, sourceById: Map<string, SourceRecord>): string {
+function sourceMarkdown(source: SourceRecord, generatedAtIso: string): string {
   const metaEntries = Object.entries(source.metadata)
     .filter(([k]) => k !== "type")
     .map(([k, v]) => {
@@ -303,11 +303,6 @@ function sourceMarkdown(source: SourceRecord, generatedAtIso: string, sourceById
     ? source.references.map((r) => `- ${sanitizeInline(r.title)}${r.url ? ": " + r.url : ""}`)
     : [];
 
-  const linkedLines = source.outgoingRelationships.map((r) => {
-    const linked = sourceById.get(r.toId);
-    return `- [${r.relationType}] ${linked ? sanitizeInline(linked.title) + " " : ""}(${r.toId})`;
-  });
-
   return [
     `# ${sanitizeInline(source.title)}`,
     "",
@@ -320,7 +315,6 @@ function sourceMarkdown(source: SourceRecord, generatedAtIso: string, sourceById
     "",
     ...(metaEntries.length ? ["## Metadata", "", ...metaEntries, ""] : []),
     ...(source.description ? ["## Description", "", wrapUserContent(source.description), ""] : []),
-    ...(linkedLines.length ? ["## Linked Sources", "", ...linkedLines, ""] : []),
     ...(referencesLines.length ? ["## References", "", ...referencesLines, ""] : []),
     ...(source.body ? ["## Body", "", wrapUserContent(source.body), ""] : [])
   ].join("\n");
@@ -551,7 +545,6 @@ export function buildContextMirror(
   }
 
   // Sources
-  const sourceById = new Map(sources.map((s) => [s.id, s]));
   const sourcesByType = sources.reduce<Record<string, SourceRecord[]>>((acc, s) => {
     (acc[s.type] ??= []).push(s);
     return acc;
@@ -587,7 +580,7 @@ export function buildContextMirror(
   for (const source of sources) {
     files.push({
       path: `sources/${source.id}.md`,
-      contents: sourceMarkdown(source, generatedAtIso, sourceById)
+      contents: sourceMarkdown(source, generatedAtIso)
     });
   }
 

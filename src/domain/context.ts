@@ -7,54 +7,31 @@ export const entryTypes = [
   "suspicion",
   "reflection",
   "open_loop",
-  "decision",
-  "project_note",
-  "media_note",
-  "event_reflection",
-  "practice_note",
-  "ai_conversation_note"
+  "decision"
 ] as const;
 
 export const entryStatuses = ["active", "archived", "draft"] as const;
 export const privacyLevels = ["private", "sensitive", "shareable"] as const;
 export const recordStatuses = ["active", "archived"] as const;
 export const questionStatuses = ["open", "active", "parked", "answered", "reframed", "abandoned"] as const;
-export const objectTypes = ["entry", "theme", "project", "question", "thread", "reference", "attachment", "source"] as const;
 export const sourceTypes = ["video", "book", "post", "image", "sadhana", "upadesha", "stotra", "deity_concept", "teacher"] as const;
 export const referenceKinds = ["url", "book", "article", "film", "game", "repository", "external_record", "other"] as const;
-export const relationTypes = [
-  "relates_to",
-  "mentions",
-  "expands",
-  "contradicts",
-  "supports",
-  "questions",
-  "answers",
-  "reframes",
-  "part_of",
-  "inspired_by",
-  "external_reference"
-] as const;
 
 export type EntryType = (typeof entryTypes)[number];
 export type EntryStatus = (typeof entryStatuses)[number];
 export type PrivacyLevel = (typeof privacyLevels)[number];
 export type RecordStatus = (typeof recordStatuses)[number];
 export type QuestionStatus = (typeof questionStatuses)[number];
-export type ObjectType = (typeof objectTypes)[number];
 export type SourceType = (typeof sourceTypes)[number];
 export type ReferenceKind = (typeof referenceKinds)[number];
-export type RelationType = (typeof relationTypes)[number];
 
 export const entryTypeSchema = z.enum(entryTypes);
 export const entryStatusSchema = z.enum(entryStatuses);
 export const privacyLevelSchema = z.enum(privacyLevels);
 export const recordStatusSchema = z.enum(recordStatuses);
 export const questionStatusSchema = z.enum(questionStatuses);
-export const objectTypeSchema = z.enum(objectTypes);
 export const sourceTypeSchema = z.enum(sourceTypes);
 export const referenceKindSchema = z.enum(referenceKinds);
-export const relationTypeSchema = z.enum(relationTypes);
 
 export const metadataSchema = z.record(z.string(), z.unknown());
 
@@ -136,25 +113,6 @@ export const listQuestionsQuerySchema = z.object({
 export const promoteEntryToQuestionCommandSchema = z.object({
   id: z.string().min(1)
 });
-
-export const linkObjectsCommandSchema = z
-  .object({
-    fromType: objectTypeSchema,
-    fromId: z.string().min(1),
-    toType: objectTypeSchema,
-    toId: z.string().min(1),
-    relationType: relationTypeSchema,
-    note: z.string().trim().max(2000).optional()
-  })
-  .superRefine((val, ctx) => {
-    if (val.fromType === val.toType && val.fromId === val.toId) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["toId"],
-        message: "Cannot link an object to itself"
-      });
-    }
-  });
 
 export const createReferenceCommandSchema = z
   .object({
@@ -371,7 +329,6 @@ export type UpdateQuestionCommand = z.infer<typeof updateQuestionCommandSchema>;
 export type CreateQuestionCommand = z.infer<typeof createQuestionCommandSchema>;
 export type ListQuestionsQuery = z.infer<typeof listQuestionsQuerySchema>;
 export type PromoteEntryToQuestionCommand = z.infer<typeof promoteEntryToQuestionCommandSchema>;
-export type LinkObjectsCommand = z.infer<typeof linkObjectsCommandSchema>;
 export type CreateReferenceCommand = z.infer<typeof createReferenceCommandSchema>;
 export type CreateAttachmentCommand = z.infer<typeof createAttachmentCommandSchema>;
 export type CreateThreadCommand = z.infer<typeof createThreadCommandSchema>;

@@ -34,26 +34,6 @@ export const entryTypeDetails = {
     label: "Decision",
     description: "A choice that should remain findable with its context and reasoning."
   },
-  project_note: {
-    label: "Project note",
-    description: "A note tied to ongoing project context, progress, or direction."
-  },
-  media_note: {
-    label: "Media note",
-    description: "A note about a book, article, video, game, repository, or other media object."
-  },
-  event_reflection: {
-    label: "Event reflection",
-    description: "A reflection tied to a conversation, session, meeting, or lived event."
-  },
-  practice_note: {
-    label: "Practice note",
-    description: "A note from study, sadhana, learning practice, or repeated personal work."
-  },
-  ai_conversation_note: {
-    label: "AI conversation note",
-    description: "A durable note distilled from an AI conversation, with the source tool named separately."
-  }
 } satisfies Record<EntryType, TaxonomyDetail>;
 
 export const questionStatusDetails = {

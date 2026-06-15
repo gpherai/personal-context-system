@@ -5,7 +5,6 @@ import type {
   EntryRepository,
   FilterRepository,
   QuestionRepository,
-  RelationshipRepository,
   SnapshotRepository,
   SourceRepository,
   TaxonomyRepository,
@@ -52,10 +51,6 @@ export async function getProjectBySlug(slug: string, repository?: TaxonomyReposi
 export async function getQuestionById(id: string, repository?: QuestionRepository) {
   if (!isValidId(id)) return null;
   return (repository ?? createPrismaContextRepository()).getQuestion(id);
-}
-
-export async function getRelationshipTargets(repository?: RelationshipRepository) {
-  return (repository ?? createPrismaContextRepository()).listRelationshipTargets();
 }
 
 export async function getSavedFilters(repository?: FilterRepository) {

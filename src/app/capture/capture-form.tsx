@@ -57,6 +57,37 @@ export function CaptureForm() {
         </div>
       )}
 
+      <div className="grid gap-1.5">
+        <label htmlFor={ids.body} className="text-sm font-medium">
+          Notitie <span aria-hidden="true" className="text-danger">*</span>
+        </label>
+        <textarea
+          id={ids.body}
+          className="field-textarea min-h-44"
+          name="body"
+          placeholder="Schrijf je gedachte, observatie, vraag of beslissing…"
+          required
+          aria-describedby={state.fieldErrors?.body ? ids.bodyError : undefined}
+          aria-invalid={!!state.fieldErrors?.body || undefined}
+        />
+        <FieldError id={ids.bodyError} errors={state.fieldErrors?.body} />
+      </div>
+
+      <div className="grid gap-1.5">
+        <label htmlFor={ids.title} className="text-sm font-medium">
+          Titel <span className="font-normal text-muted-foreground">(optioneel)</span>
+        </label>
+        <input
+          id={ids.title}
+          className="field-input"
+          name="title"
+          placeholder="Laat leeg om automatisch te genereren uit de notitie"
+          aria-describedby={state.fieldErrors?.title ? ids.titleError : undefined}
+          aria-invalid={!!state.fieldErrors?.title || undefined}
+        />
+        <FieldError id={ids.titleError} errors={state.fieldErrors?.title} />
+      </div>
+
       <div className="grid items-start gap-4 md:grid-cols-3">
         <EntryTypeField />
 
@@ -77,35 +108,6 @@ export function CaptureForm() {
             ))}
           </select>
         </label>
-      </div>
-
-      <div className="grid gap-1.5">
-        <label htmlFor={ids.title} className="text-sm font-medium">Title</label>
-        <input
-          id={ids.title}
-          className="field-input"
-          name="title"
-          placeholder="Leave empty to auto-generate from body"
-          aria-describedby={state.fieldErrors?.title ? ids.titleError : undefined}
-          aria-invalid={!!state.fieldErrors?.title || undefined}
-        />
-        <FieldError id={ids.titleError} errors={state.fieldErrors?.title} />
-      </div>
-
-      <div className="grid gap-1.5">
-        <label htmlFor={ids.body} className="text-sm font-medium">
-          Body <span aria-hidden="true" className="text-danger">*</span>
-        </label>
-        <textarea
-          id={ids.body}
-          className="field-textarea min-h-44"
-          name="body"
-          placeholder="Capture the thought, observation, question, or decision."
-          required
-          aria-describedby={state.fieldErrors?.body ? ids.bodyError : undefined}
-          aria-invalid={!!state.fieldErrors?.body || undefined}
-        />
-        <FieldError id={ids.bodyError} errors={state.fieldErrors?.body} />
       </div>
 
       <label className="grid gap-1.5 text-sm font-medium">

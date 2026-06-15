@@ -3,15 +3,12 @@
 import { useActionState } from "react";
 
 import { QuestionStatusField } from "@/components/question-status-field";
-import { RelationshipTargetSelect } from "@/components/relationship-target-select";
 import { Button } from "@/components/ui/button";
-import { privacyLevels, relationTypes, type PrivacyLevel, type QuestionStatus } from "@/domain/context";
-import { labelize } from "@/lib/format";
-import type { RelationshipTarget } from "@/repositories/context-repository";
+import { privacyLevels, type PrivacyLevel, type QuestionStatus } from "@/domain/context";
 
 import { initialMutationState } from "@/application/action-states";
 
-import { linkFromQuestionAction, updateQuestionAction } from "./actions";
+import { updateQuestionAction } from "./actions";
 
 interface QuestionUpdateDto {
   id: string;
@@ -61,42 +58,3 @@ export function QuestionUpdateForm({ question }: { question: QuestionUpdateDto }
   );
 }
 
-export function QuestionRelationshipForm({ questionId, targets }: { questionId: string; targets: RelationshipTarget[] }) {
-  const actionWithQuestion = linkFromQuestionAction.bind(null, questionId);
-  const [state, action, pending] = useActionState(actionWithQuestion, initialMutationState);
-
-  return (
-    <form action={action} className="grid gap-3">
-      <div className="grid gap-3 md:grid-cols-[1fr_180px]">
-        <RelationshipTargetSelect targets={targets} source={{ objectType: "question", objectId: questionId }} />
-        <label className="grid gap-1.5 text-sm font-medium">
-          Relation
-          <select
-            className="field-select"
-            name="relationType"
-            defaultValue="relates_to"
-          >
-            {relationTypes.map((type) => (
-              <option key={type} value={type}>
-                {labelize(type)}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <label className="grid gap-1.5 text-sm font-medium">
-        Note
-        <input
-          className="field-input"
-          name="note"
-        />
-      </label>
-      <div className="flex items-center gap-3">
-        <Button type="submit" variant="secondary" disabled={pending}>
-          {pending ? "Linking..." : "Create link"}
-        </Button>
-        <Message state={state} />
-      </div>
-    </form>
-  );
-}

@@ -7,10 +7,10 @@ import {
   createAttachmentFromForm,
   createReferenceFromForm,
   createThreadFromForm,
-  linkObjectsFromForm,
   promoteEntryToQuestion,
   type MutationState
 } from "@/application/context-service";
+import { isDatabaseUnavailable } from "@/application/errors";
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
 import { isValidId } from "@/lib/format";
 
@@ -61,28 +61,6 @@ export async function addAttachmentAction(
   return successState("Attachment metadata linked.");
 }
 
-export async function linkFromEntryAction(
-  entryId: string,
-  _previousState: MutationState,
-  formData: FormData
-): Promise<MutationState> {
-  if (!isValidId(entryId)) {
-    return { status: "error", message: "Invalid entry id." };
-  }
-
-  formData.set("fromType", "entry");
-  formData.set("fromId", entryId);
-
-  const result = await linkObjectsFromForm(formData, createPrismaContextRepository());
-
-  if (!result.ok) {
-    return result.state;
-  }
-
-  revalidatePath(`/entries/${entryId}`);
-  return successState("Relationship created.");
-}
-
 export async function promoteEntryToQuestionAction(
   entryId: string,
   _previousState: MutationState
@@ -128,4 +106,21 @@ export async function createThreadWithEntryAction(
   revalidatePath(`/entries/${entryId}`);
   revalidatePath("/threads");
   return successState("Thread created.");
+}
+
+export async function deleteEntryAction(entryId: string): Promise<void> {
+  if (!isValidId(entryId)) return;
+
+  try {
+    await createPrismaContextRepository().deleteEntry(entryId);
+  } catch (error) {
+    if (isDatabaseUnavailable(error)) return;
+    throw error;
+  }
+
+  revalidatePath("/");
+  revalidatePath("/ledger");
+  revalidatePath("/cabinet");
+  revalidatePath("/map");
+  redirect("/ledger");
 }
