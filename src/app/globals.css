@@ -27,7 +27,7 @@
   --color-primary-foreground: oklch(100% 0     0  );
   --color-on-danger:        oklch(100% 0     0  );
   --color-accent:           oklch(53%   0.16  195);
-  --color-caution:          oklch(62%   0.18   72);
+  --color-caution:          oklch(52%   0.17   72);
   --color-danger:           oklch(53%   0.22   25);
   --color-danger-strong:    oklch(45%   0.22   25);
   --color-success:          oklch(52%   0.18  155);
@@ -73,7 +73,7 @@ html[data-theme="saffron"] {
   --color-primary-foreground: oklch(100% 0     0  );
   --color-on-danger:        oklch(100% 0     0  );
   --color-accent:           oklch(52%   0.18  155);
-  --color-caution:          oklch(65%   0.18   75);
+  --color-caution:          oklch(52%   0.17   72);
   --color-danger:           oklch(52%   0.22   25);
   --color-danger-strong:    oklch(44%   0.22   25);
   --color-success:          oklch(52%   0.18  155);
@@ -119,7 +119,7 @@ html[data-theme="stone"] {
   --color-primary-foreground: oklch(100% 0     0  );
   --color-on-danger:        oklch(100% 0     0  );
   --color-accent:           oklch(52%   0.16  165);
-  --color-caution:          oklch(62%   0.18   75);
+  --color-caution:          oklch(52%   0.17   72);
   --color-danger:           oklch(52%   0.22   25);
   --color-danger-strong:    oklch(44%   0.22   25);
   --color-success:          oklch(52%   0.18  165);
@@ -167,7 +167,7 @@ html[data-theme="brutalism"] {
   --color-primary-foreground: oklch(100% 0     0  );
   --color-on-danger:        oklch(100% 0     0  );
   --color-accent:           oklch(60%   0.16  143);
-  --color-caution:          oklch(75%   0.17   75);
+  --color-caution:          oklch(52%   0.17   72);
   --color-danger:           oklch(62%   0.21   25);
   --color-danger-strong:    oklch(56%   0.21   25);
   --color-success:          oklch(60%   0.16  143);

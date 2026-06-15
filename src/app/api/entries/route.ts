@@ -1,6 +1,6 @@
 import { type NextRequest } from "next/server";
 
-import { createEntryCommandSchema, listEntriesQuerySchema, titleFromBody } from "@/domain/context";
+import { createEntryCommandSchema, createReferenceCommandSchema, listEntriesQuerySchema, titleFromBody } from "@/domain/context";
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
 import type { EntryListItem } from "@/repositories/context-repository";
 
@@ -88,6 +88,16 @@ export async function POST(request: NextRequest) {
 
     const repo = createPrismaContextRepository();
     const entry = await repo.createEntry(parsed.data);
+
+    const rawUrl = typeof raw.url === "string" ? raw.url.trim() : "";
+    if (rawUrl) {
+      try {
+        new URL(rawUrl);
+        const title = new URL(rawUrl).hostname || rawUrl;
+        const refParsed = createReferenceCommandSchema.safeParse({ entryId: entry.id, kind: "url", title, url: rawUrl, metadata: {} });
+        if (refParsed.success) await repo.createReference(refParsed.data);
+      } catch { /* invalid URL — skip */ }
+    }
 
     return apiOk(
       {
