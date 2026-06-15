@@ -5,14 +5,14 @@ import { useMemo, useState } from "react";
 import type { RelationshipTarget, RelationshipTargetType } from "@/repositories/context-repository";
 
 const targetGroupLabels: Record<RelationshipTargetType, string> = {
-  entry: "Entries",
-  theme: "Themes",
-  project: "Projects",
-  question: "Questions",
-  thread: "Threads",
-  reference: "References",
-  attachment: "Attachments",
-  source: "Sources"
+  entry: "Notities",
+  theme: "Thema's",
+  project: "Projecten",
+  question: "Vragen",
+  thread: "Draden",
+  reference: "Referenties",
+  attachment: "Bijlagen",
+  source: "Bronnen"
 };
 
 const targetOrder: RelationshipTargetType[] = [
@@ -65,17 +65,17 @@ export function RelationshipTargetSelect({
   return (
     <div className="grid gap-3">
       <label className="grid gap-1.5 text-sm font-medium">
-        Find target
+        Doel zoeken
         <input
           className="field-input"
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search by name or type…"
+          placeholder="Zoek op naam of type…"
           type="search"
           value={query}
         />
       </label>
       <label className="grid gap-1.5 text-sm font-medium">
-        Target
+        Doel
         <select
           className="field-input"
           disabled={availableTargets.length === 0}

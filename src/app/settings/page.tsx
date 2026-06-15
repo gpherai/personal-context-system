@@ -19,7 +19,7 @@ export default function SettingsPage() {
           <div className="px-5 py-4">
             <p className="text-sm font-medium">Theme &amp; mode</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Three themes available: Ink (editorial blue), Saffron (warm earthy), Stone (cool teal).
+              Four themes available: Ink (editorial blue), Saffron (warm earthy), Stone (cool teal), Brutalism (terminal hacker).
               Each supports light and dark mode.
             </p>
           </div>

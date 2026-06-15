@@ -162,7 +162,7 @@ export default async function CommandPage() {
               <Link
                 key={filter.name}
                 href={savedFilterHref(filter.params)}
-                className="inline-flex h-8 items-center rounded-full border border-border bg-surface px-3.5 text-xs font-medium transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                className="inline-flex h-8 items-center cursor-pointer rounded-full border border-border bg-surface px-3.5 text-xs font-medium transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               >
                 {filter.name}
               </Link>
@@ -174,7 +174,7 @@ export default async function CommandPage() {
                 <Link
                   key={filter.id}
                   href={savedFilterHref(filter.params)}
-                  className="inline-flex h-8 items-center rounded-full border border-primary/25 bg-primary/8 px-3.5 text-xs font-medium text-primary transition-colors hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                  className="inline-flex h-8 items-center cursor-pointer rounded-full border border-primary/25 bg-primary/8 px-3.5 text-xs font-medium text-primary transition-colors hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                 >
                   {filter.name}
                 </Link>

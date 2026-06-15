@@ -37,7 +37,7 @@ export function SaveFilterForm({ params }: { params: SavedFilterParams }) {
         <label className="grid gap-1.5 text-sm font-medium">
           Name
           <input
-            className="field-select"
+            className="field-input"
             name="name"
             placeholder="Open architecture questions"
             required
@@ -52,7 +52,7 @@ export function SaveFilterForm({ params }: { params: SavedFilterParams }) {
       <label className="grid gap-1.5 text-sm font-medium">
         Description
         <input
-          className="field-select"
+          className="field-input"
           name="description"
           placeholder="Optional note"
         />

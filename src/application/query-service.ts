@@ -18,6 +18,16 @@ export async function getDashboardOverview(repository?: SnapshotRepository) {
   return (repository ?? createPrismaContextRepository()).getDashboardOverview();
 }
 
+export async function getLedgerDropdowns(repository?: SnapshotRepository & TaxonomyRepository) {
+  const repo = repository ?? createPrismaContextRepository();
+  const [home, themes] = await Promise.all([repo.getDashboardHome(), repo.listThemes()]);
+  return {
+    activeThemes: themes,
+    activeProjects: home.activeProjects,
+    openQuestions: home.openQuestions,
+  };
+}
+
 export async function getDashboardHome(repository?: SnapshotRepository) {
   return (repository ?? createPrismaContextRepository()).getDashboardHome();
 }

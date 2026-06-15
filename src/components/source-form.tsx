@@ -47,7 +47,7 @@ interface SourceFormProps {
 
 function FieldError({ errors }: { errors?: string[] }) {
   if (!errors?.length) return null;
-  return <p className="mt-1 text-sm text-danger">{errors[0]}</p>;
+  return <p role="alert" aria-live="polite" className="mt-1 text-sm text-danger">{errors[0]}</p>;
 }
 
 function Field({ label, error, children }: { label: string; error?: string[]; children: React.ReactNode }) {
@@ -60,13 +60,6 @@ function Field({ label, error, children }: { label: string; error?: string[]; ch
   );
 }
 
-function inputCls() {
-  return "h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30";
-}
-
-function areaCls() {
-  return "min-h-20 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30";
-}
 
 function MetadataFields({
   type,
@@ -96,47 +89,47 @@ function MetadataFields({
     case "video":
       return (
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Channel" error={err("channel")}><input className={inputCls()} name="channel" defaultValue={str("channel")} /></Field>
-          <Field label="Duration (s)" error={err("duration")}><input className={inputCls()} name="duration" defaultValue={num("duration")} type="number" min="0" /></Field>
-          <Field label="Language" error={err("language")}><input className={inputCls()} name="language" defaultValue={str("language")} /></Field>
+          <Field label="Channel" error={err("channel")}><input className="field-input" name="channel" defaultValue={str("channel")} /></Field>
+          <Field label="Duration (s)" error={err("duration")}><input className="field-input" name="duration" defaultValue={num("duration")} type="number" min="0" /></Field>
+          <Field label="Language" error={err("language")}><input className="field-input" name="language" defaultValue={str("language")} /></Field>
         </div>
       );
     case "book":
       return (
         <div className="grid gap-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Authors (comma-separated)" error={err("authors")}><input className={inputCls()} name="authors" defaultValue={csv("authors")} /></Field>
-            <Field label="ISBN" error={err("isbn")}><input className={inputCls()} name="isbn" defaultValue={str("isbn")} /></Field>
-            <Field label="Year" error={err("year")}><input className={inputCls()} name="year" defaultValue={num("year")} type="number" /></Field>
-            <Field label="Publisher" error={err("publisher")}><input className={inputCls()} name="publisher" defaultValue={str("publisher")} /></Field>
-            <Field label="Language" error={err("language")}><input className={inputCls()} name="language" defaultValue={str("language")} /></Field>
+            <Field label="Authors (comma-separated)" error={err("authors")}><input className="field-input" name="authors" defaultValue={csv("authors")} /></Field>
+            <Field label="ISBN" error={err("isbn")}><input className="field-input" name="isbn" defaultValue={str("isbn")} /></Field>
+            <Field label="Year" error={err("year")}><input className="field-input" name="year" defaultValue={num("year")} type="number" /></Field>
+            <Field label="Publisher" error={err("publisher")}><input className="field-input" name="publisher" defaultValue={str("publisher")} /></Field>
+            <Field label="Language" error={err("language")}><input className="field-input" name="language" defaultValue={str("language")} /></Field>
           </div>
           <Field label="Chapters (one per line)" error={err("chapters")}>
-            <textarea className={areaCls()} name="chapters" defaultValue={lines("chapters")} placeholder="Chapter 1&#10;Chapter 2" />
+            <textarea className="field-textarea" name="chapters" defaultValue={lines("chapters")} placeholder="Chapter 1&#10;Chapter 2" />
           </Field>
         </div>
       );
     case "post":
       return (
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Author" error={err("author")}><input className={inputCls()} name="author" defaultValue={str("author")} /></Field>
-          <Field label="Published" error={err("publishedAt")}><input className={inputCls()} name="publishedAt" defaultValue={str("publishedAt")} /></Field>
+          <Field label="Author" error={err("author")}><input className="field-input" name="author" defaultValue={str("author")} /></Field>
+          <Field label="Published" error={err("publishedAt")}><input className="field-input" name="publishedAt" defaultValue={str("publishedAt")} /></Field>
         </div>
       );
     case "image":
       return (
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Alt text" error={err("alt")}><input className={inputCls()} name="alt" defaultValue={str("alt")} /></Field>
-          <Field label="Photographer" error={err("photographer")}><input className={inputCls()} name="photographer" defaultValue={str("photographer")} /></Field>
+          <Field label="Alt text" error={err("alt")}><input className="field-input" name="alt" defaultValue={str("alt")} /></Field>
+          <Field label="Photographer" error={err("photographer")}><input className="field-input" name="photographer" defaultValue={str("photographer")} /></Field>
         </div>
       );
     case "sadhana":
       return (
         <div className="grid gap-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Language" error={err("language")}><input className={inputCls()} name="language" defaultValue={str("language")} /></Field>
+            <Field label="Language" error={err("language")}><input className="field-input" name="language" defaultValue={str("language")} /></Field>
             <Field label="Format" error={err("format")}>
-              <select className={inputCls()} name="format" defaultValue={str("format")}>
+              <select className="field-select" name="format" defaultValue={str("format")}>
                 <option value="">—</option>
                 <option value="text">Text</option>
                 <option value="audio">Audio</option>
@@ -145,10 +138,10 @@ function MetadataFields({
             </Field>
           </div>
           <Field label="Steps (one per line)" error={err("steps")}>
-            <textarea className={areaCls()} name="steps" defaultValue={lines("steps")} placeholder="Step 1&#10;Step 2" />
+            <textarea className="field-textarea" name="steps" defaultValue={lines("steps")} placeholder="Step 1&#10;Step 2" />
           </Field>
           <Field label="Mantras (one per line)" error={err("mantras")}>
-            <textarea className={areaCls()} name="mantras" defaultValue={lines("mantras")} placeholder="Om Namah Shivaya&#10;Om Gam Ganapataye Namah" />
+            <textarea className="field-textarea" name="mantras" defaultValue={lines("mantras")} placeholder="Om Namah Shivaya&#10;Om Gam Ganapataye Namah" />
           </Field>
           {deities.length > 0 && (
             <div className="grid gap-2">
@@ -168,9 +161,9 @@ function MetadataFields({
       return (
         <div className="grid gap-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Language" error={err("language")}><input className={inputCls()} name="language" defaultValue={str("language")} /></Field>
+            <Field label="Language" error={err("language")}><input className="field-input" name="language" defaultValue={str("language")} /></Field>
             <Field label="Format" error={err("format")}>
-              <select className={inputCls()} name="format" defaultValue={str("format")}>
+              <select className="field-select" name="format" defaultValue={str("format")}>
                 <option value="">—</option>
                 <option value="text">Text</option>
                 <option value="audio">Audio</option>
@@ -179,7 +172,7 @@ function MetadataFields({
             </Field>
           </div>
           <Field label="Chapters / sections (one per line)" error={err("chapters")}>
-            <textarea className={areaCls()} name="chapters" defaultValue={lines("chapters")} placeholder="Introduction&#10;Chapter 1" />
+            <textarea className="field-textarea" name="chapters" defaultValue={lines("chapters")} placeholder="Introduction&#10;Chapter 1" />
           </Field>
           {teachers.length > 0 && (
             <div className="grid gap-2">
@@ -193,11 +186,11 @@ function MetadataFields({
       return (
         <div className="grid gap-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Language" error={err("language")}><input className={inputCls()} name="language" defaultValue={str("language")} /></Field>
-            <Field label="Script" error={err("script")}><input className={inputCls()} name="script" defaultValue={str("script")} /></Field>
+            <Field label="Language" error={err("language")}><input className="field-input" name="language" defaultValue={str("language")} /></Field>
+            <Field label="Script" error={err("script")}><input className="field-input" name="script" defaultValue={str("script")} /></Field>
           </div>
           <Field label="Mantras / shlokas (one per line)" error={err("mantras")}>
-            <textarea className={areaCls()} name="mantras" defaultValue={lines("mantras")} placeholder="Om Namah Shivaya&#10;Shri Ram Jai Ram" />
+            <textarea className="field-textarea" name="mantras" defaultValue={lines("mantras")} placeholder="Om Namah Shivaya&#10;Shri Ram Jai Ram" />
           </Field>
           {deities.length > 0 && (
             <div className="grid gap-2">
@@ -211,23 +204,23 @@ function MetadataFields({
       return (
         <div className="grid gap-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Language" error={err("language")}><input className={inputCls()} name="language" defaultValue={str("language")} /></Field>
+            <Field label="Language" error={err("language")}><input className="field-input" name="language" defaultValue={str("language")} /></Field>
             <Field label="Aliases (comma-separated)" error={err("aliases")}>
-              <input className={inputCls()} name="aliases" defaultValue={csv("aliases")} />
+              <input className="field-input" name="aliases" defaultValue={csv("aliases")} />
             </Field>
           </div>
           <Field label="Mantras (one per line)" error={err("mantras")}>
-            <textarea className={areaCls()} name="mantras" defaultValue={lines("mantras")} placeholder="Om Namah Shivaya&#10;Om Gam Ganapataye Namah" />
+            <textarea className="field-textarea" name="mantras" defaultValue={lines("mantras")} placeholder="Om Namah Shivaya&#10;Om Gam Ganapataye Namah" />
           </Field>
         </div>
       );
     case "teacher":
       return (
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Tradition" error={err("tradition")}><input className={inputCls()} name="tradition" defaultValue={str("tradition")} /></Field>
-          <Field label="Lineage" error={err("lineage")}><input className={inputCls()} name="lineage" defaultValue={str("lineage")} /></Field>
-          <Field label="Language" error={err("language")}><input className={inputCls()} name="language" defaultValue={str("language")} /></Field>
-          <Field label="Period" error={err("period")}><input className={inputCls()} name="period" defaultValue={str("period")} placeholder="e.g. 1879–1950" /></Field>
+          <Field label="Tradition" error={err("tradition")}><input className="field-input" name="tradition" defaultValue={str("tradition")} /></Field>
+          <Field label="Lineage" error={err("lineage")}><input className="field-input" name="lineage" defaultValue={str("lineage")} /></Field>
+          <Field label="Language" error={err("language")}><input className="field-input" name="language" defaultValue={str("language")} /></Field>
+          <Field label="Period" error={err("period")}><input className="field-input" name="period" defaultValue={str("period")} placeholder="e.g. 1879–1950" /></Field>
         </div>
       );
     default:
@@ -340,7 +333,7 @@ export function SourceForm({ action, themes, deities = [], teachers = [], stotra
   return (
     <form action={formAction} className="grid gap-5">
       {state.status === "error" && (
-        <div className="border-l-4 border-danger bg-danger/8 px-4 py-3 text-sm text-danger">
+        <div role="alert" aria-live="polite" className="border-l-4 border-danger bg-danger/8 px-4 py-3 text-sm text-danger">
           {state.message ?? "The source could not be saved."}
         </div>
       )}
@@ -350,13 +343,13 @@ export function SourceForm({ action, themes, deities = [], teachers = [], stotra
           {isEdit ? (
             <>
               <input type="hidden" name="type" value={initial?.type ?? ""} />
-              <div className={`${inputCls()} flex items-center bg-surface-muted text-muted-foreground`}>
+              <div className={`$field-input flex items-center bg-surface-muted text-muted-foreground`}>
                 {initial?.type ? sourceTypeDetails[initial.type as keyof typeof sourceTypeDetails]?.label : "—"}
               </div>
             </>
           ) : (
             <select
-              className={inputCls()}
+              className="field-select"
               name="type"
               defaultValue={initial?.type ?? ""}
               onChange={(e) => setSelectedType(e.target.value)}
@@ -372,7 +365,7 @@ export function SourceForm({ action, themes, deities = [], teachers = [], stotra
         </Field>
 
         <Field label="Status" error={state.fieldErrors?.status}>
-          <select className={inputCls()} name="status" defaultValue={initial?.status ?? "active"}>
+          <select className="field-select" name="status" defaultValue={initial?.status ?? "active"}>
             <option value="active">Active</option>
             <option value="archived">Archived</option>
           </select>
@@ -381,7 +374,7 @@ export function SourceForm({ action, themes, deities = [], teachers = [], stotra
 
       <Field label="Title" error={state.fieldErrors?.title}>
         <input
-          className={inputCls()}
+          className="field-input"
           name="title"
           defaultValue={initial?.title ?? ""}
           placeholder="Name of the source"

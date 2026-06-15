@@ -7,7 +7,6 @@ import {
   createAttachmentFromForm,
   createReferenceFromForm,
   createThreadFromForm,
-  initialMutationState,
   linkObjectsFromForm,
   promoteEntryToQuestion,
   type MutationState
@@ -15,7 +14,7 @@ import {
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
 import { isValidId } from "@/lib/format";
 
-export { initialMutationState };
+
 
 function successState(message: string): MutationState {
   return {

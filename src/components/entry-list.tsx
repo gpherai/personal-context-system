@@ -17,8 +17,8 @@ export function EntryList({ entries }: { entries: EntryListItem[] }) {
   if (!entries.length) {
     return (
       <EmptyState
-        title="No entries yet"
-        body="Capture the first thought, question, or project note."
+        title="Nog geen notities"
+        body="Leg de eerste gedachte, vraag of projectaantekening vast."
       />
     );
   }
@@ -41,7 +41,7 @@ export function EntryList({ entries }: { entries: EntryListItem[] }) {
             </div>
             <Link
               href={`/entries/${entry.id}`}
-              className="mt-2 block text-sm font-semibold text-foreground underline-offset-4 hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded"
+              className="mt-2 block text-sm font-semibold cursor-pointer text-foreground underline-offset-4 hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded"
             >
               {entry.title}
             </Link>
@@ -59,7 +59,7 @@ export function EntryList({ entries }: { entries: EntryListItem[] }) {
           </div>
           <div className="shrink-0 text-right text-xs text-muted-foreground">
             <div className="font-medium">{formatDate(entry.occurredAt ?? entry.capturedAt)}</div>
-            <div className="mt-0.5 opacity-70">captured {formatDate(entry.capturedAt)}</div>
+            <div className="mt-0.5 opacity-70">vastgelegd {formatDate(entry.capturedAt)}</div>
           </div>
         </article>
       ))}

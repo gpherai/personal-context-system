@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 
-import { createSavedFilterFromForm, initialMutationState, type MutationState } from "@/application/context-service";
+import { createSavedFilterFromForm, type MutationState } from "@/application/context-service";
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
 
-export { initialMutationState };
+
 
 export async function createSavedFilterAction(
   _previousState: MutationState,

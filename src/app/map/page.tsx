@@ -39,6 +39,14 @@ export default async function MapPage() {
       return acc;
     }, {});
 
+    const labelMap = new Map<string, string>([
+      ...snapshot.entries.map((e) => [e.id, e.title] as [string, string]),
+      ...snapshot.themes.map((t) => [t.id, t.name] as [string, string]),
+      ...snapshot.questions.map((q) => [q.id, q.prompt] as [string, string]),
+      ...snapshot.sources.map((s) => [s.id, s.title] as [string, string]),
+      ...snapshot.projects.map((p) => [p.id, p.name] as [string, string]),
+    ]);
+
     return (
       <div className="mx-auto grid max-w-7xl gap-6">
         <header className="border-b border-border pb-5">
@@ -50,12 +58,12 @@ export default async function MapPage() {
         </header>
 
         <section className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6" aria-label="Graph counts">
-          <Stat label="Entries" value={snapshot.entries.length} />
-          <Stat label="Themes" value={snapshot.themes.length} />
-          <Stat label="Projects" value={snapshot.projects.length} />
-          <Stat label="Questions" value={snapshot.questions.length} />
-          <Stat label="Sources" value={snapshot.sources.length} />
-          <Stat label="Relations" value={snapshot.relationships.length} />
+          <Stat label="Notities" value={snapshot.entries.length} />
+          <Stat label="Thema's" value={snapshot.themes.length} />
+          <Stat label="Projecten" value={snapshot.projects.length} />
+          <Stat label="Vragen" value={snapshot.questions.length} />
+          <Stat label="Bronnen" value={snapshot.sources.length} />
+          <Stat label="Relaties" value={snapshot.relationships.length} />
         </section>
 
         {(deities.length > 0 || traditions.length > 0 || topics.length > 0) && (
@@ -68,7 +76,7 @@ export default async function MapPage() {
             <div className="grid gap-5 lg:grid-cols-3">
               {traditions.length > 0 && (
                 <div>
-                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Traditions</h3>
+                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tradities</h3>
                   <div className="flex flex-wrap gap-1.5">
                     {traditions.map((t) => (
                       <Link key={t.id} href={`/themes/${t.slug}`} className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30">
@@ -81,7 +89,7 @@ export default async function MapPage() {
 
               {deities.length > 0 && (
                 <div>
-                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Deities</h3>
+                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Godheden</h3>
                   <div className="flex flex-wrap gap-1.5">
                     {deities.map((t) => (
                       <Link key={t.id} href={`/themes/${t.slug}`} className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30">
@@ -94,7 +102,7 @@ export default async function MapPage() {
 
               {topics.length > 0 && (
                 <div>
-                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Topics</h3>
+                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Onderwerpen</h3>
                   <div className="flex flex-wrap gap-1.5">
                     {topics.map((t) => (
                       <Link key={t.id} href={`/themes/${t.slug}`} className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30">
@@ -139,7 +147,9 @@ export default async function MapPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge tone="blue">{labelize(relationship.relationType)}</Badge>
                       <span className="text-sm text-muted-foreground">
-                        {relationship.fromType}:{relationship.fromId} {"->"} {relationship.toType}:{relationship.toId}
+                        {relationship.fromType}: {labelMap.get(relationship.fromId) ?? relationship.fromId}
+                        {" → "}
+                        {relationship.toType}: {labelMap.get(relationship.toId) ?? relationship.toId}
                       </span>
                     </div>
                     {relationship.note && <p className="text-sm leading-6 text-muted-foreground">{relationship.note}</p>}
@@ -147,7 +157,7 @@ export default async function MapPage() {
                 ))}
               </div>
             ) : (
-              <EmptyState title="No relationships" body="Create links from entry or question detail pages." />
+              <EmptyState title="Geen relaties" body="Maak koppelingen aan via de detail-pagina van een notitie of vraag." />
             )}
           </div>
 

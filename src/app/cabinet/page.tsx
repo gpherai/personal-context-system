@@ -78,7 +78,7 @@ export default async function CabinetPage() {
           <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
             <div className="mb-3 flex items-center gap-2">
               <Library className="h-4 w-4 text-accent" aria-hidden="true" />
-              <h2 className="text-sm font-semibold">Themes</h2>
+              <h2 className="text-sm font-semibold">{"Thema’s"}</h2>
             </div>
             <div className="grid gap-1">
               {cabinet.themes.length ? (
@@ -86,14 +86,14 @@ export default async function CabinetPage() {
                   <Link
                     key={theme.id}
                     href={`/themes/${theme.slug}`}
-                    className="flex items-center justify-between rounded-md px-2 py-2 text-sm transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                    className="flex items-center justify-between rounded-md px-2 py-2 text-sm transition-colors cursor-pointer hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   >
                     <span>{theme.name}</span>
                     <Badge>{theme.entryCount ?? 0}</Badge>
                   </Link>
                 ))
               ) : (
-                <EmptyState title="No themes" body="Themes appear when entries are captured with theme names." />
+                <EmptyState title="Geen thema's" body="Thema's verschijnen wanneer notities worden vastgelegd met thema-namen." />
               )}
             </div>
           </div>
@@ -101,7 +101,7 @@ export default async function CabinetPage() {
           <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
             <div className="mb-3 flex items-center gap-2">
               <Layers className="h-4 w-4 text-primary" aria-hidden="true" />
-              <h2 className="text-sm font-semibold">Projects</h2>
+              <h2 className="text-sm font-semibold">Projecten</h2>
             </div>
             <div className="grid gap-1">
               {cabinet.projects.length ? (
@@ -109,14 +109,14 @@ export default async function CabinetPage() {
                   <Link
                     key={project.id}
                     href={`/projects/${project.slug}`}
-                    className="flex items-center justify-between rounded-md px-2 py-2 text-sm transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                    className="flex items-center justify-between rounded-md px-2 py-2 text-sm transition-colors cursor-pointer hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   >
                     <span>{project.name}</span>
                     <Badge>{project.entryCount ?? 0}</Badge>
                   </Link>
                 ))
               ) : (
-                <EmptyState title="No projects" body="Projects appear when entries are captured with project names." />
+                <EmptyState title="Geen projecten" body="Projecten verschijnen wanneer notities worden vastgelegd met projectnamen." />
               )}
             </div>
           </div>
@@ -124,7 +124,7 @@ export default async function CabinetPage() {
           <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
             <div className="mb-3 flex items-center gap-2">
               <CircleHelp className="h-4 w-4 text-caution" aria-hidden="true" />
-              <h2 className="text-sm font-semibold">Questions</h2>
+              <h2 className="text-sm font-semibold">Vragen</h2>
             </div>
             <div className="grid gap-3">
               {cabinet.questions.length ? (
@@ -132,14 +132,14 @@ export default async function CabinetPage() {
                   <Link
                     key={question.id}
                     href={`/questions/${question.id}`}
-                    className="block border-t border-border pt-3 transition-colors first:border-t-0 first:pt-0 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded"
+                    className="block border-t border-border pt-3 transition-colors first:border-t-0 first:pt-0 cursor-pointer hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded"
                   >
                     <Badge tone="amber">{question.status}</Badge>
                     <p className="mt-1.5 text-sm leading-relaxed">{question.prompt}</p>
                   </Link>
                 ))
               ) : (
-                <EmptyState title="No questions" body="Question entries create first-class question records." />
+                <EmptyState title="Geen vragen" body="Vraag-notities maken aparte vraagrecords aan." />
               )}
             </div>
           </div>
@@ -147,7 +147,7 @@ export default async function CabinetPage() {
           <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
             <div className="mb-3 flex items-center gap-2">
               <BookOpen className="h-4 w-4 text-primary" aria-hidden="true" />
-              <h2 className="text-sm font-semibold">Threads</h2>
+              <h2 className="text-sm font-semibold">Draden</h2>
             </div>
             <div className="grid gap-1">
               {cabinet.threads.length ? (
@@ -155,13 +155,13 @@ export default async function CabinetPage() {
                   <Link
                     key={thread.id}
                     href={`/threads/${thread.slug}`}
-                    className="block rounded-md px-2 py-2 text-sm transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                    className="block rounded-md px-2 py-2 text-sm transition-colors cursor-pointer hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   >
                     {thread.title}
                   </Link>
                 ))
               ) : (
-                <EmptyState title="No threads" body="Threads appear when entries are curated into sequences." />
+                <EmptyState title="Geen draden" body="Draden verschijnen wanneer notities tot reeksen worden samengesteld." />
               )}
             </div>
           </div>
@@ -171,7 +171,7 @@ export default async function CabinetPage() {
           <div className="mb-3 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <BookMarked className="h-4 w-4 text-primary" aria-hidden="true" />
-              <h2 className="text-sm font-semibold">Sources</h2>
+              <h2 className="text-sm font-semibold">Bronnen</h2>
             </div>
             <Link
               href="/sources"
@@ -194,19 +194,19 @@ export default async function CabinetPage() {
                 ))}
             </div>
           ) : (
-            <EmptyState title="No sources" body="Sources appear here once they are created." />
+            <EmptyState title="Geen bronnen" body="Bronnen verschijnen hier zodra ze zijn aangemaakt." />
           )}
         </section>
 
         <section className="grid gap-3">
           <div className="flex items-center gap-2">
             <Archive className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-            <h2 className="text-base font-semibold text-foreground">Archived entries</h2>
+            <h2 className="text-base font-semibold text-foreground">Gearchiveerde notities</h2>
           </div>
           {cabinet.archivedEntries.length ? (
             <EntryList entries={cabinet.archivedEntries} />
           ) : (
-            <EmptyState title="No archived entries" body="Archived entries appear here after their status is changed." />
+            <EmptyState title="Geen gearchiveerde notities" body="Gearchiveerde notities verschijnen hier nadat hun status is gewijzigd." />
           )}
         </section>
       </div>

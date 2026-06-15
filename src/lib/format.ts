@@ -29,7 +29,8 @@ export function labelize(value: string): string {
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const CUID_RE = /^c[a-z0-9]{24}$/i;
 
 export function isValidId(value: string): boolean {
-  return UUID_RE.test(value);
+  return UUID_RE.test(value) || CUID_RE.test(value);
 }

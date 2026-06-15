@@ -152,8 +152,12 @@ type SourceWithRelations = Prisma.SourceGetPayload<{
   include: typeof sourceInclude;
 }>;
 
-function mapSource(source: SourceWithRelations, outgoingRelationships: RelationshipRecord[] = []): SourceRecord {
-  const metadata = sourceMetadataSchema.parse(asRecord(source.metadata));
+function mapSource(source: SourceWithRelations, outgoingRelationships: RelationshipRecord[] = []): SourceRecord | null {
+  const metadataParsed = sourceMetadataSchema.safeParse(asRecord(source.metadata));
+  if (!metadataParsed.success) {
+    console.warn(`[mapSource] invalid metadata on source ${source.id}, skipping:`, metadataParsed.error.message);
+    return null;
+  }
   return {
     id: source.id,
     type: source.type,
@@ -161,7 +165,7 @@ function mapSource(source: SourceWithRelations, outgoingRelationships: Relations
     description: optional(source.description),
     body: optional(source.body),
     status: source.status,
-    metadata,
+    metadata: metadataParsed.data,
     themes: source.themes
       .map(({ theme }) => ({ id: theme.id, slug: theme.slug, name: theme.name }))
       .sort((a, b) => a.name.localeCompare(b.name)),
@@ -177,8 +181,12 @@ function mapSource(source: SourceWithRelations, outgoingRelationships: Relations
   };
 }
 
-function mapSourceSummary(source: SourceWithRelations): SourceSummary {
-  const metadata = sourceMetadataSchema.parse(asRecord(source.metadata));
+function mapSourceSummary(source: SourceWithRelations): SourceSummary | null {
+  const metadataParsed = sourceMetadataSchema.safeParse(asRecord(source.metadata));
+  if (!metadataParsed.success) {
+    console.warn(`[mapSourceSummary] invalid metadata on source ${source.id}, skipping:`, metadataParsed.error.message);
+    return null;
+  }
   return {
     id: source.id,
     type: source.type,
@@ -186,7 +194,7 @@ function mapSourceSummary(source: SourceWithRelations): SourceSummary {
     description: optional(source.description),
     body: optional(source.body),
     status: source.status,
-    metadata,
+    metadata: metadataParsed.data,
     themes: source.themes
       .map(({ theme }) => ({ id: theme.id, slug: theme.slug, name: theme.name }))
       .sort((a, b) => a.name.localeCompare(b.name)),
@@ -687,7 +695,8 @@ export class PrismaContextRepository implements ContextRepository {
 
   async listEntries(query?: ListEntriesQuery): Promise<EntryListItem[]> {
     const limit = Math.min(query?.limit ?? 50, 200);
-    const searchIds = query?.search ? await this.searchEntryIds(query.search, 200) : undefined;
+    const allSearchIds = query?.search ? await this.searchEntryIds(query.search, 200) : undefined;
+    const searchIds = allSearchIds?.slice(0, limit);
     const entries = await this.prisma.entry.findMany({
       where: entryWhere(query, searchIds),
       select: entryListSelect,
@@ -1393,7 +1402,9 @@ export class PrismaContextRepository implements ContextRepository {
       return tx.source.findUniqueOrThrow({ where: { id: created.id }, include: sourceInclude });
     });
 
-    return mapSource(source);
+    const mapped = mapSource(source);
+    if (!mapped) throw new Error(`Failed to map created source ${source.id}: invalid metadata.`);
+    return mapped;
   }
 
   async updateSource(command: UpdateSourceCommand): Promise<SourceRecord> {
@@ -1435,7 +1446,9 @@ export class PrismaContextRepository implements ContextRepository {
       return tx.source.findUniqueOrThrow({ where: { id: command.id }, include: sourceInclude });
     });
 
-    return mapSource(source);
+    const mapped = mapSource(source);
+    if (!mapped) throw new Error(`Failed to map updated source ${source.id}: invalid metadata.`);
+    return mapped;
   }
 
   async deleteSource(id: string): Promise<void> {
@@ -1483,10 +1496,11 @@ export class PrismaContextRepository implements ContextRepository {
       const rank = new Map(searchIds.map((id, i) => [id, i]));
       return sources
         .sort((a, b) => (rank.get(a.id) ?? Infinity) - (rank.get(b.id) ?? Infinity))
-        .map(mapSourceSummary);
+        .map(mapSourceSummary)
+        .filter((s): s is SourceSummary => s !== null);
     }
 
-    return sources.map(mapSourceSummary);
+    return sources.map(mapSourceSummary).filter((s): s is SourceSummary => s !== null);
   }
 
   async getSource(id: string): Promise<SourceRecord | null> {
@@ -1504,7 +1518,7 @@ export class PrismaContextRepository implements ContextRepository {
       orderBy: [{ title: "asc" }],
       take: limit
     });
-    return sources.map(mapSourceSummary);
+    return sources.map(mapSourceSummary).filter((s): s is SourceSummary => s !== null);
   }
 
   async linkSourceToReference(sourceId: string, referenceId: string): Promise<void> {
@@ -1643,7 +1657,7 @@ export class PrismaContextRepository implements ContextRepository {
           thread.entries.map(({ entry }) => mapEntry(entry))
         )
       ),
-      sources: rawSources.map((s) => mapSource(s, relsBySourceId.get(s.id) ?? []))
+      sources: rawSources.map((s) => mapSource(s, relsBySourceId.get(s.id) ?? [])).filter((s): s is SourceRecord => s !== null)
     };
   }
 }

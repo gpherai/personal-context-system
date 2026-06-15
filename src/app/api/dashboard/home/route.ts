@@ -1,7 +1,7 @@
 import { getDashboardHome } from "@/application/query-service";
 import type { DashboardHome } from "@/repositories/context-repository";
 
-import { apiError, apiOk, withApiErrors } from "../../_lib";
+import { apiOk, withApiErrors } from "../../_lib";
 
 export const dynamic = "force-dynamic";
 

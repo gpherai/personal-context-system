@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 
 import {
-  initialMutationState,
   linkObjectsFromForm,
   updateQuestionFromForm,
   type MutationState
@@ -11,7 +10,7 @@ import {
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
 import { isValidId } from "@/lib/format";
 
-export { initialMutationState };
+
 
 export async function updateQuestionAction(
   questionId: string,

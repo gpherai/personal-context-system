@@ -27,7 +27,7 @@ function Stat({ label, value, href }: { label: string; value: number; href: stri
   return (
     <Link
       href={href}
-      className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-all duration-150 hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+      className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-all duration-150 hover:border-primary/30 hover:shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
     >
       <div className="text-3xl font-bold tabular-nums text-foreground">{value}</div>
       <div className="mt-1 text-sm text-muted-foreground">{label}</div>
@@ -60,7 +60,7 @@ export default async function DashboardPage() {
         </div>
         <Link
           href="/capture"
-          className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-[var(--color-primary-foreground)] shadow-sm transition-colors hover:bg-primary-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
         >
           <PenLine className="h-4 w-4" aria-hidden="true" />
           Capture
@@ -68,10 +68,10 @@ export default async function DashboardPage() {
       </header>
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="System counts">
-        <Stat label="Entries"        value={overview.counts.entries}       href="/ledger"  />
-        <Stat label="Question queue" value={overview.counts.openQuestions} href="/cabinet" />
-        <Stat label="Themes"         value={overview.counts.themes}        href="/cabinet" />
-        <Stat label="Projects"       value={overview.counts.projects}      href="/cabinet" />
+        <Stat label="Notities"       value={overview.counts.entries}       href="/ledger"  />
+        <Stat label="Openstaande vragen" value={overview.counts.openQuestions} href="/cabinet" />
+        <Stat label="Thema's"        value={overview.counts.themes}        href="/cabinet" />
+        <Stat label="Projecten"      value={overview.counts.projects}      href="/cabinet" />
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
@@ -100,7 +100,7 @@ export default async function DashboardPage() {
                   <Link
                     key={question.id}
                     href={`/questions/${question.id}`}
-                    className="block border-t border-border pt-3 transition-colors first:border-t-0 first:pt-0 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded"
+                    className="block border-t border-border pt-3 transition-colors first:border-t-0 first:pt-0 cursor-pointer hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded"
                   >
                     <Badge tone="amber">{question.status}</Badge>
                     <p className="mt-1.5 text-sm leading-relaxed">{question.prompt}</p>
@@ -123,7 +123,7 @@ export default async function DashboardPage() {
                   <Link
                     key={project.id}
                     href={`/projects/${project.slug}`}
-                    className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                    className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm transition-colors cursor-pointer hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   >
                     <span>{project.name}</span>
                     <span className="text-xs tabular-nums text-muted-foreground">

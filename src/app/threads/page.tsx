@@ -41,7 +41,7 @@ export default async function ThreadsPage() {
             ))}
           </section>
         ) : (
-          <EmptyState title="No threads" body="Create a thread from an entry detail page." />
+          <EmptyState title="Geen draden" body="Maak een draad aan via de detail-pagina van een notitie." />
         )}
       </div>
     );

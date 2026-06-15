@@ -51,7 +51,7 @@ export function RelationshipForm({ entryId, targets }: { entryId: string; target
       <label className="grid gap-1.5 text-sm font-medium">
         Note
         <input
-          className="field-select"
+          className="field-input"
           name="note"
           placeholder="Why these objects are connected"
         />
@@ -90,7 +90,7 @@ export function ReferenceForm({ entryId }: { entryId: string }) {
         <label className="grid gap-1.5 text-sm font-medium">
           Title
           <input
-            className="field-select"
+            className="field-input"
             name="title"
             placeholder="Reference title"
           />
@@ -99,7 +99,7 @@ export function ReferenceForm({ entryId }: { entryId: string }) {
       <label className="grid gap-1.5 text-sm font-medium">
         URL or identifier
         <input
-          className="field-select"
+          className="field-input"
           name="url"
           placeholder="https://, book ISBN, repo path, external record id"
         />
@@ -130,7 +130,7 @@ export function AttachmentForm({ entryId }: { entryId: string }) {
       <label className="grid gap-1.5 text-sm font-medium">
         File path
         <input
-          className="field-select"
+          className="field-input"
           name="path"
           placeholder="data/attachments/example.pdf"
         />
@@ -139,14 +139,14 @@ export function AttachmentForm({ entryId }: { entryId: string }) {
         <label className="grid gap-1.5 text-sm font-medium">
           Title
           <input
-            className="field-select"
+            className="field-input"
             name="title"
           />
         </label>
         <label className="grid gap-1.5 text-sm font-medium">
           Media type
           <input
-            className="field-select"
+            className="field-input"
             name="mediaType"
             placeholder="application/pdf"
           />
@@ -154,7 +154,7 @@ export function AttachmentForm({ entryId }: { entryId: string }) {
         <label className="grid gap-1.5 text-sm font-medium">
           Size bytes
           <input
-            className="field-select"
+            className="field-input"
             inputMode="numeric"
             min="0"
             name="sizeBytes"
@@ -188,7 +188,7 @@ export function ThreadForm({ entryId }: { entryId: string }) {
       <label className="grid gap-1.5 text-sm font-medium">
         Thread title
         <input
-          className="field-select"
+          className="field-input"
           name="title"
           placeholder="Continuing line of thought"
         />

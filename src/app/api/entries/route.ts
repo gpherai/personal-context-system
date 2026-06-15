@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     const parsed = listEntriesQuerySchema.safeParse({
       status: sp.get("status") ?? undefined,
       type: sp.get("type") ?? undefined,
-      privacyLevel: sp.get("privacyLevel") ?? undefined,
+      privacyLevel: sp.get("privacyLevel") ?? "shareable",
       limit: sp.has("limit") ? Number(sp.get("limit")) : undefined
     });
 

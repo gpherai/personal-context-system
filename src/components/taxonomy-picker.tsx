@@ -67,7 +67,7 @@ export function TaxonomyPicker({ themes, selectedIds, name = "themeIds" }: Taxon
         )}
       </div>
       {selected.size > 0 && (
-        <p className="text-xs text-muted-foreground">{selected.size} thema{selected.size !== 1 ? "&apos;s" : ""} geselecteerd</p>
+        <p className="text-xs text-muted-foreground">{selected.size} thema{selected.size !== 1 ? "'s" : ""} geselecteerd</p>
       )}
     </div>
   );

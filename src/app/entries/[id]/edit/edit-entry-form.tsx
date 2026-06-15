@@ -36,7 +36,7 @@ function namesValue(records: { name: string }[]): string {
 function FieldError({ id, errors }: { id?: string; errors?: string[] }) {
   if (!errors?.length) return null;
   return (
-    <p id={id} role="alert" className="mt-1 text-xs text-danger">
+    <p id={id} role="alert" aria-live="polite" className="mt-1 text-xs text-danger">
       {errors[0]}
     </p>
   );
@@ -56,7 +56,12 @@ export function EditEntryForm({ entry }: { entry: EditEntryDto }) {
 
   useEffect(() => {
     if (state.status === "error") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      const errorElement = document.querySelector('[aria-invalid="true"]');
+      if (errorElement instanceof HTMLElement) {
+        errorElement.focus();
+      } else {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
     }
   }, [state.status, state.message]);
 

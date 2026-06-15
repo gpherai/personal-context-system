@@ -1,6 +1,7 @@
-import { isDatabaseUnavailable } from "@/application/errors";
 import { getDashboardOverview } from "@/application/query-service";
 import type { DashboardOverview } from "@/repositories/context-repository";
+
+import { apiOk, withApiErrors } from "../_lib";
 
 export const dynamic = "force-dynamic";
 
@@ -14,9 +15,11 @@ type DashboardDto = {
 
 function toDto(overview: DashboardOverview): DashboardDto {
   return {
-    recentEntries: overview.recentEntries.map(({ id, type, status, title, privacyLevel, capturedAt }) => ({
-      id, type, status, title, privacyLevel, capturedAt
-    })),
+    recentEntries: overview.recentEntries
+      .filter(({ privacyLevel }) => privacyLevel === "shareable")
+      .map(({ id, type, status, title, privacyLevel, capturedAt }) => ({
+        id, type, status, title, privacyLevel, capturedAt
+      })),
     openQuestions: overview.openQuestions.map(({ id, prompt, status, summary }) => ({
       id, prompt, status, summary
     })),
@@ -27,27 +30,8 @@ function toDto(overview: DashboardOverview): DashboardDto {
 }
 
 export async function GET() {
-  try {
+  return withApiErrors(async () => {
     const overview = await getDashboardOverview();
-
-    return Response.json(toDto(overview), {
-      headers: {
-        "cache-control": "no-store",
-      },
-    });
-  } catch (error) {
-    if (isDatabaseUnavailable(error)) {
-      return Response.json(
-        { error: "The local database is not available." },
-        {
-          status: 503,
-          headers: {
-            "cache-control": "no-store",
-          },
-        }
-      );
-    }
-
-    throw error;
-  }
+    return apiOk(toDto(overview));
+  });
 }

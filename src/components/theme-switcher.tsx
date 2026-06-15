@@ -35,18 +35,52 @@ function applyToDOM(theme: ThemeName, mode: ThemeMode) {
   localStorage.setItem("pcs-mode", mode);
 }
 
-export function ThemeSwitcher() {
+function useThemeState() {
   const [theme, setTheme] = useState<ThemeName>("ink");
   const [mode, setMode] = useState<ThemeMode>("light");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const t = (readCookie("pcs-theme") ?? localStorage.getItem("pcs-theme") ?? "ink") as ThemeName;
-    const m = (readCookie("pcs-mode") ?? localStorage.getItem("pcs-mode") ?? "light") as ThemeMode;
-    setTheme(t);
-    setMode(m);
-    setMounted(true);
+    requestAnimationFrame(() => {
+      const t = (readCookie("pcs-theme") ?? localStorage.getItem("pcs-theme") ?? "ink") as ThemeName;
+      const m = (readCookie("pcs-mode") ?? localStorage.getItem("pcs-mode") ?? "light") as ThemeMode;
+      setTheme(t);
+      setMode(m);
+      setMounted(true);
+    });
   }, []);
+
+  return { theme, setTheme, mode, setMode, mounted };
+}
+
+export function ModeToggle() {
+  const { mode, setMode, theme, mounted } = useThemeState();
+
+  if (!mounted) return <div className="h-8 w-8" aria-hidden="true" />;
+
+  function toggleMode() {
+    const next: ThemeMode = mode === "light" ? "dark" : "light";
+    setMode(next);
+    applyToDOM(theme, next);
+  }
+
+  return (
+    <button
+      type="button"
+      aria-label={`Schakel naar ${mode === "light" ? "donker" : "licht"} modus`}
+      onClick={toggleMode}
+      className="cursor-pointer rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+    >
+      {mode === "dark"
+        ? <Sun className="h-4 w-4" aria-hidden="true" />
+        : <Moon className="h-4 w-4" aria-hidden="true" />
+      }
+    </button>
+  );
+}
+
+export function ThemeSwitcher() {
+  const { theme, setTheme, mode, setMode, mounted } = useThemeState();
 
   function selectTheme(t: ThemeName) {
     setTheme(t);

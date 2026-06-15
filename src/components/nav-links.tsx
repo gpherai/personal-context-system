@@ -22,11 +22,11 @@ const navItems = [
   { href: "/capture", label: "Capture",   icon: PenLine   },
   { href: "/ledger",  label: "Ledger",    icon: BookOpen  },
   { href: "/cabinet", label: "Cabinet",   icon: Archive   },
-  { href: "/sources", label: "Sources",   icon: BookMarked},
+  { href: "/sources", label: "Bronnen",   icon: BookMarked},
   { href: "/threads", label: "Threads",   icon: ListTree  },
   { href: "/map",     label: "Map",       icon: GitBranch },
   { href: "/command", label: "Command",   icon: Command   },
-  { href: "/settings",label: "Settings",  icon: Settings  },
+  { href: "/settings",label: "Instellingen", icon: Settings },
 ];
 
 export function NavLinks() {

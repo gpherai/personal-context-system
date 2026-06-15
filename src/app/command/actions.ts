@@ -21,7 +21,8 @@ export async function rebuildMirrorAction(): Promise<RebuildMirrorState> {
       status: "success",
       message: `Generated ${result.fileCount} files in ${result.outputDir}.`
     };
-  } catch {
+  } catch (error) {
+    console.error("[rebuildMirrorAction] mirror build failed:", error);
     return {
       status: "error",
       message: "Context mirror generation failed."

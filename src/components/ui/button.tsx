@@ -6,10 +6,10 @@ type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 type ButtonSize = "sm" | "md";
 
 const variants: Record<ButtonVariant, string> = {
-  primary:   "border-transparent bg-primary text-white shadow-sm hover:bg-primary-strong focus-visible:ring-primary/30",
+  primary:   "border-transparent bg-primary text-[var(--color-primary-foreground)] shadow-sm hover:bg-primary-strong focus-visible:ring-primary/30",
   secondary: "border-border bg-surface text-foreground shadow-sm hover:bg-surface-muted focus-visible:ring-primary/20",
   ghost:     "border-transparent bg-transparent text-muted-foreground hover:bg-surface-muted hover:text-foreground focus-visible:ring-primary/20",
-  danger:    "border-transparent bg-danger text-white shadow-sm hover:bg-danger-strong focus-visible:ring-danger/30",
+  danger:    "border-transparent bg-danger text-[var(--color-on-danger)] shadow-sm hover:bg-danger-strong focus-visible:ring-danger/30",
 };
 
 const sizes: Record<ButtonSize, string> = {

@@ -25,7 +25,7 @@ function Message({ state }: { state: typeof initialMutationState }) {
     return null;
   }
 
-  return <p className={state.status === "error" ? "text-sm text-danger" : "text-sm text-accent"}>{state.message}</p>;
+  return <p role="status" aria-live="polite" className={state.status === "error" ? "text-sm text-danger" : "text-sm text-accent"}>{state.message}</p>;
 }
 
 export function QuestionUpdateForm({ question }: { question: QuestionUpdateDto }) {
@@ -87,7 +87,7 @@ export function QuestionRelationshipForm({ questionId, targets }: { questionId: 
       <label className="grid gap-1.5 text-sm font-medium">
         Note
         <input
-          className="field-select"
+          className="field-input"
           name="note"
         />
       </label>

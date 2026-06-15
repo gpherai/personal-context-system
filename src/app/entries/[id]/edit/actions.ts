@@ -4,14 +4,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import {
-  initialMutationState,
   updateEntryFromForm,
   type MutationState
 } from "@/application/context-service";
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
 import { isValidId } from "@/lib/format";
 
-export { initialMutationState };
+
 
 export async function updateEntryAction(
   id: string,
