@@ -1,4 +1,5 @@
 import type {
+  AddEntryToThreadCommand,
   CreateAttachmentCommand,
   CreateEntryCommand,
   CreateQuestionCommand,
@@ -11,6 +12,8 @@ import type {
   ListEntriesQuery,
   ListQuestionsQuery,
   ListSourcesQuery,
+  MergeThemeCommand,
+  MoveEntryInThreadCommand,
   PrivacyLevel,
   PromoteEntryToQuestionCommand,
   QuestionStatus,
@@ -20,8 +23,10 @@ import type {
   SourceMetadata,
   SourceType,
   UpdateEntryCommand,
+  UpdateProjectCommand,
   UpdateQuestionCommand,
-  UpdateSourceCommand
+  UpdateSourceCommand,
+  UpdateThemeCommand
 } from "@/domain/context";
 
 export type JsonPrimitive = string | number | boolean | null;
@@ -142,6 +147,7 @@ export interface NamedRecord {
   slug: string;
   name: string;
   description?: string;
+  status?: RecordStatus;
   entryCount?: number;
   metadata?: JsonObject;
 }
@@ -262,6 +268,9 @@ export interface TaxonomyRepository {
   getProjectBySlug(slug: string): Promise<NamedRecordContext | null>;
   listThemes(): Promise<NamedRecord[]>;
   setThemeParent(themeId: string, parentThemeId: string | null): Promise<void>;
+  updateTheme(command: UpdateThemeCommand): Promise<NamedRecord>;
+  mergeThemes(command: MergeThemeCommand): Promise<NamedRecord>;
+  updateProject(command: UpdateProjectCommand): Promise<NamedRecord>;
   deleteTheme(id: string): Promise<void>;
   deleteProject(id: string): Promise<void>;
 }
@@ -270,6 +279,8 @@ export interface ThreadRepository {
   createThread(command: CreateThreadCommand): Promise<ThreadRecord>;
   listThreads(): Promise<Omit<ThreadRecord, "entries">[]>;
   getThreadBySlug(slug: string): Promise<ThreadRecord | null>;
+  addEntryToThread(command: AddEntryToThreadCommand): Promise<void>;
+  moveEntryInThread(command: MoveEntryInThreadCommand): Promise<void>;
   deleteThread(id: string): Promise<void>;
 }
 

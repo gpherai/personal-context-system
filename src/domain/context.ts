@@ -35,6 +35,20 @@ export const referenceKindSchema = z.enum(referenceKinds);
 
 export const metadataSchema = z.record(z.string(), z.unknown());
 
+export const themeCategories = ["deity", "tradition", "topic", "tag"] as const;
+export type ThemeCategory = (typeof themeCategories)[number];
+
+export const themeMetadataSchema = z.object({
+  category: z.enum(themeCategories).optional(),
+  aliases: z.array(z.string().trim().min(1).max(240)).default([])
+});
+export type ThemeMetadata = z.infer<typeof themeMetadataSchema>;
+
+export function parseThemeMetadata(metadata: Record<string, unknown> | undefined): ThemeMetadata {
+  const parsed = themeMetadataSchema.safeParse(metadata ?? {});
+  return parsed.success ? parsed.data : { aliases: [] };
+}
+
 export const createEntryCommandSchema = z.object({
   type: entryTypeSchema.default("observation"),
   status: entryStatusSchema.default("active"),
@@ -320,6 +334,44 @@ export const createThreadCommandSchema = z.object({
   metadata: metadataSchema.default({})
 });
 
+export const updateThemeCommandSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().trim().min(1, "Name is required").max(160),
+  description: z.string().trim().max(4000).optional()
+});
+
+export const mergeThemeCommandSchema = z
+  .object({
+    sourceThemeId: z.string().min(1),
+    targetThemeId: z.string().min(1)
+  })
+  .refine((val) => val.sourceThemeId !== val.targetThemeId, {
+    message: "Bron- en doelthema moeten verschillend zijn",
+    path: ["targetThemeId"]
+  });
+
+export const updateProjectCommandSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().trim().min(1, "Name is required").max(180),
+  description: z.string().trim().max(4000).optional(),
+  status: recordStatusSchema
+});
+
+export const addEntryToThreadCommandSchema = z.object({
+  threadId: z.string().min(1),
+  entryId: z.string().min(1)
+});
+
+export const threadEntryDirections = ["up", "down"] as const;
+export type ThreadEntryDirection = (typeof threadEntryDirections)[number];
+export const threadEntryDirectionSchema = z.enum(threadEntryDirections);
+
+export const moveEntryInThreadCommandSchema = z.object({
+  threadId: z.string().min(1),
+  entryId: z.string().min(1),
+  direction: threadEntryDirectionSchema
+});
+
 export type CreateEntryCommand = z.infer<typeof createEntryCommandSchema>;
 export type ListEntriesQuery = z.infer<typeof listEntriesQuerySchema>;
 export type SavedFilterParams = z.infer<typeof savedFilterParamsSchema>;
@@ -335,6 +387,11 @@ export type CreateThreadCommand = z.infer<typeof createThreadCommandSchema>;
 export type CreateSourceCommand = z.infer<typeof createSourceCommandSchema>;
 export type UpdateSourceCommand = z.infer<typeof updateSourceCommandSchema>;
 export type ListSourcesQuery = z.infer<typeof listSourcesQuerySchema>;
+export type UpdateThemeCommand = z.infer<typeof updateThemeCommandSchema>;
+export type MergeThemeCommand = z.infer<typeof mergeThemeCommandSchema>;
+export type UpdateProjectCommand = z.infer<typeof updateProjectCommandSchema>;
+export type AddEntryToThreadCommand = z.infer<typeof addEntryToThreadCommandSchema>;
+export type MoveEntryInThreadCommand = z.infer<typeof moveEntryInThreadCommandSchema>;
 
 export function slugifyName(value: string): string {
   return value

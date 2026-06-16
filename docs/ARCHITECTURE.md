@@ -234,6 +234,7 @@ SourceType enum (immutable after creation):
 - `upadesha` — teaching or discourse
 - `stotra` — hymn or devotional text
 - `deity_concept` — conceptual record for a deity form
+- `teacher` — teacher, lineage holder, or commentator
 
 Each source type has a discriminated Zod metadata schema in `src/domain/context.ts`. The `metadata` JSONB field stores type-specific data (e.g., `authorName`, `publishYear`, `youtubeUrl`, `mantras`). A derived `searchText` column is populated by `metadataToSearchText()` to make JSONB fields queryable via full-text search.
 
@@ -571,7 +572,7 @@ Last updated: 2026-05-26
 - Ledger filters can be persisted as named saved filters and reused from both Ledger and Command Center. System filters remain available as starter shortcuts.
 - Context mirror generation for `manifest.json`, `ai-index.md`, `today.md`, `ai-bundle.md`, context bundle variants, `recent.md`, `question-queue.md`, project/theme indexes and pages, thread detail pages, timeline pages, `entries/index.json`, per-entry Markdown/JSON files, `sources/index.md`, `sources/index.json`, per-type source indexes, per-source Markdown files, and `sanatana/taxonomy.md`.
 - Local backup and restore scripts for the Docker Compose PostgreSQL database and `data/attachments`.
-- Source model with SourceType enum (8 types), discriminated Zod metadata schemas, `searchText` column for FTS, and GIN indexes on Entry and Source.
+- Source model with SourceType enum (9 types), discriminated Zod metadata schemas, `searchText` column for FTS, and GIN indexes on Entry and Source.
 - Theme cycle guard (BFS ancestor walk) preventing circular parent hierarchy.
 - KB migration scripts: `seed-kb-taxonomy.ts` and `import-kb-items.ts`.
 - Taxonomy-as-Theme: KB Deity/Tradition/Topic/Tag stored as Theme records with `metadata.category`.

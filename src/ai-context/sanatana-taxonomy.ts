@@ -1,10 +1,12 @@
+import { parseThemeMetadata } from "@/domain/context";
+
 import { sanitizeInline } from "./context-mirror";
 import type { ContextMirrorFile, MirrorBuildContext } from "./context-mirror";
 
 export function sanatanaTaxonomyExtension({ themes, generatedAtIso }: MirrorBuildContext): ContextMirrorFile[] {
-  const deities = themes.filter((t) => t.metadata?.category === "deity");
-  const traditions = themes.filter((t) => t.metadata?.category === "tradition");
-  const topics = themes.filter((t) => t.metadata?.category === "topic");
+  const deities = themes.filter((t) => parseThemeMetadata(t.metadata).category === "deity");
+  const traditions = themes.filter((t) => parseThemeMetadata(t.metadata).category === "tradition");
+  const topics = themes.filter((t) => parseThemeMetadata(t.metadata).category === "topic");
 
   if (!deities.length && !traditions.length && !topics.length) return [];
 
@@ -27,9 +29,8 @@ export function sanatanaTaxonomyExtension({ themes, generatedAtIso }: MirrorBuil
         deities.length
           ? deities
               .map((t) => {
-                const aliases = Array.isArray(t.metadata?.aliases)
-                  ? ` [${(t.metadata.aliases as string[]).map((a) => sanitizeInline(a)).join(", ")}]`
-                  : "";
+                const themeAliases = parseThemeMetadata(t.metadata).aliases;
+                const aliases = themeAliases.length ? ` [${themeAliases.map((a) => sanitizeInline(a)).join(", ")}]` : "";
                 return `- ${sanitizeInline(t.name)}${aliases} (${t.slug})`;
               })
               .join("\n")

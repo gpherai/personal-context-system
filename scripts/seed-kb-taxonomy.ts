@@ -1,10 +1,9 @@
 /**
- * Seed script: KB taxonomy → PCS Themes + Relationships
+ * Seed script: KB taxonomy → PCS Themes
  *
  * Leest Deities, Traditions, Topics, Tags uit de KB database.
- * Maakt PCS Theme records aan met metadata.category.
+ * Maakt PCS Theme records aan met metadata.category (gevalideerd via themeMetadataSchema).
  * Zet parent-child relaties via setThemeParent (cycle guard).
- * Maakt Relationship records aan voor DeityTradition koppelingen.
  *
  * Veilig om meerdere keren te draaien (idempotent via upsert op slug).
  */
@@ -13,7 +12,7 @@ import "dotenv/config";
 
 import pg from "pg";
 
-import { slugifyName } from "../src/domain/context";
+import { slugifyName, themeMetadataSchema } from "../src/domain/context";
 import { getPrismaClient } from "../src/infrastructure/database/client";
 import { PrismaContextRepository } from "../src/infrastructure/database/prisma-context-repository";
 
@@ -57,10 +56,11 @@ const prisma = getPrismaClient();
 const repo = new PrismaContextRepository(prisma);
 
 async function upsertTheme(slug: string, name: string, description: string | null, metadata: Record<string, unknown>) {
+  const validated = themeMetadataSchema.parse(metadata);
   return prisma.theme.upsert({
     where: { slug },
-    update: { name, description, metadata: metadata as never },
-    create: { slug, name, description, metadata: metadata as never }
+    update: { name, description, metadata: validated as never },
+    create: { slug, name, description, metadata: validated as never }
   });
 }
 

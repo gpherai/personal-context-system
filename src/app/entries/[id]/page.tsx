@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { isDatabaseUnavailable } from "@/application/errors";
 import { getEntryById } from "@/application/query-service";
+import { DeleteForm } from "@/components/delete-form";
 import { SetupNotice } from "@/components/setup-notice";
 import { Badge } from "@/components/ui/badge";
 import { formatDateTime, isValidId, labelize } from "@/lib/format";
@@ -57,19 +58,14 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
               >
                 Bewerken
               </Link>
-              <form
-                action={deleteEntryAction.bind(null, entry.id)}
-                onSubmit={(e) => {
-                  if (!confirm("Notitie permanent verwijderen?")) e.preventDefault();
-                }}
-              >
+              <DeleteForm action={deleteEntryAction.bind(null, entry.id)} confirmMessage="Notitie permanent verwijderen?">
                 <button
                   type="submit"
-                  className="inline-flex h-10 w-full items-center justify-center rounded-md border border-danger/30 bg-danger/8 px-4 text-sm font-medium text-danger transition-colors duration-200 hover:bg-danger/12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30"
+                  className="inline-flex h-11 w-full items-center justify-center rounded-md border border-danger/30 bg-danger/8 px-4 text-sm font-medium text-danger transition-colors duration-200 hover:bg-danger/12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30"
                 >
                   Verwijderen
                 </button>
-              </form>
+              </DeleteForm>
             </div>
           </div>
           <dl className="mt-4 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">

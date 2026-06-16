@@ -18,13 +18,19 @@ import {
   type CreateSavedFilterCommand,
   type CreateSourceCommand,
   type CreateThreadCommand,
+  type AddEntryToThreadCommand,
   type ListEntriesQuery,
   type ListQuestionsQuery,
   type ListSourcesQuery,
+  type MergeThemeCommand,
+  type MoveEntryInThreadCommand,
   type PromoteEntryToQuestionCommand,
+  type RecordStatus,
   type UpdateEntryCommand,
+  type UpdateProjectCommand,
   type UpdateQuestionCommand,
-  type UpdateSourceCommand
+  type UpdateSourceCommand,
+  type UpdateThemeCommand
 } from "@/domain/context";
 import type {
   AttachmentRecord,
@@ -351,6 +357,7 @@ function mapNamed(record: {
   slug: string;
   name: string;
   description: string | null;
+  status?: RecordStatus;
   metadata?: unknown;
   _count?: { entries?: number };
 }): NamedRecord {
@@ -359,6 +366,7 @@ function mapNamed(record: {
     slug: record.slug,
     name: record.name,
     description: optional(record.description),
+    status: record.status,
     entryCount: record._count?.entries,
     metadata: record.metadata ? asRecord(record.metadata) : undefined
   };
@@ -712,6 +720,59 @@ export class PrismaContextRepository implements ContextRepository {
     await this.prisma.project.delete({ where: { id } });
   }
 
+  async updateTheme(command: UpdateThemeCommand): Promise<NamedRecord> {
+    const theme = await this.prisma.theme.update({
+      where: { id: command.id },
+      data: { name: command.name, description: command.description },
+      include: { _count: { select: { entries: true } } }
+    });
+    return mapNamed(theme);
+  }
+
+  async mergeThemes(command: MergeThemeCommand): Promise<NamedRecord> {
+    const theme = await this.prisma.$transaction(async (tx) => {
+      const [sourceLinks, sourceSourceLinks] = await Promise.all([
+        tx.entryTheme.findMany({ where: { themeId: command.sourceThemeId } }),
+        tx.sourceTheme.findMany({ where: { themeId: command.sourceThemeId } })
+      ]);
+
+      for (const link of sourceLinks) {
+        await tx.entryTheme.upsert({
+          where: { entryId_themeId: { entryId: link.entryId, themeId: command.targetThemeId } },
+          create: { entryId: link.entryId, themeId: command.targetThemeId },
+          update: {}
+        });
+      }
+
+      for (const link of sourceSourceLinks) {
+        await tx.sourceTheme.upsert({
+          where: { sourceId_themeId: { sourceId: link.sourceId, themeId: command.targetThemeId } },
+          create: { sourceId: link.sourceId, themeId: command.targetThemeId },
+          update: {}
+        });
+      }
+
+      await tx.theme.delete({ where: { id: command.sourceThemeId } });
+
+      return tx.theme.update({
+        where: { id: command.targetThemeId },
+        data: {},
+        include: { _count: { select: { entries: true } } }
+      });
+    });
+
+    return mapNamed(theme);
+  }
+
+  async updateProject(command: UpdateProjectCommand): Promise<NamedRecord> {
+    const project = await this.prisma.project.update({
+      where: { id: command.id },
+      data: { name: command.name, description: command.description, status: command.status },
+      include: { _count: { select: { entries: true } } }
+    });
+    return mapNamed(project);
+  }
+
   async getProjectBySlug(slug: string): Promise<NamedRecordContext | null> {
     const project = await this.prisma.project.findUnique({
       where: { slug },
@@ -993,6 +1054,59 @@ export class PrismaContextRepository implements ContextRepository {
 
   async deleteThread(id: string): Promise<void> {
     await this.prisma.thread.delete({ where: { id } });
+  }
+
+  async addEntryToThread(command: AddEntryToThreadCommand): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      const existing = await tx.entryThread.findUnique({
+        where: { entryId_threadId: { entryId: command.entryId, threadId: command.threadId } }
+      });
+      if (existing) return;
+
+      const last = await tx.entryThread.findFirst({
+        where: { threadId: command.threadId },
+        orderBy: { position: "desc" }
+      });
+
+      await tx.entryThread.create({
+        data: {
+          entryId: command.entryId,
+          threadId: command.threadId,
+          position: (last?.position ?? 0) + 1
+        }
+      });
+    });
+  }
+
+  async moveEntryInThread(command: MoveEntryInThreadCommand): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      const current = await tx.entryThread.findUnique({
+        where: { entryId_threadId: { entryId: command.entryId, threadId: command.threadId } }
+      });
+      if (!current) return;
+
+      const neighbor = await tx.entryThread.findFirst({
+        where: {
+          threadId: command.threadId,
+          position: command.direction === "up" ? { lt: current.position } : { gt: current.position }
+        },
+        orderBy: { position: command.direction === "up" ? "desc" : "asc" }
+      });
+      if (!neighbor) return;
+
+      await tx.entryThread.update({
+        where: { entryId_threadId: { entryId: current.entryId, threadId: current.threadId } },
+        data: { position: -1 }
+      });
+      await tx.entryThread.update({
+        where: { entryId_threadId: { entryId: neighbor.entryId, threadId: neighbor.threadId } },
+        data: { position: current.position }
+      });
+      await tx.entryThread.update({
+        where: { entryId_threadId: { entryId: current.entryId, threadId: current.threadId } },
+        data: { position: neighbor.position }
+      });
+    });
   }
 
   async getGraphSnapshot(): Promise<GraphSnapshot> {

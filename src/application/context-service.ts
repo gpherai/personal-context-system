@@ -9,6 +9,7 @@ import { writeContextMirror } from "@/infrastructure/files/context-mirror-writer
 
 import { databaseMutationErrorState, isDatabaseUnavailable } from "./errors";
 import {
+  addEntryToThreadCommandSchema,
   createAttachmentCommandSchema,
   createEntryCommandSchema,
   createReferenceCommandSchema,
@@ -19,6 +20,8 @@ import {
   entryTypeSchema,
   listEntriesQuerySchema,
   listSourcesQuerySchema,
+  mergeThemeCommandSchema,
+  moveEntryInThreadCommandSchema,
   parseIdList,
   parseLineList,
   parseNameList,
@@ -31,8 +34,10 @@ import {
   sourceTypeSchema,
   titleFromBody,
   updateEntryCommandSchema,
+  updateProjectCommandSchema,
   updateQuestionCommandSchema,
-  updateSourceCommandSchema
+  updateSourceCommandSchema,
+  updateThemeCommandSchema
 } from "@/domain/context";
 import type {
   EntryRepository,
@@ -40,6 +45,7 @@ import type {
   QuestionRepository,
   SnapshotRepository,
   SourceRepository,
+  TaxonomyRepository,
   ThreadRepository
 } from "@/repositories/context-repository";
 import type { MutationState } from "./action-states";
@@ -136,6 +142,41 @@ export function parseCreateThreadFormData(formData: FormData) {
     entryIds: parseIdList(formStr(formData, "entryIds")),
     metadata: {}
   });
+}
+
+export function parseUpdateThemeFormData(id: string, formData: FormData) {
+  return updateThemeCommandSchema.safeParse({
+    id,
+    name: parseOptionalString(formStr(formData, "name")),
+    description: parseOptionalString(formStr(formData, "description"))
+  });
+}
+
+export function parseMergeThemeFormData(sourceThemeId: string, formData: FormData) {
+  return mergeThemeCommandSchema.safeParse({
+    sourceThemeId,
+    targetThemeId: parseOptionalString(formStr(formData, "targetThemeId"))
+  });
+}
+
+export function parseUpdateProjectFormData(id: string, formData: FormData) {
+  return updateProjectCommandSchema.safeParse({
+    id,
+    name: parseOptionalString(formStr(formData, "name")),
+    description: parseOptionalString(formStr(formData, "description")),
+    status: parseOptionalString(formStr(formData, "status"))
+  });
+}
+
+export function parseAddEntryToThreadFormData(threadId: string, formData: FormData) {
+  return addEntryToThreadCommandSchema.safeParse({
+    threadId,
+    entryId: parseOptionalString(formStr(formData, "entryId"))
+  });
+}
+
+export function parseMoveEntryInThreadFormData(threadId: string, entryId: string, direction: string) {
+  return moveEntryInThreadCommandSchema.safeParse({ threadId, entryId, direction });
 }
 
 export function parseCreateSavedFilterFormData(formData: FormData) {
@@ -297,6 +338,76 @@ export async function createThreadFromForm(formData: FormData, repository: Threa
   return withDbErrorHandling(async () => {
     const thread = await repository.createThread(parsed.data);
     return { ok: true as const, thread };
+  });
+}
+
+export async function updateThemeFromForm(id: string, formData: FormData, repository: TaxonomyRepository) {
+  const parsed = parseUpdateThemeFormData(id, formData);
+
+  if (!parsed.success) {
+    return { ok: false as const, state: errorState("Check the highlighted fields.", parsed.error) };
+  }
+
+  return withDbErrorHandling(async () => {
+    const theme = await repository.updateTheme(parsed.data);
+    return { ok: true as const, theme };
+  });
+}
+
+export async function mergeThemesFromForm(sourceThemeId: string, formData: FormData, repository: TaxonomyRepository) {
+  const parsed = parseMergeThemeFormData(sourceThemeId, formData);
+
+  if (!parsed.success) {
+    return { ok: false as const, state: errorState("Kies een doelthema.", parsed.error) };
+  }
+
+  return withDbErrorHandling(async () => {
+    const theme = await repository.mergeThemes(parsed.data);
+    return { ok: true as const, theme };
+  });
+}
+
+export async function updateProjectFromForm(id: string, formData: FormData, repository: TaxonomyRepository) {
+  const parsed = parseUpdateProjectFormData(id, formData);
+
+  if (!parsed.success) {
+    return { ok: false as const, state: errorState("Check the highlighted fields.", parsed.error) };
+  }
+
+  return withDbErrorHandling(async () => {
+    const project = await repository.updateProject(parsed.data);
+    return { ok: true as const, project };
+  });
+}
+
+export async function addEntryToThreadFromForm(threadId: string, formData: FormData, repository: ThreadRepository) {
+  const parsed = parseAddEntryToThreadFormData(threadId, formData);
+
+  if (!parsed.success) {
+    return { ok: false as const, state: errorState("Kies een notitie om toe te voegen.", parsed.error) };
+  }
+
+  return withDbErrorHandling(async () => {
+    await repository.addEntryToThread(parsed.data);
+    return { ok: true as const };
+  });
+}
+
+export async function moveEntryInThread(
+  threadId: string,
+  entryId: string,
+  direction: string,
+  repository: ThreadRepository
+) {
+  const parsed = parseMoveEntryInThreadFormData(threadId, entryId, direction);
+
+  if (!parsed.success) {
+    return { ok: false as const, state: errorState("Kan notitie niet verplaatsen.", parsed.error) };
+  }
+
+  return withDbErrorHandling(async () => {
+    await repository.moveEntryInThread(parsed.data);
+    return { ok: true as const };
   });
 }
 

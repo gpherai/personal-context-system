@@ -5,6 +5,7 @@ import { isDatabaseUnavailable } from "@/application/errors";
 import { getGraphSnapshot } from "@/application/query-service";
 import { SetupNotice } from "@/components/setup-notice";
 import { Badge } from "@/components/ui/badge";
+import { parseThemeMetadata, type ThemeCategory } from "@/domain/context";
 import { sourceTypeDetails } from "@/domain/taxonomy";
 import type { NamedRecord } from "@/repositories/context-repository";
 
@@ -19,8 +20,8 @@ function Stat({ label, value }: { label: string; value: number }) {
   );
 }
 
-function themesByCategory(themes: NamedRecord[], category: string) {
-  return themes.filter((t) => t.metadata?.category === category);
+function themesByCategory(themes: NamedRecord[], category: ThemeCategory) {
+  return themes.filter((t) => parseThemeMetadata(t.metadata).category === category);
 }
 
 export default async function MapPage() {
@@ -30,7 +31,7 @@ export default async function MapPage() {
     const deities = themesByCategory(snapshot.themes, "deity");
     const traditions = themesByCategory(snapshot.themes, "tradition");
     const topics = themesByCategory(snapshot.themes, "topic");
-    const otherThemes = snapshot.themes.filter((t) => !t.metadata?.category || !["deity", "tradition", "topic", "tag"].includes(t.metadata.category as string));
+    const otherThemes = snapshot.themes.filter((t) => !parseThemeMetadata(t.metadata).category);
 
     const sourcesByType = snapshot.sources.reduce<Record<string, number>>((acc, s) => {
       acc[s.type] = (acc[s.type] ?? 0) + 1;

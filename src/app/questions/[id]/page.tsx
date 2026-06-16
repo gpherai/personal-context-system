@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { isDatabaseUnavailable } from "@/application/errors";
 import { getQuestionById } from "@/application/query-service";
+import { DeleteForm } from "@/components/delete-form";
 import { EntryList } from "@/components/entry-list";
 import { SetupNotice } from "@/components/setup-notice";
 import { Badge } from "@/components/ui/badge";
@@ -45,20 +46,18 @@ export default async function QuestionPage({ params }: { params: Promise<{ id: s
               </div>
               {question.summary && <p className="mt-3 text-sm leading-6 text-muted-foreground">{question.summary}</p>}
             </div>
-            <form
+            <DeleteForm
               action={deleteQuestionAction.bind(null, question.id)}
-              onSubmit={(e) => {
-                if (!confirm("Vraag permanent verwijderen?")) e.preventDefault();
-              }}
+              confirmMessage="Vraag permanent verwijderen?"
               className="shrink-0"
             >
               <button
                 type="submit"
-                className="inline-flex h-9 items-center justify-center rounded-md border border-danger/30 bg-danger/8 px-3 text-sm font-medium text-danger transition-colors duration-200 hover:bg-danger/12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30"
+                className="inline-flex h-11 items-center justify-center rounded-md border border-danger/30 bg-danger/8 px-4 text-sm font-medium text-danger transition-colors duration-200 hover:bg-danger/12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30"
               >
                 Verwijderen
               </button>
-            </form>
+            </DeleteForm>
           </div>
         </header>
 

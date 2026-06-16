@@ -65,6 +65,10 @@ export async function getThreadBySlug(slug: string, repository?: ThreadRepositor
   return (repository ?? createPrismaContextRepository()).getThreadBySlug(slug);
 }
 
+export async function getEntryOptions(repository?: EntryRepository) {
+  return (repository ?? createPrismaContextRepository()).listEntries({ limit: 200 });
+}
+
 export async function getGraphSnapshot(repository?: SnapshotRepository) {
   return (repository ?? createPrismaContextRepository()).getGraphSnapshot();
 }
