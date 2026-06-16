@@ -36,8 +36,8 @@ export function EntryList({ entries }: { entries: EntryListItem[] }) {
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-1.5">
               <Badge tone="blue">{labelize(entry.type)}</Badge>
-              <Badge>{entry.status}</Badge>
-              <Badge tone={privacyTone(entry.privacyLevel)}>{entry.privacyLevel}</Badge>
+              <Badge>{labelize(entry.status)}</Badge>
+              <Badge tone={privacyTone(entry.privacyLevel)}>{labelize(entry.privacyLevel)}</Badge>
             </div>
             <Link
               href={`/entries/${entry.id}`}

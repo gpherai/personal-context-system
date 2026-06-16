@@ -52,7 +52,7 @@ export default async function ThreadPage({ params }: { params: Promise<{ slug: s
             </DeleteForm>
           </div>
           <div className="mt-3">
-            <Badge>{thread.status}</Badge>
+            <Badge>{labelize(thread.status)}</Badge>
           </div>
           <h1 className="mt-3 text-3xl font-bold tracking-tight">{thread.title}</h1>
           <p className="mt-2 text-sm text-muted-foreground">Bijgewerkt {formatDateTime(thread.updatedAt)}</p>
@@ -94,7 +94,7 @@ export default async function ThreadPage({ params }: { params: Promise<{ slug: s
                 >
                   <div className="flex flex-wrap items-center gap-1.5">
                     <Badge tone="blue">{labelize(entry.type)}</Badge>
-                    <Badge>{entry.status}</Badge>
+                    <Badge>{labelize(entry.status)}</Badge>
                   </div>
                   <p className="mt-1.5 truncate text-sm font-semibold text-foreground hover:text-primary hover:underline">
                     {entry.title}

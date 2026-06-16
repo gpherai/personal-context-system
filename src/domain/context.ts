@@ -14,6 +14,9 @@ export const entryStatuses = ["active", "archived", "draft"] as const;
 export const privacyLevels = ["private", "sensitive", "shareable"] as const;
 export const recordStatuses = ["active", "archived"] as const;
 export const questionStatuses = ["open", "active", "parked", "answered", "reframed", "abandoned"] as const;
+export const questionClosingStatuses = ["answered", "reframed"] as const satisfies readonly QuestionStatus[];
+export const decisionStatuses = ["proposed", "accepted", "deferred", "follow_up_planned", "closed"] as const;
+export const taskStatuses = ["open", "in_progress", "done", "cancelled"] as const;
 export const sourceTypes = ["video", "book", "post", "image", "sadhana", "upadesha", "stotra", "deity_concept", "teacher"] as const;
 export const referenceKinds = ["url", "book", "article", "film", "game", "repository", "external_record", "other"] as const;
 
@@ -24,6 +27,8 @@ export type RecordStatus = (typeof recordStatuses)[number];
 export type QuestionStatus = (typeof questionStatuses)[number];
 export type SourceType = (typeof sourceTypes)[number];
 export type ReferenceKind = (typeof referenceKinds)[number];
+export type DecisionStatus = (typeof decisionStatuses)[number];
+export type TaskStatus = (typeof taskStatuses)[number];
 
 export const entryTypeSchema = z.enum(entryTypes);
 export const entryStatusSchema = z.enum(entryStatuses);
@@ -32,6 +37,39 @@ export const recordStatusSchema = z.enum(recordStatuses);
 export const questionStatusSchema = z.enum(questionStatuses);
 export const sourceTypeSchema = z.enum(sourceTypes);
 export const referenceKindSchema = z.enum(referenceKinds);
+export const decisionStatusSchema = z.enum(decisionStatuses);
+export const taskStatusSchema = z.enum(taskStatuses);
+
+// proposed -> accepted | deferred; deferred -> follow_up_planned; accepted | follow_up_planned -> closed
+export const decisionStatusTransitions: Record<DecisionStatus, readonly DecisionStatus[]> = {
+  proposed: ["accepted", "deferred"],
+  deferred: ["follow_up_planned"],
+  follow_up_planned: ["closed"],
+  accepted: ["closed"],
+  closed: []
+};
+
+export function isValidDecisionStatusTransition(from: DecisionStatus, to: DecisionStatus): boolean {
+  return decisionStatusTransitions[from].includes(to);
+}
+
+export const bundleManifestSchema = z.object({
+  scope: z.string().trim().min(1),
+  purpose: z.string().trim().min(1),
+  privacyFloor: privacyLevelSchema,
+  generatedAt: z.string().trim().min(1),
+  contentHash: z.string().regex(/^[0-9a-f]{64}$/, "Must be a SHA-256 hex digest"),
+  fileCount: z.number().int().min(0)
+});
+
+export type BundleManifest = z.infer<typeof bundleManifestSchema>;
+
+// Forbidden metadata keys for shareable-floor bundles: never leak credential/secret material outward.
+const forbiddenShareableMetadataKeyPattern = /credential|secret/i;
+
+export function findForbiddenMetadataKeys(metadata: Record<string, unknown>): string[] {
+  return Object.keys(metadata).filter((key) => forbiddenShareableMetadataKeyPattern.test(key));
+}
 
 export const metadataSchema = z.record(z.string(), z.unknown());
 
@@ -126,6 +164,36 @@ export const listQuestionsQuerySchema = z.object({
 
 export const promoteEntryToQuestionCommandSchema = z.object({
   id: z.string().min(1)
+});
+
+export function isQuestionClosingStatus(status: QuestionStatus): boolean {
+  return (questionClosingStatuses as readonly string[]).includes(status);
+}
+
+export const createDecisionCommandSchema = z.object({
+  questionId: z.string().min(1),
+  decisionText: z.string().trim().min(1, "Decision text is required").max(4000),
+  status: decisionStatusSchema.default("proposed"),
+  decidedAt: z.date().optional(),
+  supersedesDecisionId: z.string().trim().min(1).optional()
+});
+
+export const updateDecisionStatusCommandSchema = z.object({
+  id: z.string().min(1),
+  status: decisionStatusSchema
+});
+
+export const createTaskCommandSchema = z.object({
+  decisionId: z.string().trim().min(1).optional(),
+  questionId: z.string().trim().min(1).optional(),
+  nextAction: z.string().trim().min(1, "Next action is required").max(2000),
+  status: taskStatusSchema.default("open"),
+  dueAt: z.date().optional()
+});
+
+export const updateTaskStatusCommandSchema = z.object({
+  id: z.string().min(1),
+  status: taskStatusSchema
 });
 
 export const createReferenceCommandSchema = z
@@ -392,6 +460,10 @@ export type MergeThemeCommand = z.infer<typeof mergeThemeCommandSchema>;
 export type UpdateProjectCommand = z.infer<typeof updateProjectCommandSchema>;
 export type AddEntryToThreadCommand = z.infer<typeof addEntryToThreadCommandSchema>;
 export type MoveEntryInThreadCommand = z.infer<typeof moveEntryInThreadCommandSchema>;
+export type CreateDecisionCommand = z.infer<typeof createDecisionCommandSchema>;
+export type UpdateDecisionStatusCommand = z.infer<typeof updateDecisionStatusCommandSchema>;
+export type CreateTaskCommand = z.infer<typeof createTaskCommandSchema>;
+export type UpdateTaskStatusCommand = z.infer<typeof updateTaskStatusCommandSchema>;
 
 export function slugifyName(value: string): string {
   return value

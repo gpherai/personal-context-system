@@ -5,7 +5,7 @@ import { isDatabaseUnavailable } from "@/application/errors";
 import { getSourceById } from "@/application/query-service";
 import { SetupNotice } from "@/components/setup-notice";
 import { Badge } from "@/components/ui/badge";
-import { formatDateTime, isValidId } from "@/lib/format";
+import { formatDateTime, isValidId, labelize } from "@/lib/format";
 import { sourceTypeDetails } from "@/domain/taxonomy";
 import type { SourceMetadata } from "@/domain/context";
 
@@ -126,7 +126,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone="blue">{typeDetail.label}</Badge>
-                <Badge tone={source.status === "archived" ? "neutral" : "teal"}>{source.status}</Badge>
+                <Badge tone={source.status === "archived" ? "neutral" : "teal"}>{labelize(source.status)}</Badge>
               </div>
               <h1 className="mt-3 text-3xl font-bold tracking-tight">{source.title}</h1>
             </div>

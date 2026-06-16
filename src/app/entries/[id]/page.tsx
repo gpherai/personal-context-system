@@ -36,8 +36,8 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone="blue">{labelize(entry.type)}</Badge>
-                <Badge>{entry.status}</Badge>
-                <Badge tone={entry.privacyLevel === "sensitive" ? "amber" : "neutral"}>{entry.privacyLevel}</Badge>
+                <Badge>{labelize(entry.status)}</Badge>
+                <Badge tone={entry.privacyLevel === "sensitive" ? "amber" : "neutral"}>{labelize(entry.privacyLevel)}</Badge>
               </div>
               <h1 className="mt-3 text-3xl font-bold tracking-tight">{entry.title}</h1>
             </div>
@@ -148,7 +148,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
                     href={`/questions/${question.id}`}
                     className="rounded-md px-2 py-2 text-sm transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   >
-                    <Badge tone="amber">{question.status}</Badge>
+                    <Badge tone="amber">{labelize(question.status)}</Badge>
                     <span className="ml-2">{question.prompt}</span>
                   </Link>
                 ))

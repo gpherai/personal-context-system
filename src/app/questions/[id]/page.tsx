@@ -7,9 +7,10 @@ import { DeleteForm } from "@/components/delete-form";
 import { EntryList } from "@/components/entry-list";
 import { SetupNotice } from "@/components/setup-notice";
 import { Badge } from "@/components/ui/badge";
-import { formatDateTime, isValidId } from "@/lib/format";
+import { formatDateTime, isValidId, labelize } from "@/lib/format";
 
 import { deleteQuestionAction } from "./actions";
+import { DecisionForm, DecisionHistory, TaskForm, TaskList } from "./decision-task-forms";
 import { QuestionUpdateForm } from "./question-forms";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +32,7 @@ export default async function QuestionPage({ params }: { params: Promise<{ id: s
         <header className="border-b border-border pb-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <Badge tone="amber">{question.status}</Badge>
+              <Badge tone="amber">{labelize(question.status)}</Badge>
               <h1 className="mt-3 text-3xl font-bold tracking-tight">{question.prompt}</h1>
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                 <span>Bijgewerkt {formatDateTime(question.updatedAt)}</span>
@@ -70,6 +71,20 @@ export default async function QuestionPage({ params }: { params: Promise<{ id: s
             <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
               <h2 className="mb-3 text-sm font-semibold">Question workflow</h2>
               <QuestionUpdateForm question={question} />
+            </div>
+            <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
+              <h2 className="mb-3 text-sm font-semibold">Decisions</h2>
+              <DecisionHistory decisions={question.decisions} questionId={question.id} />
+              <div className="mt-4 border-t border-border pt-4">
+                <DecisionForm questionId={question.id} />
+              </div>
+            </div>
+            <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
+              <h2 className="mb-3 text-sm font-semibold">Tasks</h2>
+              <TaskList tasks={question.tasks} questionId={question.id} />
+              <div className="mt-4 border-t border-border pt-4">
+                <TaskForm questionId={question.id} />
+              </div>
             </div>
           </aside>
         </section>

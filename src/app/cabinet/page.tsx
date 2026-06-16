@@ -134,7 +134,7 @@ export default async function CabinetPage() {
                     href={`/questions/${question.id}`}
                     className="block border-t border-border pt-3 transition-colors first:border-t-0 first:pt-0 cursor-pointer hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded"
                   >
-                    <Badge tone="amber">{question.status}</Badge>
+                    <Badge tone="amber">{labelize(question.status)}</Badge>
                     <p className="mt-1.5 text-sm leading-relaxed">{question.prompt}</p>
                   </Link>
                 ))

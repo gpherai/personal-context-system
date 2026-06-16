@@ -1,5 +1,6 @@
 import { type NextRequest } from "next/server";
 
+import { validateQuestionClosing } from "@/application/context-service";
 import { updateQuestionCommandSchema } from "@/domain/context";
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
 import { isValidId } from "@/lib/format";
@@ -59,6 +60,9 @@ export async function PUT(
     const existing = await repo.getQuestion(id);
     if (!existing) return apiError("Question not found.", 404);
 
+    const closingError = await validateQuestionClosing(id, parsed.data.status, repo);
+    if (closingError) return apiError(closingError, 422);
+
     const question = await repo.updateQuestion(parsed.data);
     return apiOk({
       id: question.id,
@@ -103,6 +107,9 @@ export async function PATCH(
     if (!parsed.success) {
       return apiError("Validation failed: " + parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", "), 422);
     }
+
+    const closingError = await validateQuestionClosing(id, parsed.data.status, repo);
+    if (closingError) return apiError(closingError, 422);
 
     const question = await repo.updateQuestion(parsed.data);
     return apiOk({

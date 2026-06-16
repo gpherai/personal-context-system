@@ -5,7 +5,7 @@ import { getThreads } from "@/application/query-service";
 import { EmptyState } from "@/components/empty-state";
 import { SetupNotice } from "@/components/setup-notice";
 import { Badge } from "@/components/ui/badge";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, labelize } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +32,7 @@ export default async function ThreadsPage() {
                 className="grid gap-2 px-5 py-4 transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge>{thread.status}</Badge>
+                  <Badge>{labelize(thread.status)}</Badge>
                   <span className="text-xs text-muted-foreground">Updated {formatDateTime(thread.updatedAt)}</span>
                 </div>
                 <h2 className="text-base font-semibold">{thread.title}</h2>

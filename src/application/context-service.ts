@@ -11,13 +11,17 @@ import { databaseMutationErrorState, isDatabaseUnavailable } from "./errors";
 import {
   addEntryToThreadCommandSchema,
   createAttachmentCommandSchema,
+  createDecisionCommandSchema,
   createEntryCommandSchema,
   createReferenceCommandSchema,
   createSavedFilterCommandSchema,
   createSourceCommandSchema,
+  createTaskCommandSchema,
   createThreadCommandSchema,
   deleteSourceCommandSchema,
   entryTypeSchema,
+  isQuestionClosingStatus,
+  isValidDecisionStatusTransition,
   listEntriesQuerySchema,
   listSourcesQuerySchema,
   mergeThemeCommandSchema,
@@ -33,18 +37,24 @@ import {
   recordStatusSchema,
   sourceTypeSchema,
   titleFromBody,
+  updateDecisionStatusCommandSchema,
   updateEntryCommandSchema,
   updateProjectCommandSchema,
   updateQuestionCommandSchema,
   updateSourceCommandSchema,
-  updateThemeCommandSchema
+  updateTaskStatusCommandSchema,
+  updateThemeCommandSchema,
+  type DecisionStatus,
+  type QuestionStatus
 } from "@/domain/context";
 import type {
+  DecisionRepository,
   EntryRepository,
   FilterRepository,
   QuestionRepository,
   SnapshotRepository,
   SourceRepository,
+  TaskRepository,
   TaxonomyRepository,
   ThreadRepository
 } from "@/repositories/context-repository";
@@ -179,6 +189,40 @@ export function parseMoveEntryInThreadFormData(threadId: string, entryId: string
   return moveEntryInThreadCommandSchema.safeParse({ threadId, entryId, direction });
 }
 
+export function parseCreateDecisionFormData(questionId: string, formData: FormData) {
+  return createDecisionCommandSchema.safeParse({
+    questionId,
+    decisionText: parseOptionalString(formStr(formData, "decisionText")),
+    status: parseOptionalString(formStr(formData, "status")) ?? "proposed",
+    decidedAt: parseOptionalDate(formStr(formData, "decidedAt")),
+    supersedesDecisionId: parseOptionalString(formStr(formData, "supersedesDecisionId"))
+  });
+}
+
+export function parseUpdateDecisionStatusFormData(id: string, formData: FormData) {
+  return updateDecisionStatusCommandSchema.safeParse({
+    id,
+    status: parseOptionalString(formStr(formData, "status"))
+  });
+}
+
+export function parseCreateTaskFormData(questionId: string, formData: FormData) {
+  return createTaskCommandSchema.safeParse({
+    questionId,
+    decisionId: parseOptionalString(formStr(formData, "decisionId")),
+    nextAction: parseOptionalString(formStr(formData, "nextAction")),
+    status: parseOptionalString(formStr(formData, "status")) ?? "open",
+    dueAt: parseOptionalDate(formStr(formData, "dueAt"))
+  });
+}
+
+export function parseUpdateTaskStatusFormData(id: string, formData: FormData) {
+  return updateTaskStatusCommandSchema.safeParse({
+    id,
+    status: parseOptionalString(formStr(formData, "status"))
+  });
+}
+
 export function parseCreateSavedFilterFormData(formData: FormData) {
   const rawParams = {
     search: parseOptionalString(formStr(formData, "search")),
@@ -289,16 +333,104 @@ export async function updateEntryFromForm(id: string, formData: FormData, reposi
   });
 }
 
-export async function updateQuestionFromForm(id: string, formData: FormData, repository: QuestionRepository) {
+export async function validateQuestionClosing(
+  questionId: string,
+  status: QuestionStatus,
+  repository: DecisionRepository
+): Promise<string | null> {
+  if (!isQuestionClosingStatus(status)) {
+    return null;
+  }
+
+  const decisions = await repository.listDecisionsForQuestion(questionId);
+  return decisions.length === 0
+    ? "Question kan niet afgesloten worden zonder Decision (of markeer als abandoned)."
+    : null;
+}
+
+export async function updateQuestionFromForm(
+  id: string,
+  formData: FormData,
+  repository: QuestionRepository & DecisionRepository
+) {
   const parsed = parseUpdateQuestionFormData(id, formData);
 
   if (!parsed.success) {
     return { ok: false as const, state: errorState("Check the highlighted fields.", parsed.error) };
   }
 
+  const closingError = await validateQuestionClosing(id, parsed.data.status, repository);
+  if (closingError) {
+    return { ok: false as const, state: { status: "error" as const, message: closingError } };
+  }
+
   return withDbErrorHandling(async () => {
     const question = await repository.updateQuestion(parsed.data);
     return { ok: true as const, question };
+  });
+}
+
+export async function createDecisionFromForm(questionId: string, formData: FormData, repository: DecisionRepository) {
+  const parsed = parseCreateDecisionFormData(questionId, formData);
+
+  if (!parsed.success) {
+    return { ok: false as const, state: errorState("Check the decision fields.", parsed.error) };
+  }
+
+  return withDbErrorHandling(async () => {
+    const decision = await repository.createDecision(parsed.data);
+    return { ok: true as const, decision };
+  });
+}
+
+export async function updateDecisionStatusFromForm(
+  id: string,
+  currentStatus: DecisionStatus,
+  formData: FormData,
+  repository: DecisionRepository
+) {
+  const parsed = parseUpdateDecisionStatusFormData(id, formData);
+
+  if (!parsed.success) {
+    return { ok: false as const, state: errorState("Check the decision status.", parsed.error) };
+  }
+
+  if (!isValidDecisionStatusTransition(currentStatus, parsed.data.status)) {
+    return {
+      ok: false as const,
+      state: { status: "error" as const, message: `Kan status niet wijzigen van "${currentStatus}" naar "${parsed.data.status}".` }
+    };
+  }
+
+  return withDbErrorHandling(async () => {
+    const decision = await repository.updateDecisionStatus(parsed.data);
+    return { ok: true as const, decision };
+  });
+}
+
+export async function createTaskFromForm(questionId: string, formData: FormData, repository: TaskRepository) {
+  const parsed = parseCreateTaskFormData(questionId, formData);
+
+  if (!parsed.success) {
+    return { ok: false as const, state: errorState("Check the task fields.", parsed.error) };
+  }
+
+  return withDbErrorHandling(async () => {
+    const task = await repository.createTask(parsed.data);
+    return { ok: true as const, task };
+  });
+}
+
+export async function updateTaskStatusFromForm(id: string, formData: FormData, repository: TaskRepository) {
+  const parsed = parseUpdateTaskStatusFormData(id, formData);
+
+  if (!parsed.success) {
+    return { ok: false as const, state: errorState("Check the task status.", parsed.error) };
+  }
+
+  return withDbErrorHandling(async () => {
+    const task = await repository.updateTaskStatus(parsed.data);
+    return { ok: true as const, task };
   });
 }
 

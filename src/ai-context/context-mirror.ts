@@ -1,4 +1,6 @@
-import type { EntryStatus, EntryType, PrivacyLevel } from "@/domain/context";
+import { createHash } from "node:crypto";
+
+import { findForbiddenMetadataKeys, privacyLevels, type BundleManifest, type EntryStatus, type EntryType, type PrivacyLevel } from "@/domain/context";
 import type {
   ContextMirrorSnapshot,
   EntryRecord,
@@ -671,4 +673,92 @@ export function buildContextMirror(
     generatedAt: generatedAtIso,
     files
   };
+}
+
+function privacyFloorRank(level: PrivacyLevel): number {
+  return privacyLevels.indexOf(level);
+}
+
+function entriesAtOrAbovePrivacyFloor(entries: EntryRecord[], floor: PrivacyLevel): EntryRecord[] {
+  const floorRank = privacyFloorRank(floor);
+  return entries.filter((entry) => privacyFloorRank(entry.privacyLevel) >= floorRank);
+}
+
+// Stable key ordering so the same logical content always hashes identically.
+function canonicalJson(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map(canonicalJson).join(",")}]`;
+  }
+  if (value !== null && typeof value === "object") {
+    const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) => a.localeCompare(b));
+    return `{${entries.map(([key, val]) => `${JSON.stringify(key)}:${canonicalJson(val)}`).join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
+function sha256Hex(input: string): string {
+  return createHash("sha256").update(input, "utf8").digest("hex");
+}
+
+export class ShareableBundleSecretLeakError extends Error {
+  constructor(entryId: string, keys: string[]) {
+    super(`Entry ${entryId} has forbidden credential/secret metadata keys for a shareable bundle: ${keys.join(", ")}`);
+    this.name = "ShareableBundleSecretLeakError";
+  }
+}
+
+function assertNoShareableSecretLeak(entries: EntryRecord[], privacyFloor: PrivacyLevel): void {
+  if (privacyFloor !== "shareable") {
+    return;
+  }
+
+  for (const entry of entries) {
+    const forbiddenKeys = findForbiddenMetadataKeys(entry.metadata);
+    if (forbiddenKeys.length > 0) {
+      throw new ShareableBundleSecretLeakError(entry.id, forbiddenKeys);
+    }
+  }
+}
+
+export interface GenerateBundleOptions {
+  scope: string;
+  purpose: string;
+  privacyFloor: PrivacyLevel;
+  generatedAt?: Date;
+}
+
+export interface GeneratedBundle {
+  manifest: BundleManifest;
+  contents: string;
+}
+
+// Deterministic traversal (sorted entries) + canonical JSON + SHA-256 content hash,
+// so the same logical snapshot always produces an identical, verifiable bundle.
+export function generateBundle(snapshot: ContextMirrorSnapshot, options: GenerateBundleOptions): GeneratedBundle {
+  const generatedAtIso = (options.generatedAt ?? new Date()).toISOString();
+  const entries = entriesAtOrAbovePrivacyFloor(sortedEntries(snapshot.entries), options.privacyFloor);
+
+  assertNoShareableSecretLeak(entries, options.privacyFloor);
+
+  const body = bundleMarkdown({
+    title: `${options.scope} Context Bundle`,
+    generatedAtIso,
+    scope: options.scope,
+    entries,
+    questions: snapshot.openQuestions,
+    localOnly: options.privacyFloor !== "shareable"
+  });
+
+  const contentHash = sha256Hex(canonicalJson({ scope: options.scope, entries: entries.map((e) => e.id), body }));
+
+  const manifest: BundleManifest = {
+    scope: options.scope,
+    purpose: options.purpose,
+    privacyFloor: options.privacyFloor,
+    generatedAt: generatedAtIso,
+    contentHash,
+    fileCount: 1
+  };
+
+  return { manifest, contents: body };
 }

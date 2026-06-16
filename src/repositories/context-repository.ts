@@ -1,12 +1,15 @@
 import type {
   AddEntryToThreadCommand,
   CreateAttachmentCommand,
+  CreateDecisionCommand,
   CreateEntryCommand,
   CreateQuestionCommand,
   CreateReferenceCommand,
   CreateSavedFilterCommand,
   CreateSourceCommand,
+  CreateTaskCommand,
   CreateThreadCommand,
+  DecisionStatus,
   EntryStatus,
   EntryType,
   ListEntriesQuery,
@@ -22,10 +25,13 @@ import type {
   SavedFilterParams,
   SourceMetadata,
   SourceType,
+  TaskStatus,
+  UpdateDecisionStatusCommand,
   UpdateEntryCommand,
   UpdateProjectCommand,
   UpdateQuestionCommand,
   UpdateSourceCommand,
+  UpdateTaskStatusCommand,
   UpdateThemeCommand
 } from "@/domain/context";
 
@@ -205,8 +211,32 @@ export interface NamedRecordContext extends NamedRecord {
   entries: EntryRecord[];
 }
 
+export interface DecisionRecord {
+  id: string;
+  questionId: string;
+  decisionText: string;
+  status: DecisionStatus;
+  decidedAt?: Date;
+  supersedesDecisionId?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface TaskRecord {
+  id: string;
+  decisionId?: string;
+  questionId?: string;
+  status: TaskStatus;
+  dueAt?: Date;
+  nextAction: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface QuestionContext extends QuestionRecord {
   entries: EntryRecord[];
+  decisions: DecisionRecord[];
+  tasks: TaskRecord[];
 }
 
 export interface ThreadRecord {
@@ -263,6 +293,17 @@ export interface QuestionRepository {
   deleteQuestion(id: string): Promise<void>;
 }
 
+export interface DecisionRepository {
+  listDecisionsForQuestion(questionId: string): Promise<DecisionRecord[]>;
+  createDecision(command: CreateDecisionCommand): Promise<DecisionRecord>;
+  updateDecisionStatus(command: UpdateDecisionStatusCommand): Promise<DecisionRecord>;
+}
+
+export interface TaskRepository {
+  createTask(command: CreateTaskCommand): Promise<TaskRecord>;
+  updateTaskStatus(command: UpdateTaskStatusCommand): Promise<TaskRecord>;
+}
+
 export interface TaxonomyRepository {
   getThemeBySlug(slug: string): Promise<NamedRecordContext | null>;
   getProjectBySlug(slug: string): Promise<NamedRecordContext | null>;
@@ -308,6 +349,8 @@ export interface ContextRepository extends
   EntryRepository,
   SourceRepository,
   QuestionRepository,
+  DecisionRepository,
+  TaskRepository,
   TaxonomyRepository,
   ThreadRepository,
   FilterRepository,

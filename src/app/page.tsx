@@ -7,6 +7,7 @@ import { EntryList } from "@/components/entry-list";
 import { SetupNotice } from "@/components/setup-notice";
 import { Badge } from "@/components/ui/badge";
 import type { DashboardOverview } from "@/repositories/context-repository";
+import { labelize } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -102,7 +103,7 @@ export default async function DashboardPage() {
                     href={`/questions/${question.id}`}
                     className="block border-t border-border pt-3 transition-colors first:border-t-0 first:pt-0 cursor-pointer hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded"
                   >
-                    <Badge tone="amber">{question.status}</Badge>
+                    <Badge tone="amber">{labelize(question.status)}</Badge>
                     <p className="mt-1.5 text-sm leading-relaxed">{question.prompt}</p>
                   </Link>
                 ))

@@ -66,6 +66,21 @@ enum ReferenceKind {
   other
 }
 
+enum DecisionStatus {
+  proposed
+  accepted
+  deferred
+  follow_up_planned
+  closed
+}
+
+enum TaskStatus {
+  open
+  in_progress
+  done
+  cancelled
+}
+
 model Entry {
   id           String       @id @default(cuid())
   type         EntryType
@@ -146,9 +161,48 @@ model Question {
 
   originEntry Entry?          @relation("QuestionOrigin", fields: [originEntryId], references: [id], onDelete: SetNull)
   entries     EntryQuestion[]
+  decisions   Decision[]
+  tasks       Task[]
 
   @@index([status])
   @@index([privacyLevel])
+}
+
+model Decision {
+  id                    String         @id @default(cuid())
+  questionId            String
+  decisionText          String         @db.Text
+  status                DecisionStatus @default(proposed)
+  decidedAt             DateTime?      @db.Timestamptz(6)
+  supersedesDecisionId  String?        @unique
+  createdAt             DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime       @updatedAt @db.Timestamptz(6)
+
+  question            Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  supersedesDecision  Decision? @relation("DecisionSupersedes", fields: [supersedesDecisionId], references: [id], onDelete: SetNull)
+  supersededBy        Decision? @relation("DecisionSupersedes")
+  tasks               Task[]
+
+  @@index([questionId])
+  @@index([status])
+}
+
+model Task {
+  id         String     @id @default(cuid())
+  decisionId String?
+  questionId String?
+  status     TaskStatus @default(open)
+  dueAt      DateTime?  @db.Timestamptz(6)
+  nextAction String     @db.Text
+  createdAt  DateTime   @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime   @updatedAt @db.Timestamptz(6)
+
+  decision Decision? @relation(fields: [decisionId], references: [id], onDelete: Cascade)
+  question Question? @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([decisionId])
+  @@index([questionId])
+  @@index([status])
 }
 
 model Thread {

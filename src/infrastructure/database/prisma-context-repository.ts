@@ -12,11 +12,13 @@ import {
   sourceMetadataSchema,
   type SourceType,
   type CreateAttachmentCommand,
+  type CreateDecisionCommand,
   type CreateEntryCommand,
   type CreateQuestionCommand,
   type CreateReferenceCommand,
   type CreateSavedFilterCommand,
   type CreateSourceCommand,
+  type CreateTaskCommand,
   type CreateThreadCommand,
   type AddEntryToThreadCommand,
   type ListEntriesQuery,
@@ -26,10 +28,12 @@ import {
   type MoveEntryInThreadCommand,
   type PromoteEntryToQuestionCommand,
   type RecordStatus,
+  type UpdateDecisionStatusCommand,
   type UpdateEntryCommand,
   type UpdateProjectCommand,
   type UpdateQuestionCommand,
   type UpdateSourceCommand,
+  type UpdateTaskStatusCommand,
   type UpdateThemeCommand
 } from "@/domain/context";
 import type {
@@ -39,6 +43,7 @@ import type {
   ContextRepository,
   DashboardHome,
   DashboardOverview,
+  DecisionRecord,
   EntryListItem,
   EntryRecord,
   GraphSnapshot,
@@ -51,6 +56,7 @@ import type {
   SavedFilterRecord,
   SourceRecord,
   SourceSummary,
+  TaskRecord,
   ThreadRecord
 } from "@/repositories/context-repository";
 
@@ -349,6 +355,50 @@ function mapQuestion(question: {
     originEntryId: optional(question.originEntryId),
     createdAt: question.createdAt,
     updatedAt: question.updatedAt
+  };
+}
+
+function mapDecision(decision: {
+  id: string;
+  questionId: string;
+  decisionText: string;
+  status: DecisionRecord["status"];
+  decidedAt: Date | null;
+  supersedesDecisionId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}): DecisionRecord {
+  return {
+    id: decision.id,
+    questionId: decision.questionId,
+    decisionText: decision.decisionText,
+    status: decision.status,
+    decidedAt: optional(decision.decidedAt),
+    supersedesDecisionId: optional(decision.supersedesDecisionId),
+    createdAt: decision.createdAt,
+    updatedAt: decision.updatedAt
+  };
+}
+
+function mapTask(task: {
+  id: string;
+  decisionId: string | null;
+  questionId: string | null;
+  status: TaskRecord["status"];
+  dueAt: Date | null;
+  nextAction: string;
+  createdAt: Date;
+  updatedAt: Date;
+}): TaskRecord {
+  return {
+    id: task.id,
+    decisionId: optional(task.decisionId),
+    questionId: optional(task.questionId),
+    status: task.status,
+    dueAt: optional(task.dueAt),
+    nextAction: task.nextAction,
+    createdAt: task.createdAt,
+    updatedAt: task.updatedAt
   };
 }
 
@@ -808,7 +858,9 @@ export class PrismaContextRepository implements ContextRepository {
               include: entryInclude
             }
           }
-        }
+        },
+        decisions: { orderBy: [{ createdAt: "desc" }] },
+        tasks: { orderBy: [{ createdAt: "desc" }] }
       }
     });
 
@@ -818,8 +870,65 @@ export class PrismaContextRepository implements ContextRepository {
 
     return {
       ...mapQuestion(question),
-      entries: question.entries.map(({ entry }) => mapEntry(entry))
+      entries: question.entries.map(({ entry }) => mapEntry(entry)),
+      decisions: question.decisions.map(mapDecision),
+      tasks: question.tasks.map(mapTask)
     };
+  }
+
+  async listDecisionsForQuestion(questionId: string): Promise<DecisionRecord[]> {
+    const decisions = await this.prisma.decision.findMany({
+      where: { questionId },
+      orderBy: [{ createdAt: "desc" }]
+    });
+
+    return decisions.map(mapDecision);
+  }
+
+  async createDecision(command: CreateDecisionCommand): Promise<DecisionRecord> {
+    const decision = await this.prisma.decision.create({
+      data: {
+        questionId: command.questionId,
+        decisionText: command.decisionText,
+        status: command.status,
+        decidedAt: command.decidedAt ?? null,
+        supersedesDecisionId: command.supersedesDecisionId ?? null
+      }
+    });
+
+    return mapDecision(decision);
+  }
+
+  async updateDecisionStatus(command: UpdateDecisionStatusCommand): Promise<DecisionRecord> {
+    const decision = await this.prisma.decision.update({
+      where: { id: command.id },
+      data: { status: command.status }
+    });
+
+    return mapDecision(decision);
+  }
+
+  async createTask(command: CreateTaskCommand): Promise<TaskRecord> {
+    const task = await this.prisma.task.create({
+      data: {
+        decisionId: command.decisionId ?? null,
+        questionId: command.questionId ?? null,
+        nextAction: command.nextAction,
+        status: command.status,
+        dueAt: command.dueAt ?? null
+      }
+    });
+
+    return mapTask(task);
+  }
+
+  async updateTaskStatus(command: UpdateTaskStatusCommand): Promise<TaskRecord> {
+    const task = await this.prisma.task.update({
+      where: { id: command.id },
+      data: { status: command.status }
+    });
+
+    return mapTask(task);
   }
 
   async createSavedFilter(command: CreateSavedFilterCommand): Promise<SavedFilterRecord> {
