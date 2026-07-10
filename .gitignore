@@ -35,3 +35,6 @@ data/backups/
 
 # Tool directories
 .antigravitycli/
+
+# graphify code-graph output (local dev tool, regenerate via `graphify update .`)
+/graphify-out/
