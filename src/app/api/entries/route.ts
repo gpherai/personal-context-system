@@ -36,10 +36,13 @@ export async function GET(request: NextRequest) {
   return withApiErrors(async () => {
     const sp = request.nextUrl.searchParams;
 
+    // Privacy boundary: this endpoint only ever returns shareable entries.
+    // The privacyLevel is forced here and intentionally NOT taken from the caller,
+    // so ?privacyLevel=private cannot be used to read private records.
     const parsed = listEntriesQuerySchema.safeParse({
       status: sp.get("status") ?? undefined,
       type: sp.get("type") ?? undefined,
-      privacyLevel: sp.get("privacyLevel") ?? "shareable",
+      privacyLevel: "shareable",
       limit: sp.has("limit") ? Number(sp.get("limit")) : undefined
     });
 

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { buildContextMirror, generateBundle, ShareableBundleSecretLeakError } from "./context-mirror";
+import type { SourceRecord } from "@/repositories/context-repository";
+
+import { applyBundleSelection, buildContextMirror, generateBundle, ShareableBundleSecretLeakError } from "./context-mirror";
 
 describe("context mirror", () => {
   it("builds deterministic core files with source ids", () => {
@@ -105,5 +107,119 @@ describe("generateBundle", () => {
     expect(() =>
       generateBundle(snapshot, { scope: "test", purpose: "verify", privacyFloor: "sensitive", generatedAt })
     ).not.toThrow();
+  });
+
+  function baseSource(overrides: Partial<SourceRecord> = {}): SourceRecord {
+    return {
+      id: "source_1",
+      type: "post",
+      title: "A raw source",
+      status: "active",
+      privacyLevel: "private",
+      metadata: { type: "post" },
+      themes: [],
+      references: [],
+      entries: [],
+      createdAt: generatedAt,
+      updatedAt: generatedAt,
+      ...overrides
+    };
+  }
+
+  it("excludes sources below the privacy floor", () => {
+    const snapshot = { ...snapshotWith("shareable"), sources: [baseSource({ privacyLevel: "private" })] };
+    const bundle = generateBundle(snapshot, { scope: "test", purpose: "verify", privacyFloor: "shareable", generatedAt });
+
+    expect(bundle.contents).not.toContain("source_1");
+  });
+
+  it("throws when a shareable-floor bundle would leak credential/secret metadata via a source", () => {
+    const snapshot = {
+      ...snapshotWith("shareable"),
+      sources: [baseSource({ privacyLevel: "shareable", metadata: { type: "post", secretKey: "leak-me" } as never })]
+    };
+
+    expect(() =>
+      generateBundle(snapshot, { scope: "test", purpose: "verify", privacyFloor: "shareable", generatedAt })
+    ).toThrow(ShareableBundleSecretLeakError);
+  });
+});
+
+describe("applyBundleSelection", () => {
+  const generatedAt = new Date("2026-04-29T10:00:00.000Z");
+  const baseEntry = {
+    id: "entry_1",
+    type: "observation" as const,
+    status: "active" as const,
+    title: "Entry",
+    body: "Body",
+    privacyLevel: "shareable" as const,
+    capturedAt: generatedAt,
+    createdAt: generatedAt,
+    updatedAt: generatedAt,
+    metadata: {},
+    themes: [{ id: "t1", slug: "theme-a", name: "Theme A" }],
+    projects: [],
+    questions: [],
+    threads: [],
+    references: [],
+    attachments: [],
+    sources: []
+  };
+
+  const baseSource: SourceRecord = {
+    id: "source_1",
+    type: "video",
+    title: "Video",
+    status: "active",
+    privacyLevel: "shareable",
+    metadata: { type: "video" },
+    themes: [{ id: "t1", slug: "theme-a", name: "Theme A" }],
+    references: [],
+    entries: [],
+    createdAt: generatedAt,
+    updatedAt: generatedAt
+  };
+
+  it("combines recordTypes, sourceTypes, themeSlugs, date range and ids as AND filters", () => {
+    const entries = [
+      { ...baseEntry, id: "entry_1", themes: [{ id: "t1", slug: "theme-a", name: "Theme A" }] },
+      { ...baseEntry, id: "entry_2", themes: [{ id: "t2", slug: "theme-b", name: "Theme B" }] }
+    ];
+    const sources = [
+      { ...baseSource, id: "source_1", type: "video" as const },
+      { ...baseSource, id: "source_2", type: "conversation" as const, metadata: { type: "conversation" as const, provider: "chatgpt" as const, conversationId: "c1", createdAt: generatedAt.toISOString(), updatedAt: generatedAt.toISOString(), messageCount: 0, messages: [] } }
+    ];
+
+    const result = applyBundleSelection(entries, sources, {
+      privacyFloor: "shareable",
+      recordTypes: ["entry", "source"],
+      sourceTypes: ["video"],
+      themeSlugs: ["theme-a"],
+      ids: ["entry_1", "source_1"]
+    });
+
+    expect(result.entries.map((e) => e.id)).toEqual(["entry_1"]);
+    expect(result.sources.map((s) => s.id)).toEqual(["source_1"]);
+  });
+
+  it("excludes conversation sources by default when no selection is given", () => {
+    const result = applyBundleSelection([baseEntry], [baseSource], undefined);
+
+    expect(result.entries).toHaveLength(1);
+    expect(result.sources).toHaveLength(1);
+  });
+
+  it("excludes a record type entirely when recordTypes omits it", () => {
+    const result = applyBundleSelection([baseEntry], [baseSource], {
+      privacyFloor: "private",
+      recordTypes: ["entry"],
+      sourceTypes: ["video"],
+      themeSlugs: [],
+      ids: []
+    });
+
+    expect(result.entries).toHaveLength(1);
+    expect(result.sources).toHaveLength(0);
   });
 });

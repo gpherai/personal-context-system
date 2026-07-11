@@ -4,16 +4,24 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { addEntryToThreadFromForm, moveEntryInThread, type MutationState } from "@/application/context-service";
-import { isDatabaseUnavailable } from "@/application/errors";
+import { databaseMutationErrorState, isDatabaseUnavailable } from "@/application/errors";
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
 import { isValidId } from "@/lib/format";
 
-export async function deleteThreadAction(threadId: string): Promise<void> {
+export async function deleteThreadAction(
+  threadId: string,
+  _previousState: MutationState,
+  _formData: FormData
+): Promise<MutationState> {
+  if (!isValidId(threadId)) {
+    return { status: "error", message: "Invalid thread id." };
+  }
+
   try {
     await createPrismaContextRepository().deleteThread(threadId);
   } catch (error) {
-    if (isDatabaseUnavailable(error)) return;
-    throw error;
+    if (isDatabaseUnavailable(error)) return databaseMutationErrorState();
+    return { status: "error", message: error instanceof Error ? error.message : "Could not delete thread." };
   }
 
   revalidatePath("/threads");
@@ -27,7 +35,7 @@ export async function addEntryToThreadAction(
   formData: FormData
 ): Promise<MutationState> {
   if (!isValidId(threadId)) {
-    return { status: "error", message: "Ongeldig draad-id." };
+    return { status: "error", message: "Invalid thread id." };
   }
 
   const result = await addEntryToThreadFromForm(threadId, formData, createPrismaContextRepository());
@@ -37,7 +45,7 @@ export async function addEntryToThreadAction(
   }
 
   revalidatePath(`/threads/${threadSlug}`);
-  return { status: "success", message: "Notitie toegevoegd aan draad." };
+  return { status: "success", message: "Entry added to thread." };
 }
 
 export async function moveEntryInThreadAction(

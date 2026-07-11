@@ -15,7 +15,7 @@ export function QuestionStatusField({ defaultValue }: { defaultValue: QuestionSt
       Status
       <select
         aria-describedby={descriptionId}
-        className="h-10 rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+        className="field-select"
         name="status"
         value={value}
         onChange={(event) => setValue(event.target.value as QuestionStatus)}

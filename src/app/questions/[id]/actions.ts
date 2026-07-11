@@ -11,7 +11,7 @@ import {
   updateTaskStatusFromForm,
   type MutationState
 } from "@/application/context-service";
-import { isDatabaseUnavailable } from "@/application/errors";
+import { databaseMutationErrorState, isDatabaseUnavailable } from "@/application/errors";
 import type { DecisionStatus } from "@/domain/context";
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
 import { isValidId } from "@/lib/format";
@@ -72,7 +72,7 @@ export async function updateDecisionStatusAction(
   }
 
   revalidatePath(`/questions/${questionId}`);
-  return { status: "success", message: "Decision-status bijgewerkt." };
+  return { status: "success", message: "Decision status updated." };
 }
 
 export async function createTaskAction(
@@ -107,17 +107,23 @@ export async function updateTaskStatusAction(
   }
 
   revalidatePath(`/questions/${questionId}`);
-  return { status: "success", message: "Task-status bijgewerkt." };
+  return { status: "success", message: "Task status updated." };
 }
 
-export async function deleteQuestionAction(questionId: string): Promise<void> {
-  if (!isValidId(questionId)) return;
+export async function deleteQuestionAction(
+  questionId: string,
+  _previousState: MutationState,
+  _formData: FormData
+): Promise<MutationState> {
+  if (!isValidId(questionId)) {
+    return { status: "error", message: "Invalid question id." };
+  }
 
   try {
     await createPrismaContextRepository().deleteQuestion(questionId);
   } catch (error) {
-    if (isDatabaseUnavailable(error)) return;
-    throw error;
+    if (isDatabaseUnavailable(error)) return databaseMutationErrorState();
+    return { status: "error", message: error instanceof Error ? error.message : "Could not delete question." };
   }
 
   revalidatePath("/");

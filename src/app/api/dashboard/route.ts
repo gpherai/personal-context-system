@@ -13,6 +13,9 @@ type DashboardDto = {
   counts: DashboardOverview["counts"];
 };
 
+// Privacy boundary: this endpoint only exposes shareable material.
+// Entries and questions carry a privacyLevel and are filtered to "shareable";
+// themes/projects have no privacy dimension in the schema, so they pass through.
 function toDto(overview: DashboardOverview): DashboardDto {
   return {
     recentEntries: overview.recentEntries
@@ -20,9 +23,11 @@ function toDto(overview: DashboardOverview): DashboardDto {
       .map(({ id, type, status, title, privacyLevel, capturedAt }) => ({
         id, type, status, title, privacyLevel, capturedAt
       })),
-    openQuestions: overview.openQuestions.map(({ id, prompt, status, summary }) => ({
-      id, prompt, status, summary
-    })),
+    openQuestions: overview.openQuestions
+      .filter(({ privacyLevel }) => privacyLevel === "shareable")
+      .map(({ id, prompt, status, summary }) => ({
+        id, prompt, status, summary
+      })),
     activeThemes: overview.activeThemes.map(({ id, slug, name }) => ({ id, slug, name })),
     activeProjects: overview.activeProjects.map(({ id, slug, name }) => ({ id, slug, name })),
     counts: overview.counts

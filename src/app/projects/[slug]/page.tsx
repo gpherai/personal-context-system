@@ -23,7 +23,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
     }
 
     return (
-      <div className="mx-auto grid max-w-5xl gap-5">
+      <div className="mx-auto grid max-w-4xl gap-5">
         <header className="border-b border-border pb-5">
           <div className="flex items-start justify-between gap-4">
             <Link
@@ -35,20 +35,15 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             {project.entries.length === 0 && (
               <DeleteForm
                 action={deleteProjectAction.bind(null, project.id)}
-                confirmMessage={`Project "${project.name}" permanent verwijderen?`}
-              >
-                <button
-                  type="submit"
-                  className="inline-flex h-11 items-center justify-center rounded-md border border-danger/30 bg-danger/8 px-4 text-sm font-medium text-danger transition-colors duration-200 hover:bg-danger/12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30"
-                >
-                  Verwijderen
-                </button>
-              </DeleteForm>
+                title="Delete project"
+                message={`Permanently delete the project "${project.name}"? This cannot be undone.`}
+                triggerLabel="Delete"
+              />
             )}
           </div>
           <div className="mt-3 flex gap-2">
             <Badge tone="blue">Project</Badge>
-            {project.status === "archived" && <Badge tone="amber">Gearchiveerd</Badge>}
+            {project.status === "archived" && <Badge tone="amber">Archived</Badge>}
           </div>
           <h1 className="mt-3 text-3xl font-bold tracking-tight">{project.name}</h1>
           {project.description && <p className="mt-2 text-sm leading-6 text-muted-foreground">{project.description}</p>}
@@ -57,7 +52,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
         <section className="grid gap-4 md:grid-cols-2">
           <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
-            <h2 className="mb-3 text-sm font-semibold">Naam en beschrijving</h2>
+            <h2 className="mb-3 text-sm font-semibold">Name and description</h2>
             <RenameProjectForm
               projectId={project.id}
               name={project.name}
@@ -68,7 +63,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
             <h2 className="mb-3 text-sm font-semibold">Status</h2>
             <p className="mb-3 text-sm text-muted-foreground">
-              Een gearchiveerd project verdwijnt uit actieve overzichten, maar blijft bereikbaar via deze pagina.
+              An archived project disappears from active overviews but stays reachable via this page.
             </p>
             <ArchiveProjectForm
               projectId={project.id}

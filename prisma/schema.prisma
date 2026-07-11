@@ -53,6 +53,7 @@ enum SourceType {
   stotra
   deity_concept
   teacher
+  conversation
 }
 
 enum ReferenceKind {
@@ -266,16 +267,17 @@ model SavedFilter {
 }
 
 model Source {
-  id          String       @id @default(cuid())
-  type        SourceType
-  title       String       @db.VarChar(320)
-  description String?      @db.Text
-  body        String?      @db.Text
-  status      RecordStatus @default(active)
-  metadata    Json         @default("{}")
-  searchText  String?      @db.Text
-  createdAt   DateTime     @default(now()) @db.Timestamptz(6)
-  updatedAt   DateTime     @updatedAt @db.Timestamptz(6)
+  id           String       @id @default(cuid())
+  type         SourceType
+  title        String       @db.VarChar(320)
+  description  String?      @db.Text
+  body         String?      @db.Text
+  status       RecordStatus @default(active)
+  privacyLevel PrivacyLevel @default(private)
+  metadata     Json         @default("{}")
+  searchText   String?      @db.Text
+  createdAt    DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime     @updatedAt @db.Timestamptz(6)
 
   themes      SourceTheme[]
   entries     EntrySource[]
@@ -283,6 +285,7 @@ model Source {
 
   @@index([type])
   @@index([status])
+  @@index([privacyLevel])
 }
 
 model SourceTheme {

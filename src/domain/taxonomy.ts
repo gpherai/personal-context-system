@@ -99,5 +99,9 @@ export const sourceTypeDetails = {
   teacher: {
     label: "Teacher",
     description: "Teacher, guru, or tradition lineage holder as a named entity."
+  },
+  conversation: {
+    label: "Conversation",
+    description: "Imported AI chat transcript (ChatGPT, Claude, Gemini)."
   }
 } satisfies Record<SourceType, TaxonomyDetail>;

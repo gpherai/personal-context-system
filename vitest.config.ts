@@ -10,7 +10,10 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@": new URL("./src", import.meta.url).pathname
+      "@": new URL("./src", import.meta.url).pathname,
+      // `server-only` throws outside a React Server environment; stub it so
+      // server modules can be imported in unit tests.
+      "server-only": new URL("./src/test/server-only-stub.ts", import.meta.url).pathname
     }
   }
 });

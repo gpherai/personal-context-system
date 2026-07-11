@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 
 import { initialMutationState } from "@/application/action-states";
-import { SourcePicker } from "@/components/source-picker";
+import { FieldError } from "@/components/field-error";
 import { TaxonomyPicker } from "@/components/taxonomy-picker";
 import { Button } from "@/components/ui/button";
 import { sourceTypes, type SourceType, type RecordStatus, type SourceMetadata } from "@/domain/context";
@@ -17,12 +17,6 @@ interface Theme {
   slug: string;
 }
 
-interface SourceOption {
-  id: string;
-  type: SourceType;
-  title: string;
-}
-
 interface SourceFormInitial {
   type?: SourceType;
   status?: RecordStatus;
@@ -32,22 +26,13 @@ interface SourceFormInitial {
   metadata?: SourceMetadata;
   themes?: { id: string }[];
   references?: ReferenceRecord[];
-  outgoingRelationships?: { toId: string }[];
 }
 
 interface SourceFormProps {
   action: (state: MutationState, formData: FormData) => Promise<MutationState>;
   themes: Theme[];
-  deities?: SourceOption[];
-  teachers?: SourceOption[];
-  stotraSources?: SourceOption[];
   initial?: SourceFormInitial;
   isEdit?: boolean;
-}
-
-function FieldError({ errors }: { errors?: string[] }) {
-  if (!errors?.length) return null;
-  return <p role="alert" aria-live="polite" className="mt-1 text-sm text-danger">{errors[0]}</p>;
 }
 
 function Field({ label, error, children }: { label: string; error?: string[]; children: React.ReactNode }) {
@@ -64,19 +49,11 @@ function Field({ label, error, children }: { label: string; error?: string[]; ch
 function MetadataFields({
   type,
   initial,
-  errors,
-  deities,
-  teachers,
-  stotraSources,
-  linkedSourceIds
+  errors
 }: {
   type: string;
   initial?: Record<string, unknown>;
   errors?: Record<string, string[] | undefined>;
-  deities: SourceOption[];
-  teachers: SourceOption[];
-  stotraSources: SourceOption[];
-  linkedSourceIds: string[];
 }) {
   const m = (initial ?? {}) as Record<string, unknown>;
   const str = (k: string) => (typeof m[k] === "string" ? String(m[k]) : "");
@@ -143,18 +120,6 @@ function MetadataFields({
           <Field label="Mantras (one per line)" error={err("mantras")}>
             <textarea className="field-textarea" name="mantras" defaultValue={lines("mantras")} placeholder="Om Namah Shivaya&#10;Om Gam Ganapataye Namah" />
           </Field>
-          {deities.length > 0 && (
-            <div className="grid gap-2">
-              <span className="text-sm font-medium">Deity</span>
-              <SourcePicker sources={deities} selectedIds={linkedSourceIds} name="deitySourceIds" />
-            </div>
-          )}
-          {stotraSources.length > 0 && (
-            <div className="grid gap-2">
-              <span className="text-sm font-medium">Included stotra</span>
-              <SourcePicker sources={stotraSources} selectedIds={linkedSourceIds} name="stotraSourceIds" />
-            </div>
-          )}
         </div>
       );
     case "upadesha":
@@ -174,12 +139,6 @@ function MetadataFields({
           <Field label="Chapters / sections (one per line)" error={err("chapters")}>
             <textarea className="field-textarea" name="chapters" defaultValue={lines("chapters")} placeholder="Introduction&#10;Chapter 1" />
           </Field>
-          {teachers.length > 0 && (
-            <div className="grid gap-2">
-              <span className="text-sm font-medium">Teacher</span>
-              <SourcePicker sources={teachers} selectedIds={linkedSourceIds} name="teacherSourceIds" />
-            </div>
-          )}
         </div>
       );
     case "stotra":
@@ -192,12 +151,6 @@ function MetadataFields({
           <Field label="Mantras / shlokas (one per line)" error={err("mantras")}>
             <textarea className="field-textarea" name="mantras" defaultValue={lines("mantras")} placeholder="Om Namah Shivaya&#10;Shri Ram Jai Ram" />
           </Field>
-          {deities.length > 0 && (
-            <div className="grid gap-2">
-              <span className="text-sm font-medium">Deity</span>
-              <SourcePicker sources={deities} selectedIds={linkedSourceIds} name="deitySourceIds" />
-            </div>
-          )}
         </div>
       );
     case "deity_concept":
@@ -297,14 +250,14 @@ function ReferencesSection({ existingReferences }: { existingReferences: Referen
 
       <div className="grid gap-2 sm:grid-cols-[1fr_180px]">
         <input
-          className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          className="field-input"
           onChange={(e) => setUrlInput(e.target.value)}
           placeholder="https://…"
           type="url"
           value={urlInput}
         />
         <input
-          className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          className="field-input"
           onChange={(e) => setTitleInput(e.target.value)}
           placeholder="Title (optional)"
           type="text"
@@ -322,7 +275,7 @@ function ReferencesSection({ existingReferences }: { existingReferences: Referen
   );
 }
 
-export function SourceForm({ action, themes, deities = [], teachers = [], stotraSources = [], initial, isEdit = false }: SourceFormProps) {
+export function SourceForm({ action, themes, initial, isEdit = false }: SourceFormProps) {
   const [state, formAction, pending] = useActionState(action, initialMutationState);
   const [selectedType, setSelectedType] = useState<string>(initial?.type ?? "");
 
@@ -343,7 +296,7 @@ export function SourceForm({ action, themes, deities = [], teachers = [], stotra
           {isEdit ? (
             <>
               <input type="hidden" name="type" value={initial?.type ?? ""} />
-              <div className={`$field-input flex items-center bg-surface-muted text-muted-foreground`}>
+              <div className="field-input flex items-center bg-surface-muted text-muted-foreground">
                 {initial?.type ? sourceTypeDetails[initial.type as keyof typeof sourceTypeDetails]?.label : "—"}
               </div>
             </>
@@ -355,11 +308,13 @@ export function SourceForm({ action, themes, deities = [], teachers = [], stotra
               onChange={(e) => setSelectedType(e.target.value)}
             >
               <option value="">Choose a type…</option>
-              {sourceTypes.map((type) => (
-                <option key={type} value={type}>
-                  {sourceTypeDetails[type].label}
-                </option>
-              ))}
+              {sourceTypes
+                .filter((type) => type !== "conversation")
+                .map((type) => (
+                  <option key={type} value={type}>
+                    {sourceTypeDetails[type].label}
+                  </option>
+                ))}
             </select>
           )}
         </Field>
@@ -384,7 +339,7 @@ export function SourceForm({ action, themes, deities = [], teachers = [], stotra
 
       <Field label="Description">
         <textarea
-          className="min-h-24 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          className="field-textarea min-h-24"
           name="description"
           defaultValue={initial?.description ?? ""}
           placeholder="Optional short description"
@@ -393,7 +348,7 @@ export function SourceForm({ action, themes, deities = [], teachers = [], stotra
 
       <Field label="Body / full text">
         <textarea
-          className="min-h-32 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          className="field-textarea min-h-32"
           name="body"
           defaultValue={initial?.body ?? ""}
           placeholder="Full text, katha, article body, or extended notes…"
@@ -409,10 +364,6 @@ export function SourceForm({ action, themes, deities = [], teachers = [], stotra
             type={isEdit ? (initial?.type ?? "") : selectedType}
             initial={initialMeta}
             errors={state.fieldErrors}
-            deities={deities}
-            teachers={teachers}
-            stotraSources={stotraSources}
-            linkedSourceIds={initial?.outgoingRelationships?.map(r => r.toId) ?? []}
           />
         </fieldset>
       )}

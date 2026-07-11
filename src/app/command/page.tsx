@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { Bot, FileText, FolderTree, ShieldCheck, Terminal } from "lucide-react";
+import { Bot, FileText, FolderTree, Package, ShieldCheck, Terminal } from "lucide-react";
 
 import { isDatabaseUnavailable } from "@/application/errors";
 import { getContextMirrorStatus, getSavedFilters } from "@/application/query-service";
 import { formatDateTime } from "@/lib/format";
 import { savedFilterHref, systemSavedFilters } from "@/lib/saved-filter-url";
 
+import { GenerateBundleForm } from "./generate-bundle-form";
 import { RebuildMirrorForm } from "./rebuild-form";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +23,7 @@ export default async function CommandPage() {
   const questionBundleCount = mirrorStatus.files.filter((f) => f.startsWith("bundles/questions/")).length;
 
   return (
-    <div className="mx-auto grid max-w-5xl gap-6">
+    <div className="mx-auto grid max-w-6xl gap-6">
       <header className="border-b border-border pb-6">
         <p className="text-xs font-semibold uppercase tracking-widest text-primary">Command Center</p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">AI context operations</h1>
@@ -44,6 +45,14 @@ export default async function CommandPage() {
             </code>
           </p>
           <RebuildMirrorForm />
+
+          <div className="mt-5 border-t border-border pt-5">
+            <div className="mb-3 flex items-center gap-2">
+              <Package className="h-4 w-4 text-primary" aria-hidden="true" />
+              <h2 className="text-sm font-semibold">Verifiable bundle</h2>
+            </div>
+            <GenerateBundleForm />
+          </div>
         </div>
 
         <aside className="grid gap-4 content-start">

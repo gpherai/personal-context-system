@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button-link";
 
 import { isDatabaseUnavailable } from "@/application/errors";
 import { getLedgerDropdowns, getLedgerEntries, getSavedFilters } from "@/application/query-service";
@@ -109,7 +110,7 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
           className="grid gap-3 rounded-lg border border-border bg-surface p-4 shadow-sm md:grid-cols-2 xl:grid-cols-[1fr_160px_140px_140px_160px_160px]"
         >
           <label className="grid gap-1.5 text-sm font-medium">
-            Zoeken
+            Search
             <span className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden="true" />
               <input
@@ -123,7 +124,7 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
           <label className="grid gap-1.5 text-sm font-medium">
             Type
             <select className="field-select" defaultValue={params["type"] ?? ""} name="type">
-              <option value="">Alles</option>
+              <option value="">All</option>
               {entryTypes.map((t) => (
                 <option key={t} value={t}>{labelize(t)}</option>
               ))}
@@ -132,25 +133,25 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
           <label className="grid gap-1.5 text-sm font-medium">
             Status
             <select className="field-select" defaultValue={params["status"] ?? ""} name="status">
-              <option value="">Alles</option>
+              <option value="">All</option>
               {entryStatuses.map((s) => (
-                <option key={s} value={s}>{s}</option>
+                <option key={s} value={s}>{labelize(s)}</option>
               ))}
             </select>
           </label>
           <label className="grid gap-1.5 text-sm font-medium">
             Privacy
             <select className="field-select" defaultValue={params["privacyLevel"] ?? ""} name="privacyLevel">
-              <option value="">Alles</option>
+              <option value="">All</option>
               {privacyLevels.map((p) => (
-                <option key={p} value={p}>{p}</option>
+                <option key={p} value={p}>{labelize(p)}</option>
               ))}
             </select>
           </label>
           <label className="grid gap-1.5 text-sm font-medium">
-            Thema
+            Theme
             <select className="field-select" defaultValue={params["themeSlug"] ?? ""} name="themeSlug">
-              <option value="">Alles</option>
+              <option value="">All</option>
               {overview.activeThemes.map((t) => (
                 <option key={t.id} value={t.slug}>{t.name}</option>
               ))}
@@ -159,37 +160,32 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
           <label className="grid gap-1.5 text-sm font-medium">
             Project
             <select className="field-select" defaultValue={params["projectSlug"] ?? ""} name="projectSlug">
-              <option value="">Alles</option>
+              <option value="">All</option>
               {overview.activeProjects.map((p) => (
                 <option key={p.id} value={p.slug}>{p.name}</option>
               ))}
             </select>
           </label>
           <label className="grid gap-1.5 text-sm font-medium">
-            Vraag
+            Question
             <select className="field-select" defaultValue={params["questionId"] ?? ""} name="questionId">
-              <option value="">Alles</option>
+              <option value="">All</option>
               {overview.openQuestions.map((q) => (
                 <option key={q.id} value={q.id}>{q.prompt}</option>
               ))}
             </select>
           </label>
           <label className="grid gap-1.5 text-sm font-medium">
-            Van
+            From
             <input className="field-input" defaultValue={params["occurredFrom"] ?? ""} name="occurredFrom" type="date" />
           </label>
           <label className="grid gap-1.5 text-sm font-medium">
-            Tot
+            To
             <input className="field-input" defaultValue={params["occurredTo"] ?? ""} name="occurredTo" type="date" />
           </label>
           <div className="flex items-end gap-2">
-            <Button type="submit">Toepassen</Button>
-            <Link
-              href="/ledger"
-              className="inline-flex h-10 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium text-foreground transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-            >
-              Wissen
-            </Link>
+            <Button type="submit">Apply</Button>
+            <ButtonLink href="/ledger" variant="secondary">Clear</ButtonLink>
           </div>
         </form>
 

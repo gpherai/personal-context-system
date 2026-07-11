@@ -39,16 +39,16 @@ export function TaxonomyPicker({ themes, selectedIds, name = "themeIds" }: Taxon
         <input key={id} type="hidden" name={name} value={id} />
       ))}
       <input
-        aria-label="Zoek thema's"
-        className="h-9 w-full rounded-md border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+        aria-label="Search themes"
+        className="field-input"
         onChange={(e) => setSearch(e.target.value)}
-        placeholder="Zoeken…"
+        placeholder="Search…"
         type="search"
         value={search}
       />
       <div className="max-h-48 overflow-y-auto rounded-md border border-border bg-surface">
         {filtered.length === 0 ? (
-          <p className="px-3 py-2 text-sm text-muted-foreground">Geen thema&apos;s gevonden</p>
+          <p className="px-3 py-2 text-sm text-muted-foreground">No themes found</p>
         ) : (
           filtered.map((theme) => (
             <label
@@ -67,7 +67,7 @@ export function TaxonomyPicker({ themes, selectedIds, name = "themeIds" }: Taxon
         )}
       </div>
       {selected.size > 0 && (
-        <p className="text-xs text-muted-foreground">{selected.size} thema{selected.size !== 1 ? "'s" : ""} geselecteerd</p>
+        <p className="text-xs text-muted-foreground">{selected.size} theme{selected.size !== 1 ? "s" : ""} selected</p>
       )}
     </div>
   );

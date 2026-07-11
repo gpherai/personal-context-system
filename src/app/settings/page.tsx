@@ -4,7 +4,7 @@ export default function SettingsPage() {
   const mirrorDir = process.env.CONTEXT_MIRROR_DIR ?? "data/context-mirror";
 
   return (
-    <div className="mx-auto grid max-w-5xl gap-8">
+    <div className="mx-auto grid max-w-6xl gap-8">
       <header className="border-b border-border pb-6">
         <p className="text-xs font-semibold uppercase tracking-widest text-primary">Settings</p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">Local operation</h1>

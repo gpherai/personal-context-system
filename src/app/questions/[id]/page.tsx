@@ -28,20 +28,20 @@ export default async function QuestionPage({ params }: { params: Promise<{ id: s
     }
 
     return (
-      <div className="mx-auto grid max-w-5xl gap-5">
+      <div className="mx-auto grid max-w-4xl gap-5">
         <header className="border-b border-border pb-5">
           <div className="flex items-start justify-between gap-4">
             <div>
               <Badge tone="amber">{labelize(question.status)}</Badge>
               <h1 className="mt-3 text-3xl font-bold tracking-tight">{question.prompt}</h1>
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-                <span>Bijgewerkt {formatDateTime(question.updatedAt)}</span>
+                <span>Updated {formatDateTime(question.updatedAt)}</span>
                 {question.originEntryId && (
                   <Link
                     href={`/entries/${question.originEntryId}`}
                     className="font-medium text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   >
-                    Oorspronkelijke notitie
+                    Original entry
                   </Link>
                 )}
               </div>
@@ -49,16 +49,10 @@ export default async function QuestionPage({ params }: { params: Promise<{ id: s
             </div>
             <DeleteForm
               action={deleteQuestionAction.bind(null, question.id)}
-              confirmMessage="Vraag permanent verwijderen?"
-              className="shrink-0"
-            >
-              <button
-                type="submit"
-                className="inline-flex h-11 items-center justify-center rounded-md border border-danger/30 bg-danger/8 px-4 text-sm font-medium text-danger transition-colors duration-200 hover:bg-danger/12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30"
-              >
-                Verwijderen
-              </button>
-            </DeleteForm>
+              title="Delete question"
+              message="This permanently deletes the question and its decisions/tasks. This cannot be undone."
+              triggerLabel="Delete"
+            />
           </div>
         </header>
 

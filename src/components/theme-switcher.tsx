@@ -56,7 +56,7 @@ function useThemeState() {
 export function ModeToggle() {
   const { mode, setMode, theme, mounted } = useThemeState();
 
-  if (!mounted) return <div className="h-8 w-8" aria-hidden="true" />;
+  if (!mounted) return <div className="h-11 w-11" aria-hidden="true" />;
 
   function toggleMode() {
     const next: ThemeMode = mode === "light" ? "dark" : "light";
@@ -67,9 +67,9 @@ export function ModeToggle() {
   return (
     <button
       type="button"
-      aria-label={`Schakel naar ${mode === "light" ? "donker" : "licht"} modus`}
+      aria-label={`Switch to ${mode === "light" ? "dark" : "light"} mode`}
       onClick={toggleMode}
-      className="cursor-pointer rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+      className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
     >
       {mode === "dark"
         ? <Sun className="h-4 w-4" aria-hidden="true" />
@@ -106,12 +106,16 @@ export function ThemeSwitcher() {
             aria-pressed={theme === t.name}
             title={t.label}
             onClick={() => selectTheme(t.name)}
-            className={cn(
-              "h-5 w-5 cursor-pointer rounded-full border-2 transition-transform duration-150 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
-              theme === t.name ? "border-foreground scale-110" : "border-transparent opacity-70"
-            )}
-            style={{ backgroundColor: t.color }}
-          />
+            className="group flex h-11 w-11 cursor-pointer items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          >
+            <span
+              className={cn(
+                "h-5 w-5 rounded-full border-2 transition-transform duration-150 group-hover:scale-110",
+                theme === t.name ? "border-foreground scale-110" : "border-transparent opacity-70"
+              )}
+              style={{ backgroundColor: t.color }}
+            />
+          </button>
         ))}
       </div>
 

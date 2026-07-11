@@ -1,10 +1,12 @@
 "use client";
 
-import { useActionState, useEffect, useId } from "react";
+import { useActionState, useEffect, useId, useRef } from "react";
 
 import { EntryTypeField } from "@/components/entry-type-field";
 import { Button } from "@/components/ui/button";
+import { FieldError } from "@/components/field-error";
 import { entryStatuses, privacyLevels, type EntryType, type EntryStatus, type PrivacyLevel } from "@/domain/context";
+import { labelize } from "@/lib/format";
 
 import { initialMutationState } from "@/application/action-states";
 
@@ -33,19 +35,16 @@ function namesValue(records: { name: string }[]): string {
   return records.map((record) => record.name).join(", ");
 }
 
-function FieldError({ id, errors }: { id?: string; errors?: string[] }) {
-  if (!errors?.length) return null;
-  return (
-    <p id={id} role="alert" aria-live="polite" className="mt-1 text-xs text-danger">
-      {errors[0]}
-    </p>
-  );
-}
-
 export function EditEntryForm({ entry }: { entry: EditEntryDto }) {
   const updateEntryWithId = updateEntryAction.bind(null, entry.id);
   const [state, formAction, pending] = useActionState(updateEntryWithId, initialMutationState);
   const formId = useId();
+  // Set the max date on the DOM after mount so SSR and client render identical
+  // markup (avoids a hydration mismatch when the render straddles midnight).
+  const occurredAtRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (occurredAtRef.current) occurredAtRef.current.max = new Date().toISOString().split("T")[0];
+  }, []);
 
   const ids = {
     title:      `${formId}-title`,
@@ -83,7 +82,7 @@ export function EditEntryForm({ entry }: { entry: EditEntryDto }) {
           Status
           <select className="field-select" name="status" defaultValue={entry.status}>
             {entryStatuses.map((status) => (
-              <option key={status} value={status}>{status}</option>
+              <option key={status} value={status}>{labelize(status)}</option>
             ))}
           </select>
         </label>
@@ -92,7 +91,7 @@ export function EditEntryForm({ entry }: { entry: EditEntryDto }) {
           Privacy
           <select className="field-select" name="privacyLevel" defaultValue={entry.privacyLevel}>
             {privacyLevels.map((privacy) => (
-              <option key={privacy} value={privacy}>{privacy}</option>
+              <option key={privacy} value={privacy}>{labelize(privacy)}</option>
             ))}
           </select>
         </label>
@@ -160,11 +159,11 @@ export function EditEntryForm({ entry }: { entry: EditEntryDto }) {
         <label className="grid gap-1.5 text-sm font-medium">
           Occurred at
           <input
+            ref={occurredAtRef}
             className="field-input"
             name="occurredAt"
             type="date"
             defaultValue={dateInputValue(entry.occurredAt)}
-            max={new Date().toISOString().split("T")[0]}
           />
         </label>
 

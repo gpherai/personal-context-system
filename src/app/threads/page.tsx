@@ -14,7 +14,7 @@ export default async function ThreadsPage() {
     const threads = await getThreads();
 
     return (
-      <div className="mx-auto grid max-w-5xl gap-6">
+      <div className="mx-auto grid max-w-6xl gap-6">
         <header className="border-b border-border pb-5">
           <p className="text-xs font-semibold uppercase tracking-widest text-primary">Threads</p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight">Curated thought sequences</h1>
@@ -29,7 +29,7 @@ export default async function ThreadsPage() {
               <Link
                 key={thread.id}
                 href={`/threads/${thread.slug}`}
-                className="grid gap-2 px-5 py-4 transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                className="grid gap-2 px-5 py-4 transition-colors duration-150 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge>{labelize(thread.status)}</Badge>
@@ -41,7 +41,7 @@ export default async function ThreadsPage() {
             ))}
           </section>
         ) : (
-          <EmptyState title="Geen draden" body="Maak een draad aan via de detail-pagina van een notitie." />
+          <EmptyState title="No threads" body="Create a thread from the detail page of an entry." />
         )}
       </div>
     );

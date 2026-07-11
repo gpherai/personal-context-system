@@ -29,6 +29,9 @@ data/attachments/
 data/exports/
 data/backups/
 
+# Raw personal chat exports (large, contain secrets/PII) — never commit
+docs/*.zip
+
 # Logs and OS/editor noise
 *.log
 .DS_Store

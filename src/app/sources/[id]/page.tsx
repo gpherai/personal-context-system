@@ -1,13 +1,98 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import Markdown, { type Components } from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import { isDatabaseUnavailable } from "@/application/errors";
 import { getSourceById } from "@/application/query-service";
+import { DeleteForm } from "@/components/delete-form";
 import { SetupNotice } from "@/components/setup-notice";
 import { Badge } from "@/components/ui/badge";
+import { ButtonLink } from "@/components/ui/button-link";
 import { formatDateTime, isValidId, labelize } from "@/lib/format";
 import { sourceTypeDetails } from "@/domain/taxonomy";
+import type { ChatGptExportMessage } from "@/domain/chatgpt-export";
 import type { SourceMetadata } from "@/domain/context";
+
+import { deleteSourceAction } from "../actions";
+
+const markdownComponents: Components = {
+  a: ({ node: _node, href, children, ...props }) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="break-all text-primary hover:underline"
+      {...props}
+    >
+      {children}
+    </a>
+  ),
+  code: ({ node: _node, className, children, ...props }) => {
+    const isBlock = /language-/.test(className ?? "");
+    return isBlock ? (
+      <code className={className} {...props}>
+        {children}
+      </code>
+    ) : (
+      <code className="rounded bg-surface-muted px-1 py-0.5 font-mono text-[0.85em]" {...props}>
+        {children}
+      </code>
+    );
+  },
+  pre: ({ node: _node, children, ...props }) => (
+    <pre
+      className="overflow-x-auto rounded-md border border-border bg-surface-muted p-3 font-mono text-xs leading-6"
+      {...props}
+    >
+      {children}
+    </pre>
+  ),
+  ul: ({ node: _node, children, ...props }) => (
+    <ul className="list-disc pl-5" {...props}>
+      {children}
+    </ul>
+  ),
+  ol: ({ node: _node, children, ...props }) => (
+    <ol className="list-decimal pl-5" {...props}>
+      {children}
+    </ol>
+  ),
+  blockquote: ({ node: _node, children, ...props }) => (
+    <blockquote className="border-l-2 border-border pl-3 text-muted-foreground" {...props}>
+      {children}
+    </blockquote>
+  )
+};
+
+function ConversationTranscript({ messages }: { messages: ChatGptExportMessage[] }) {
+  if (!messages.length) {
+    return <p className="text-sm text-muted-foreground">No messages.</p>;
+  }
+
+  return (
+    <div className="grid gap-3">
+      {messages.map((message, index) => (
+        <div
+          key={index}
+          className={`grid gap-1.5 rounded-md border border-border bg-surface p-3 ${
+            message.role === "user" ? "border-l-4 border-l-primary/50" : ""
+          }`}
+        >
+          <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+            <Badge tone={message.role === "user" ? "blue" : "neutral"}>{labelize(message.role)}</Badge>
+            <span>{formatDateTime(new Date(message.timestamp))}</span>
+          </div>
+          <div className="grid gap-2 text-sm leading-7 [&>:first-child]:mt-0 [&>:last-child]:mb-0">
+            <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+              {message.text}
+            </Markdown>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export const dynamic = "force-dynamic";
 
@@ -102,6 +187,15 @@ function SourceMetadataSection({ metadata }: { metadata: SourceMetadata }) {
           <MetadataField label="Period" value={metadata.period} />
         </dl>
       );
+    case "conversation":
+      return (
+        <dl className="grid gap-3 sm:grid-cols-2">
+          <MetadataField label="Provider" value={labelize(metadata.provider)} />
+          <MetadataField label="Model" value={metadata.model} />
+          <MetadataField label="Messages" value={metadata.messageCount} />
+          <MetadataField label="Started" value={formatDateTime(new Date(metadata.createdAt))} />
+        </dl>
+      );
   }
 }
 
@@ -130,16 +224,28 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
               </div>
               <h1 className="mt-3 text-3xl font-bold tracking-tight">{source.title}</h1>
             </div>
-            <div className="flex flex-col gap-2 sm:items-end">
-              <Link
-                href={`/sources/${source.id}/edit`}
-                className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-surface px-4 text-sm font-medium transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-              >
-                Edit
-              </Link>
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end shrink-0">
+              {source.type !== "conversation" && (
+                <ButtonLink href={`/sources/${source.id}/edit`} variant="primary" className="w-full sm:w-auto">
+                  Edit
+                </ButtonLink>
+              )}
+              <DeleteForm
+                action={deleteSourceAction.bind(null, source.id)}
+                title="Delete source"
+                message="This permanently deletes the source. This cannot be undone."
+                triggerLabel="Delete"
+                triggerClassName="w-full sm:w-auto"
+              />
             </div>
           </div>
         </header>
+
+        {source.type === "conversation" && (
+          <p className="text-xs leading-5 text-muted-foreground">
+            Imported transcript — read-only. Promote a worthwhile insight to an Entry instead of editing this source.
+          </p>
+        )}
 
         {source.description && (
           <section>
@@ -147,16 +253,23 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
           </section>
         )}
 
-        <section className="grid gap-4 border border-border bg-surface p-4">
+        <section className="grid gap-4 rounded-lg border border-border bg-surface p-4 shadow-sm">
           <h2 className="text-sm font-semibold">{typeDetail.label} details</h2>
           <SourceMetadataSection metadata={source.metadata} />
         </section>
 
-        {source.body && (
-          <section className="grid gap-3 border border-border bg-surface p-4">
-            <h2 className="text-sm font-semibold">Body</h2>
-            <div className="whitespace-pre-wrap text-sm leading-7">{source.body}</div>
+        {source.metadata.type === "conversation" ? (
+          <section className="grid gap-3">
+            <h2 className="text-sm font-semibold">Transcript</h2>
+            <ConversationTranscript messages={source.metadata.messages} />
           </section>
+        ) : (
+          source.body && (
+            <section className="grid gap-3 rounded-lg border border-border bg-surface p-4 shadow-sm">
+              <h2 className="text-sm font-semibold">Body</h2>
+              <div className="whitespace-pre-wrap text-sm leading-7">{source.body}</div>
+            </section>
+          )
         )}
 
         {source.references.length > 0 && (
@@ -190,7 +303,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
                 <Link
                   key={theme.id}
                   href={`/themes/${theme.slug}`}
-                  className="inline-flex h-8 items-center cursor-pointer rounded-md border border-border bg-surface px-3 text-sm transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                  className="inline-flex h-8 items-center cursor-pointer rounded-md border border-border bg-surface px-3 text-sm transition-colors duration-150 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                 >
                   {theme.name}
                 </Link>
@@ -207,7 +320,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
                 <Link
                   key={entry.id}
                   href={`/entries/${entry.id}`}
-                  className="rounded-md px-2 py-2 text-sm cursor-pointer transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                  className="rounded-md px-2 py-2 text-sm cursor-pointer transition-colors duration-150 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                 >
                   {entry.title}
                 </Link>

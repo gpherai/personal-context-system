@@ -44,27 +44,22 @@ export default async function ThemePage({ params }: { params: Promise<{ slug: st
     const otherThemes = allThemes.filter((t) => t.id !== theme.id);
 
     return (
-      <div className="mx-auto grid max-w-5xl gap-5">
+      <div className="mx-auto grid max-w-4xl gap-5">
         <header className="border-b border-border pb-5">
           <div className="flex items-start justify-between gap-4">
             <Link
               href="/cabinet"
-              className="text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20"
+              className="text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
             >
               ← Cabinet
             </Link>
             {theme.entries.length === 0 && (
               <DeleteForm
                 action={deleteThemeAction.bind(null, theme.id)}
-                confirmMessage={`Thema "${theme.name}" permanent verwijderen?`}
-              >
-                <button
-                  type="submit"
-                  className="inline-flex h-11 items-center justify-center rounded-md border border-danger/30 bg-danger/8 px-4 text-sm font-medium text-danger transition-colors duration-200 hover:bg-danger/12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30"
-                >
-                  Verwijderen
-                </button>
-              </DeleteForm>
+                title="Delete theme"
+                message={`Permanently delete the theme "${theme.name}"? This cannot be undone.`}
+                triggerLabel="Delete"
+              />
             )}
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -73,16 +68,16 @@ export default async function ThemePage({ params }: { params: Promise<{ slug: st
                 {categoryLabels[category] ?? category}
               </Badge>
             ) : (
-              <Badge tone="teal">Thema</Badge>
+              <Badge tone="teal">Theme</Badge>
             )}
           </div>
-          <h1 className="mt-3 text-3xl font-semibold">{theme.name}</h1>
+          <h1 className="mt-3 text-3xl font-bold tracking-tight">{theme.name}</h1>
           {theme.description && (
             <p className="mt-2 text-sm leading-6 text-muted-foreground">{theme.description}</p>
           )}
           {aliases.length > 0 && (
             <p className="mt-2 text-sm text-muted-foreground">
-              <span className="font-medium">Ook bekend als:</span> {aliases.join(", ")}
+              <span className="font-medium">Also known as:</span> {aliases.join(", ")}
             </p>
           )}
         </header>
@@ -95,7 +90,7 @@ export default async function ThemePage({ params }: { params: Promise<{ slug: st
                 <Link
                   key={source.id}
                   href={`/sources/${source.id}`}
-                  className="flex items-center justify-between gap-3 rounded-md border border-border bg-surface px-3 py-2.5 text-sm transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 cursor-pointer"
+                  className="flex items-center justify-between gap-3 rounded-md border border-border bg-surface px-3 py-2.5 text-sm transition-colors duration-150 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 cursor-pointer"
                 >
                   <span className="line-clamp-1">{source.title}</span>
                   <Badge tone="neutral">{sourceTypeDetails[source.type].label}</Badge>
@@ -118,11 +113,11 @@ export default async function ThemePage({ params }: { params: Promise<{ slug: st
 
         <section className="grid gap-4 md:grid-cols-2">
           <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
-            <h2 className="mb-3 text-sm font-semibold">Naam en beschrijving</h2>
+            <h2 className="mb-3 text-sm font-semibold">Name and description</h2>
             <RenameThemeForm themeId={theme.id} name={theme.name} description={theme.description} />
           </div>
           <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
-            <h2 className="mb-3 text-sm font-semibold">Samenvoegen met ander thema</h2>
+            <h2 className="mb-3 text-sm font-semibold">Merge with another theme</h2>
             <MergeThemeForm themeId={theme.id} otherThemes={otherThemes} />
           </div>
         </section>

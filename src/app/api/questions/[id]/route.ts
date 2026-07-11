@@ -7,6 +7,9 @@ import { isValidId } from "@/lib/format";
 
 import { apiError, apiOk, withApiErrors } from "../../_lib";
 
+// Trusted local CRUD surface (read + write by id). This is NOT the outward
+// shareable boundary — that is /api/dashboard, which only exposes shareable
+// records. These by-id routes assume a trusted caller.
 export const dynamic = "force-dynamic";
 
 export async function GET(

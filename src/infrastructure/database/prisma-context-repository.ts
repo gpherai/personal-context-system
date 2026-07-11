@@ -159,34 +159,6 @@ type SourceWithRelations = Prisma.SourceGetPayload<{
   include: typeof sourceInclude;
 }>;
 
-function mapSource(source: SourceWithRelations): SourceRecord | null {
-  const metadataParsed = sourceMetadataSchema.safeParse(asRecord(source.metadata));
-  if (!metadataParsed.success) {
-    console.warn(`[mapSource] invalid metadata on source ${source.id}, skipping:`, metadataParsed.error.message);
-    return null;
-  }
-  return {
-    id: source.id,
-    type: source.type,
-    title: source.title,
-    description: optional(source.description),
-    body: optional(source.body),
-    status: source.status,
-    metadata: metadataParsed.data,
-    themes: source.themes
-      .map(({ theme }) => ({ id: theme.id, slug: theme.slug, name: theme.name }))
-      .sort((a, b) => a.name.localeCompare(b.name)),
-    references: source.references
-      .map(({ reference }) => mapReference(reference))
-      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()),
-    entries: source.entries
-      .map(({ entry }) => ({ id: entry.id, title: entry.title }))
-      .sort((a, b) => a.title.localeCompare(b.title)),
-    createdAt: source.createdAt,
-    updatedAt: source.updatedAt
-  };
-}
-
 function mapSourceSummary(source: SourceWithRelations): SourceSummary | null {
   const metadataParsed = sourceMetadataSchema.safeParse(asRecord(source.metadata));
   if (!metadataParsed.success) {
@@ -200,6 +172,7 @@ function mapSourceSummary(source: SourceWithRelations): SourceSummary | null {
     description: optional(source.description),
     body: optional(source.body),
     status: source.status,
+    privacyLevel: source.privacyLevel,
     metadata: metadataParsed.data,
     themes: source.themes
       .map(({ theme }) => ({ id: theme.id, slug: theme.slug, name: theme.name }))
@@ -209,6 +182,17 @@ function mapSourceSummary(source: SourceWithRelations): SourceSummary | null {
       .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()),
     createdAt: source.createdAt,
     updatedAt: source.updatedAt
+  };
+}
+
+function mapSource(source: SourceWithRelations): SourceRecord | null {
+  const summary = mapSourceSummary(source);
+  if (!summary) return null;
+  return {
+    ...summary,
+    entries: source.entries
+      .map(({ entry }) => ({ id: entry.id, title: entry.title }))
+      .sort((a, b) => a.title.localeCompare(b.title))
   };
 }
 
@@ -537,7 +521,10 @@ export class PrismaContextRepository implements ContextRepository {
     await tx.entryTheme.deleteMany({ where: { entryId } });
     await tx.entryProject.deleteMany({ where: { entryId } });
 
+    // Upserts must stay per-row (each returns the generated id); the join rows
+    // are then written in a single createMany batch.
     const seenThemeSlugs = new Set<string>();
+    const themeIds: string[] = [];
     for (const name of themeNames) {
       const slug = slugifyName(name);
       if (!slug || seenThemeSlugs.has(slug)) continue;
@@ -548,11 +535,14 @@ export class PrismaContextRepository implements ContextRepository {
         update: { name },
         create: { slug, name }
       });
-
-      await tx.entryTheme.create({ data: { entryId, themeId: theme.id } });
+      themeIds.push(theme.id);
+    }
+    if (themeIds.length > 0) {
+      await tx.entryTheme.createMany({ data: themeIds.map((themeId) => ({ entryId, themeId })) });
     }
 
     const seenProjectSlugs = new Set<string>();
+    const projectIds: string[] = [];
     for (const name of projectNames) {
       const slug = slugifyName(name);
       if (!slug || seenProjectSlugs.has(slug)) continue;
@@ -563,8 +553,10 @@ export class PrismaContextRepository implements ContextRepository {
         update: { name },
         create: { slug, name }
       });
-
-      await tx.entryProject.create({ data: { entryId, projectId: project.id } });
+      projectIds.push(project.id);
+    }
+    if (projectIds.length > 0) {
+      await tx.entryProject.createMany({ data: projectIds.map((projectId) => ({ entryId, projectId })) });
     }
   }
 
@@ -701,19 +693,23 @@ export class PrismaContextRepository implements ContextRepository {
 
   async listEntries(query?: ListEntriesQuery): Promise<EntryListItem[]> {
     const limit = Math.min(query?.limit ?? 50, 200);
-    const allSearchIds = query?.search ? await this.searchEntryIds(query.search, 200) : undefined;
-    const searchIds = allSearchIds?.slice(0, limit);
+    // Fetch the full ranked candidate set (not pre-sliced to `limit`) so the
+    // structured filters below apply across ALL matches. Slicing to `limit`
+    // before filtering dropped relevant rows ranked past `limit`.
+    const searchIds = query?.search ? await this.searchEntryIds(query.search, 200) : undefined;
     const entries = await this.prisma.entry.findMany({
       where: entryWhere(query, searchIds),
       select: entryListSelect,
       orderBy: [{ capturedAt: "desc" }, { createdAt: "desc" }],
-      take: limit
+      // When searching, apply `limit` after re-sorting by rank; otherwise limit in-query.
+      take: searchIds ? undefined : limit
     });
 
     if (searchIds) {
       const rank = new Map(searchIds.map((id, i) => [id, i]));
       return entries
         .sort((a, b) => (rank.get(a.id) ?? Infinity) - (rank.get(b.id) ?? Infinity))
+        .slice(0, limit)
         .map(mapEntryListItem);
     }
 
@@ -760,13 +756,13 @@ export class PrismaContextRepository implements ContextRepository {
 
   async deleteTheme(id: string): Promise<void> {
     const count = await this.prisma.entryTheme.count({ where: { themeId: id } });
-    if (count > 0) throw new Error(`Thema heeft nog ${count} gekoppelde notities.`);
+    if (count > 0) throw new Error(`Theme still has ${count} linked ${count === 1 ? "entry" : "entries"}.`);
     await this.prisma.theme.delete({ where: { id } });
   }
 
   async deleteProject(id: string): Promise<void> {
     const count = await this.prisma.entryProject.count({ where: { projectId: id } });
-    if (count > 0) throw new Error(`Project heeft nog ${count} gekoppelde notities.`);
+    if (count > 0) throw new Error(`Project still has ${count} linked ${count === 1 ? "entry" : "entries"}.`);
     await this.prisma.project.delete({ where: { id } });
   }
 
@@ -801,6 +797,13 @@ export class PrismaContextRepository implements ContextRepository {
           update: {}
         });
       }
+
+      // Reparent child themes of the source onto the target, otherwise deleting
+      // the source theme would SetNull their parentThemeId and orphan the subtree.
+      await tx.theme.updateMany({
+        where: { parentThemeId: command.sourceThemeId },
+        data: { parentThemeId: command.targetThemeId }
+      });
 
       await tx.theme.delete({ where: { id: command.sourceThemeId } });
 
@@ -1087,13 +1090,13 @@ export class PrismaContextRepository implements ContextRepository {
         });
 
         const uniqueEntryIds = [...new Set(command.entryIds)];
-        for (const [index, entryId] of uniqueEntryIds.entries()) {
-          await tx.entryThread.create({
-            data: {
+        if (uniqueEntryIds.length > 0) {
+          await tx.entryThread.createMany({
+            data: uniqueEntryIds.map((entryId, index) => ({
               entryId,
               threadId: created.id,
               position: index + 1
-            }
+            }))
           });
         }
 
@@ -1234,7 +1237,7 @@ export class PrismaContextRepository implements ContextRepository {
         take: 120
       }),
       this.listThreads(),
-      this.listSources({ limit: 200 })
+      this.listSources({ limit: 200, offset: 0 })
     ]);
 
     return {
@@ -1344,7 +1347,7 @@ export class PrismaContextRepository implements ContextRepository {
 
     const countByType = new Map(entryTypeCounts.map((row) => [row.type, row._count._all]));
     const countByStatus = new Map(entryStatusCounts.map((row) => [row.status, row._count._all]));
-    const countBySourceType = new Map(sourceTypeCounts.map((row) => [row.type, row._count._all]));
+    const countBySourceType = new Map<string, number>(sourceTypeCounts.map((row) => [row.type, row._count._all]));
     const sourceCount = sourceTypeCounts.reduce((sum, row) => sum + row._count._all, 0);
 
     return {
@@ -1355,7 +1358,7 @@ export class PrismaContextRepository implements ContextRepository {
       projects: projects.map(mapNamed),
       questions: questions.map(mapQuestion),
       threads: threads.slice(0, 16),
-      sourceTypes: sourceTypes.map((type) => ({ type, count: countBySourceType.get(type as never) ?? 0 })),
+      sourceTypes: sourceTypes.map((type) => ({ type, count: countBySourceType.get(type) ?? 0 })),
       sourceCount
     };
   }
@@ -1375,8 +1378,9 @@ export class PrismaContextRepository implements ContextRepository {
         }
       });
 
-      for (const themeId of [...new Set(command.themeIds)]) {
-        await tx.sourceTheme.create({ data: { sourceId: created.id, themeId } });
+      const themeIds = [...new Set(command.themeIds)];
+      if (themeIds.length > 0) {
+        await tx.sourceTheme.createMany({ data: themeIds.map((themeId) => ({ sourceId: created.id, themeId })) });
       }
 
       const allReferenceIds = [...new Set(command.referenceIds)];
@@ -1384,8 +1388,8 @@ export class PrismaContextRepository implements ContextRepository {
         const ref = await tx.reference.create({ data: { kind: "url", title, url } });
         allReferenceIds.push(ref.id);
       }
-      for (const referenceId of allReferenceIds) {
-        await tx.sourceReference.create({ data: { sourceId: created.id, referenceId } });
+      if (allReferenceIds.length > 0) {
+        await tx.sourceReference.createMany({ data: allReferenceIds.map((referenceId) => ({ sourceId: created.id, referenceId })) });
       }
 
       return tx.source.findUniqueOrThrow({ where: { id: created.id }, include: sourceInclude });
@@ -1418,8 +1422,9 @@ export class PrismaContextRepository implements ContextRepository {
       });
 
       await tx.sourceTheme.deleteMany({ where: { sourceId: command.id } });
-      for (const themeId of [...new Set(command.themeIds)]) {
-        await tx.sourceTheme.create({ data: { sourceId: command.id, themeId } });
+      const themeIds = [...new Set(command.themeIds)];
+      if (themeIds.length > 0) {
+        await tx.sourceTheme.createMany({ data: themeIds.map((themeId) => ({ sourceId: command.id, themeId })) });
       }
 
       await tx.sourceReference.deleteMany({ where: { sourceId: command.id } });
@@ -1428,8 +1433,8 @@ export class PrismaContextRepository implements ContextRepository {
         const ref = await tx.reference.create({ data: { kind: "url", title, url } });
         allReferenceIds.push(ref.id);
       }
-      for (const referenceId of allReferenceIds) {
-        await tx.sourceReference.create({ data: { sourceId: command.id, referenceId } });
+      if (allReferenceIds.length > 0) {
+        await tx.sourceReference.createMany({ data: allReferenceIds.map((referenceId) => ({ sourceId: command.id, referenceId })) });
       }
 
       return tx.source.findUniqueOrThrow({ where: { id: command.id }, include: sourceInclude });
@@ -1444,28 +1449,39 @@ export class PrismaContextRepository implements ContextRepository {
     await this.prisma.source.delete({ where: { id } });
   }
 
-  async listSources(query?: ListSourcesQuery): Promise<SourceSummary[]> {
-    const limit = Math.min(query?.limit ?? 50, 200);
-    const where: Prisma.SourceWhereInput = {};
+  private async findSourceSearchIds(search: string): Promise<string[]> {
+    // Fetch the full ranked candidate set (fixed cap, not `limit`) so the
+    // type/status/theme filters can be applied across all matches before limiting.
+    const rows = await this.prisma.$queryRaw<{ id: string }[]>`
+      SELECT "id"
+      FROM "Source"
+      WHERE to_tsvector('simple', coalesce("title", '') || ' ' || coalesce("body", '') || ' ' || coalesce("searchText", ''))
+        @@ plainto_tsquery('simple', ${search})
+      ORDER BY ts_rank(
+        to_tsvector('simple', coalesce("title", '') || ' ' || coalesce("body", '') || ' ' || coalesce("searchText", '')),
+        plainto_tsquery('simple', ${search})
+      ) DESC
+      LIMIT 200
+    `;
+    return rows.map((r) => r.id);
+  }
 
+  private buildSourceWhere(query?: ListSourcesQuery): Prisma.SourceWhereInput {
+    const where: Prisma.SourceWhereInput = {};
     if (query?.type) where.type = query.type;
     if (query?.status) where.status = query.status;
     if (query?.themeSlug) where.themes = { some: { theme: { slug: query.themeSlug } } };
+    return where;
+  }
+
+  async listSources(query?: ListSourcesQuery): Promise<SourceSummary[]> {
+    const limit = Math.min(query?.limit ?? 50, 200);
+    const offset = Math.max(query?.offset ?? 0, 0);
+    const where = this.buildSourceWhere(query);
 
     let searchIds: string[] | undefined;
     if (query?.search) {
-      const rows = await this.prisma.$queryRaw<{ id: string }[]>`
-        SELECT "id"
-        FROM "Source"
-        WHERE to_tsvector('simple', coalesce("title", '') || ' ' || coalesce("body", '') || ' ' || coalesce("searchText", ''))
-          @@ plainto_tsquery('simple', ${query.search})
-        ORDER BY ts_rank(
-          to_tsvector('simple', coalesce("title", '') || ' ' || coalesce("body", '') || ' ' || coalesce("searchText", '')),
-          plainto_tsquery('simple', ${query.search})
-        ) DESC
-        LIMIT ${limit}
-      `;
-      searchIds = rows.map((r) => r.id);
+      searchIds = await this.findSourceSearchIds(query.search);
       where.id = { in: searchIds };
     }
 
@@ -1473,18 +1489,33 @@ export class PrismaContextRepository implements ContextRepository {
       where,
       include: sourceInclude,
       orderBy: [{ title: "asc" }],
-      take: limit
+      skip: searchIds ? undefined : offset,
+      take: searchIds ? undefined : limit
     });
 
     if (searchIds) {
       const rank = new Map(searchIds.map((id, i) => [id, i]));
       return sources
         .sort((a, b) => (rank.get(a.id) ?? Infinity) - (rank.get(b.id) ?? Infinity))
+        .slice(offset, offset + limit)
         .map(mapSourceSummary)
         .filter((s): s is SourceSummary => s !== null);
     }
 
     return sources.map(mapSourceSummary).filter((s): s is SourceSummary => s !== null);
+  }
+
+  async countSources(query?: ListSourcesQuery): Promise<number> {
+    const where = this.buildSourceWhere(query);
+
+    if (query?.search) {
+      // Matches the 200-candidate ranking cap in listSources/findSourceSearchIds:
+      // total for a search query is reported as min(actual filtered matches, 200).
+      const searchIds = await this.findSourceSearchIds(query.search);
+      return this.prisma.source.count({ where: { ...where, id: { in: searchIds } } });
+    }
+
+    return this.prisma.source.count({ where });
   }
 
   async getSource(id: string): Promise<SourceRecord | null> {

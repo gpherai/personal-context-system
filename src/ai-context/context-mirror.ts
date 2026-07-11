@@ -1,6 +1,14 @@
 import { createHash } from "node:crypto";
 
-import { findForbiddenMetadataKeys, privacyLevels, type BundleManifest, type EntryStatus, type EntryType, type PrivacyLevel } from "@/domain/context";
+import {
+  findForbiddenMetadataKeys,
+  privacyLevels,
+  type BundleManifest,
+  type BundleSelection,
+  type EntryStatus,
+  type EntryType,
+  type PrivacyLevel
+} from "@/domain/context";
 import type {
   ContextMirrorSnapshot,
   EntryRecord,
@@ -248,6 +256,7 @@ function bundleMarkdown({
   scope,
   entries,
   questions = [],
+  sources = [],
   localOnly = false
 }: {
   title: string;
@@ -255,9 +264,10 @@ function bundleMarkdown({
   scope: string;
   entries: EntryRecord[];
   questions?: QuestionRecord[];
+  sources?: SourceRecord[];
   localOnly?: boolean;
 }): string {
-  return [
+  const lines = [
     `# ${title}`,
     "",
     `Generated: ${generatedAtIso}`,
@@ -268,6 +278,7 @@ function bundleMarkdown({
     "",
     `- entries: ${entries.length}`,
     `- questions: ${questions.length}`,
+    ...(sources.length ? [`- sources: ${sources.length}`] : []),
     "",
     "## Questions",
     "",
@@ -277,7 +288,13 @@ function bundleMarkdown({
     "",
     entryList(entries),
     ""
-  ].join("\n");
+  ];
+
+  if (sources.length) {
+    lines.push("## Sources", "", sourceList(sources), "");
+  }
+
+  return lines.join("\n");
 }
 
 function entryJson(entry: EntryRecord): string {
@@ -554,7 +571,7 @@ export function buildContextMirror(
 
   files.push({
     path: "sources/index.md",
-    contents: ["# Bronnen", "", `Generated: ${generatedAtIso}`, "", `Totaal: ${sources.length}`, "", sourceList(sources), ""].join("\n")
+    contents: ["# Sources", "", `Generated: ${generatedAtIso}`, "", `Total: ${sources.length}`, "", sourceList(sources), ""].join("\n")
   });
 
   files.push({
@@ -575,7 +592,7 @@ export function buildContextMirror(
   for (const [type, typeSources] of Object.entries(sourcesByType)) {
     files.push({
       path: `sources/by-type/${type}.md`,
-      contents: [`# Bronnen: ${type}`, "", `Generated: ${generatedAtIso}`, "", sourceList(typeSources), ""].join("\n")
+      contents: [`# Sources: ${type}`, "", `Generated: ${generatedAtIso}`, "", sourceList(typeSources), ""].join("\n")
     });
   }
 
@@ -679,9 +696,69 @@ function privacyFloorRank(level: PrivacyLevel): number {
   return privacyLevels.indexOf(level);
 }
 
-function entriesAtOrAbovePrivacyFloor(entries: EntryRecord[], floor: PrivacyLevel): EntryRecord[] {
+function atOrAbovePrivacyFloor<T extends { privacyLevel: PrivacyLevel }>(records: T[], floor: PrivacyLevel): T[] {
   const floorRank = privacyFloorRank(floor);
-  return entries.filter((entry) => privacyFloorRank(entry.privacyLevel) >= floorRank);
+  return records.filter((record) => privacyFloorRank(record.privacyLevel) >= floorRank);
+}
+
+function inDateRange(date: Date, selection: BundleSelection): boolean {
+  if (selection.occurredFrom && date.getTime() < selection.occurredFrom.getTime()) return false;
+  if (selection.occurredTo && date.getTime() > selection.occurredTo.getTime()) return false;
+  return true;
+}
+
+function matchesThemeSlugs(themes: { slug: string }[], themeSlugs: string[]): boolean {
+  return !themeSlugs.length || themes.some((theme) => themeSlugs.includes(theme.slug));
+}
+
+function matchesIds(id: string, ids: string[]): boolean {
+  return !ids.length || ids.includes(id);
+}
+
+// Conversation sources carry their original conversation date in metadata; every
+// other source type is dated by its own (import) createdAt.
+function sourceDate(source: SourceRecord): Date {
+  if (source.metadata.type === "conversation") {
+    const parsed = new Date(source.metadata.createdAt);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
+  return source.createdAt;
+}
+
+// Pure AND-combined filter over the already privacy-floored entries/sources:
+// recordTypes, sourceTypes, themeSlugs, date range, and explicit ids all narrow the result together.
+export function applyBundleSelection(
+  entries: EntryRecord[],
+  sources: SourceRecord[],
+  selection?: BundleSelection
+): { entries: EntryRecord[]; sources: SourceRecord[] } {
+  if (!selection) {
+    return { entries, sources };
+  }
+
+  const includeEntries = selection.recordTypes.includes("entry");
+  const includeSources = selection.recordTypes.includes("source");
+
+  const filteredEntries = includeEntries
+    ? entries.filter(
+        (entry) =>
+          matchesThemeSlugs(entry.themes, selection.themeSlugs) &&
+          inDateRange(entry.occurredAt ?? entry.capturedAt, selection) &&
+          matchesIds(entry.id, selection.ids)
+      )
+    : [];
+
+  const filteredSources = includeSources
+    ? sources.filter(
+        (source) =>
+          selection.sourceTypes.includes(source.type) &&
+          matchesThemeSlugs(source.themes, selection.themeSlugs) &&
+          inDateRange(sourceDate(source), selection) &&
+          matchesIds(source.id, selection.ids)
+      )
+    : [];
+
+  return { entries: filteredEntries, sources: filteredSources };
 }
 
 // Stable key ordering so the same logical content always hashes identically.
@@ -707,7 +784,7 @@ export class ShareableBundleSecretLeakError extends Error {
   }
 }
 
-function assertNoShareableSecretLeak(entries: EntryRecord[], privacyFloor: PrivacyLevel): void {
+function assertNoShareableSecretLeak(entries: EntryRecord[], sources: SourceRecord[], privacyFloor: PrivacyLevel): void {
   if (privacyFloor !== "shareable") {
     return;
   }
@@ -718,12 +795,20 @@ function assertNoShareableSecretLeak(entries: EntryRecord[], privacyFloor: Priva
       throw new ShareableBundleSecretLeakError(entry.id, forbiddenKeys);
     }
   }
+
+  for (const source of sources) {
+    const forbiddenKeys = findForbiddenMetadataKeys(source.metadata as unknown as Record<string, unknown>);
+    if (forbiddenKeys.length > 0) {
+      throw new ShareableBundleSecretLeakError(source.id, forbiddenKeys);
+    }
+  }
 }
 
 export interface GenerateBundleOptions {
   scope: string;
   purpose: string;
   privacyFloor: PrivacyLevel;
+  selection?: BundleSelection;
   generatedAt?: Date;
 }
 
@@ -732,24 +817,34 @@ export interface GeneratedBundle {
   contents: string;
 }
 
-// Deterministic traversal (sorted entries) + canonical JSON + SHA-256 content hash,
+// Deterministic traversal (sorted entries/sources) + canonical JSON + SHA-256 content hash,
 // so the same logical snapshot always produces an identical, verifiable bundle.
 export function generateBundle(snapshot: ContextMirrorSnapshot, options: GenerateBundleOptions): GeneratedBundle {
   const generatedAtIso = (options.generatedAt ?? new Date()).toISOString();
-  const entries = entriesAtOrAbovePrivacyFloor(sortedEntries(snapshot.entries), options.privacyFloor);
 
-  assertNoShareableSecretLeak(entries, options.privacyFloor);
+  const entriesAtFloor = atOrAbovePrivacyFloor(sortedEntries(snapshot.entries), options.privacyFloor);
+  const sourcesAtFloor = atOrAbovePrivacyFloor(
+    [...snapshot.sources].sort((a, b) => a.title.localeCompare(b.title)),
+    options.privacyFloor
+  );
+
+  const { entries, sources } = applyBundleSelection(entriesAtFloor, sourcesAtFloor, options.selection);
+
+  assertNoShareableSecretLeak(entries, sources, options.privacyFloor);
 
   const body = bundleMarkdown({
     title: `${options.scope} Context Bundle`,
     generatedAtIso,
     scope: options.scope,
     entries,
+    sources,
     questions: snapshot.openQuestions,
     localOnly: options.privacyFloor !== "shareable"
   });
 
-  const contentHash = sha256Hex(canonicalJson({ scope: options.scope, entries: entries.map((e) => e.id), body }));
+  const contentHash = sha256Hex(
+    canonicalJson({ scope: options.scope, entries: entries.map((e) => e.id), sources: sources.map((s) => s.id), body })
+  );
 
   const manifest: BundleManifest = {
     scope: options.scope,

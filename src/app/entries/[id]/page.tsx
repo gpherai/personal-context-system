@@ -6,6 +6,7 @@ import { getEntryById } from "@/application/query-service";
 import { DeleteForm } from "@/components/delete-form";
 import { SetupNotice } from "@/components/setup-notice";
 import { Badge } from "@/components/ui/badge";
+import { ButtonLink } from "@/components/ui/button-link";
 import { formatDateTime, isValidId, labelize } from "@/lib/format";
 
 import { AttachmentForm, ReferenceForm, ThreadForm } from "./entry-related-forms";
@@ -41,31 +42,27 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
               </div>
               <h1 className="mt-3 text-3xl font-bold tracking-tight">{entry.title}</h1>
             </div>
-            <div className="flex flex-col gap-2 sm:items-end">
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end shrink-0">
               {trackedQuestion ? (
                 <Link
                   href={`/questions/${trackedQuestion.id}`}
-                  className="inline-flex h-10 items-center justify-center rounded-md border border-caution/30 bg-caution/8 px-4 text-sm font-medium text-caution transition-colors duration-200 hover:bg-caution/12 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-caution/20"
+                  className="inline-flex h-10 w-full items-center justify-center rounded-lg border border-caution/30 bg-caution/8 px-4 text-sm font-medium text-caution transition-colors duration-150 hover:bg-caution/12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-caution/30 sm:w-auto"
                 >
                   Tracked question
                 </Link>
               ) : canPromoteToQuestion ? (
                 <PromoteQuestionForm entryId={entry.id} />
               ) : null}
-              <Link
-                href={`/entries/${entry.id}/edit`}
-                className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-surface px-4 text-sm font-medium text-foreground transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-              >
-                Bewerken
-              </Link>
-              <DeleteForm action={deleteEntryAction.bind(null, entry.id)} confirmMessage="Notitie permanent verwijderen?">
-                <button
-                  type="submit"
-                  className="inline-flex h-11 w-full items-center justify-center rounded-md border border-danger/30 bg-danger/8 px-4 text-sm font-medium text-danger transition-colors duration-200 hover:bg-danger/12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30"
-                >
-                  Verwijderen
-                </button>
-              </DeleteForm>
+              <ButtonLink href={`/entries/${entry.id}/edit`} variant="primary" className="w-full sm:w-auto">
+                Edit
+              </ButtonLink>
+              <DeleteForm
+                action={deleteEntryAction.bind(null, entry.id)}
+                title="Delete entry"
+                message="This permanently deletes the entry. This cannot be undone."
+                triggerLabel="Delete"
+                triggerClassName="w-full sm:w-auto"
+              />
             </div>
           </div>
           <dl className="mt-4 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
@@ -146,7 +143,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
                   <Link
                     key={question.id}
                     href={`/questions/${question.id}`}
-                    className="rounded-md px-2 py-2 text-sm transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                    className="rounded-md px-2 py-2 text-sm transition-colors duration-150 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   >
                     <Badge tone="amber">{labelize(question.status)}</Badge>
                     <span className="ml-2">{question.prompt}</span>
@@ -166,7 +163,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
                   <Link
                     key={thread.id}
                     href={`/threads/${thread.slug}`}
-                    className="rounded-md px-2 py-2 text-sm transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                    className="rounded-md px-2 py-2 text-sm transition-colors duration-150 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   >
                     {thread.title}
                   </Link>

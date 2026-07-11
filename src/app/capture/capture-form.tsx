@@ -1,26 +1,25 @@
 "use client";
 
-import { useActionState, useEffect, useId } from "react";
+import { useActionState, useEffect, useId, useRef } from "react";
 
 import { initialMutationState } from "@/application/action-states";
 import { EntryTypeField } from "@/components/entry-type-field";
 import { entryStatuses, privacyLevels } from "@/domain/context";
 import { Button } from "@/components/ui/button";
+import { FieldError } from "@/components/field-error";
+import { labelize } from "@/lib/format";
 
 import { createEntryAction } from "./actions";
-
-function FieldError({ id, errors }: { id?: string; errors?: string[] }) {
-  if (!errors?.length) return null;
-  return (
-    <p id={id} role="alert" aria-live="polite" className="mt-1 text-xs text-danger">
-      {errors[0]}
-    </p>
-  );
-}
 
 export function CaptureForm() {
   const [state, formAction, pending] = useActionState(createEntryAction, initialMutationState);
   const formId = useId();
+  // Set the max date on the DOM after mount so server and client render the same
+  // initial markup (avoids a hydration mismatch when the render straddles midnight).
+  const occurredAtRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (occurredAtRef.current) occurredAtRef.current.max = new Date().toISOString().split("T")[0];
+  }, []);
 
   const ids = {
     title:         `${formId}-title`,
@@ -59,13 +58,13 @@ export function CaptureForm() {
 
       <div className="grid gap-1.5">
         <label htmlFor={ids.body} className="text-sm font-medium">
-          Notitie <span aria-hidden="true" className="text-danger">*</span>
+          Note <span aria-hidden="true" className="text-danger">*</span>
         </label>
         <textarea
           id={ids.body}
           className="field-textarea min-h-44"
           name="body"
-          placeholder="Schrijf je gedachte, observatie, vraag of beslissing…"
+          placeholder="Write your thought, observation, question, or decision…"
           required
           aria-describedby={state.fieldErrors?.body ? ids.bodyError : undefined}
           aria-invalid={!!state.fieldErrors?.body || undefined}
@@ -75,13 +74,13 @@ export function CaptureForm() {
 
       <div className="grid gap-1.5">
         <label htmlFor={ids.title} className="text-sm font-medium">
-          Titel <span className="font-normal text-muted-foreground">(optioneel)</span>
+          Title <span className="font-normal text-muted-foreground">(optional)</span>
         </label>
         <input
           id={ids.title}
           className="field-input"
           name="title"
-          placeholder="Laat leeg om automatisch te genereren uit de notitie"
+          placeholder="Leave empty to auto-generate from the note"
           aria-describedby={state.fieldErrors?.title ? ids.titleError : undefined}
           aria-invalid={!!state.fieldErrors?.title || undefined}
         />
@@ -95,7 +94,7 @@ export function CaptureForm() {
           Status
           <select className="field-select" name="status" defaultValue="active">
             {entryStatuses.map((s) => (
-              <option key={s} value={s}>{s}</option>
+              <option key={s} value={s}>{labelize(s)}</option>
             ))}
           </select>
         </label>
@@ -104,7 +103,7 @@ export function CaptureForm() {
           Privacy
           <select className="field-select" name="privacyLevel" defaultValue="private">
             {privacyLevels.map((p) => (
-              <option key={p} value={p}>{p}</option>
+              <option key={p} value={p}>{labelize(p)}</option>
             ))}
           </select>
         </label>
@@ -152,10 +151,10 @@ export function CaptureForm() {
         <label className="grid gap-1.5 text-sm font-medium">
           Occurred at
           <input
+            ref={occurredAtRef}
             className="field-input"
             name="occurredAt"
             type="date"
-            max={new Date().toISOString().split("T")[0]}
           />
         </label>
         <div className="grid gap-1.5">

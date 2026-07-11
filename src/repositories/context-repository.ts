@@ -89,6 +89,7 @@ export interface SourceSummary {
   description?: string;
   body?: string;
   status: RecordStatus;
+  privacyLevel: PrivacyLevel;
   metadata: SourceMetadata;
   themes: LinkedName[];
   references: ReferenceRecord[];
@@ -275,6 +276,7 @@ export interface SourceRepository {
   updateSource(command: UpdateSourceCommand): Promise<SourceRecord>;
   deleteSource(id: string): Promise<void>;
   listSources(query?: ListSourcesQuery): Promise<SourceSummary[]>;
+  countSources(query?: ListSourcesQuery): Promise<number>;
   listSourcesByType(type: SourceType, limit?: number): Promise<SourceSummary[]>;
   getSource(id: string): Promise<SourceRecord | null>;
   linkEntryToSource(entryId: string, sourceId: string): Promise<void>;

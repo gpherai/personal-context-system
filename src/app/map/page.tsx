@@ -39,7 +39,7 @@ export default async function MapPage() {
     }, {});
 
     return (
-      <div className="mx-auto grid max-w-7xl gap-6">
+      <div className="mx-auto grid max-w-6xl gap-6">
         <header className="border-b border-border pb-5">
           <p className="text-xs font-semibold uppercase tracking-widest text-primary">Map</p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight">Relationship map</h1>
@@ -48,12 +48,12 @@ export default async function MapPage() {
           </p>
         </header>
 
-        <section className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6" aria-label="Graph counts">
-          <Stat label="Notities" value={snapshot.entries.length} />
-          <Stat label="Thema's" value={snapshot.themes.length} />
-          <Stat label="Projecten" value={snapshot.projects.length} />
-          <Stat label="Vragen" value={snapshot.questions.length} />
-          <Stat label="Bronnen" value={snapshot.sources.length} />
+        <section className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5" aria-label="Graph counts">
+          <Stat label="Entries" value={snapshot.entries.length} />
+          <Stat label="Themes" value={snapshot.themes.length} />
+          <Stat label="Projects" value={snapshot.projects.length} />
+          <Stat label="Questions" value={snapshot.questions.length} />
+          <Stat label="Sources" value={snapshot.sources.length} />
         </section>
 
         {(deities.length > 0 || traditions.length > 0 || topics.length > 0) && (
@@ -66,7 +66,7 @@ export default async function MapPage() {
             <div className="grid gap-5 lg:grid-cols-3">
               {traditions.length > 0 && (
                 <div>
-                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tradities</h3>
+                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Traditions</h3>
                   <div className="flex flex-wrap gap-1.5">
                     {traditions.map((t) => (
                       <Link key={t.id} href={`/themes/${t.slug}`} className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30">
@@ -79,7 +79,7 @@ export default async function MapPage() {
 
               {deities.length > 0 && (
                 <div>
-                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Godheden</h3>
+                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Deities</h3>
                   <div className="flex flex-wrap gap-1.5">
                     {deities.map((t) => (
                       <Link key={t.id} href={`/themes/${t.slug}`} className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30">
@@ -92,7 +92,7 @@ export default async function MapPage() {
 
               {topics.length > 0 && (
                 <div>
-                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Onderwerpen</h3>
+                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Topics</h3>
                   <div className="flex flex-wrap gap-1.5">
                     {topics.map((t) => (
                       <Link key={t.id} href={`/themes/${t.slug}`} className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30">
@@ -112,7 +112,7 @@ export default async function MapPage() {
                     <Link
                       key={type}
                       href={`/sources?type=${type}`}
-                      className="inline-flex h-8 items-center gap-2 rounded-md border border-border bg-surface px-3 text-xs font-medium transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                      className="inline-flex h-8 items-center gap-2 rounded-md border border-border bg-surface px-3 text-xs font-medium transition-colors duration-150 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                     >
                       {sourceTypeDetails[type as keyof typeof sourceTypeDetails]?.label ?? type}
                       <Badge tone="neutral">{count}</Badge>
@@ -124,8 +124,7 @@ export default async function MapPage() {
           </section>
         )}
 
-        <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
-          <aside className="grid content-start gap-4">
+        <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {otherThemes.length > 0 && (
               <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
                 <div className="mb-3 flex items-center gap-2">
@@ -185,7 +184,6 @@ export default async function MapPage() {
                 )}
               </div>
             </section>
-          </aside>
         </section>
       </div>
     );

@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { FormMessage } from "@/components/form-message";
 
 import { initialMutationState } from "@/application/action-states";
 
@@ -13,11 +14,11 @@ export function PromoteQuestionForm({ entryId }: { entryId: string }) {
   const [state, action, pending] = useActionState(actionWithEntry, initialMutationState);
 
   return (
-    <form action={action} className="grid gap-2 sm:justify-items-end">
-      <Button type="submit" variant="secondary" disabled={pending}>
-        {pending ? "Promoting..." : "Promote to question"}
+    <form action={action} className="grid gap-1.5">
+      <Button type="submit" variant="secondary" disabled={pending} className="w-full sm:w-auto">
+        {pending ? "Promoting…" : "Promote to question"}
       </Button>
-      {state.status === "error" && <p className="text-sm text-danger">{state.message}</p>}
+      <FormMessage state={state} />
     </form>
   );
 }

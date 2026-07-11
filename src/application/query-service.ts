@@ -10,7 +10,6 @@ import type {
   TaxonomyRepository,
   ThreadRepository
 } from "@/repositories/context-repository";
-import type { SourceType } from "@/domain/context";
 import { listEntries, listSources } from "./context-service";
 
 export async function getDashboardOverview(repository?: SnapshotRepository) {
@@ -91,15 +90,11 @@ export async function getSourceById(id: string, repository?: SourceRepository) {
 }
 
 export async function getSourcesByTheme(themeSlug: string, repository?: SourceRepository) {
-  return (repository ?? createPrismaContextRepository()).listSources({ themeSlug, limit: 200 });
+  return (repository ?? createPrismaContextRepository()).listSources({ themeSlug, limit: 200, offset: 0 });
 }
 
 export async function getSources(params?: Record<string, string | undefined>, repository?: SourceRepository) {
   return listSources(repository ?? createPrismaContextRepository(), params);
-}
-
-export async function getSourcesByType(type: SourceType, repository?: SourceRepository, limit?: number) {
-  return (repository ?? createPrismaContextRepository()).listSourcesByType(type, limit);
 }
 
 export function getContextMirrorStatus() {

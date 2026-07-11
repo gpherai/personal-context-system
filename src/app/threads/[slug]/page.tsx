@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 import { isDatabaseUnavailable } from "@/application/errors";
 import { getEntryOptions, getThreadBySlug } from "@/application/query-service";
@@ -30,32 +31,27 @@ export default async function ThreadPage({ params }: { params: Promise<{ slug: s
       .map((entry) => ({ id: entry.id, title: entry.title }));
 
     return (
-      <div className="mx-auto grid max-w-5xl gap-5">
+      <div className="mx-auto grid max-w-4xl gap-5">
         <header className="border-b border-border pb-5">
           <div className="flex items-start justify-between gap-4">
             <Link
               href="/threads"
               className="text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
             >
-              ← Draden
+              ← Threads
             </Link>
             <DeleteForm
               action={deleteThreadAction.bind(null, thread.id)}
-              confirmMessage={`Draad "${thread.title}" permanent verwijderen?`}
-            >
-              <button
-                type="submit"
-                className="inline-flex h-11 items-center justify-center rounded-md border border-danger/30 bg-danger/8 px-4 text-sm font-medium text-danger transition-colors duration-200 hover:bg-danger/12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30"
-              >
-                Verwijderen
-              </button>
-            </DeleteForm>
+              title="Delete thread"
+              message={`Permanently delete the thread "${thread.title}"? This cannot be undone.`}
+              triggerLabel="Delete"
+            />
           </div>
           <div className="mt-3">
             <Badge>{labelize(thread.status)}</Badge>
           </div>
           <h1 className="mt-3 text-3xl font-bold tracking-tight">{thread.title}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Bijgewerkt {formatDateTime(thread.updatedAt)}</p>
+          <p className="mt-2 text-sm text-muted-foreground">Updated {formatDateTime(thread.updatedAt)}</p>
           {thread.description && <p className="mt-3 text-sm leading-6 text-muted-foreground">{thread.description}</p>}
         </header>
 
@@ -71,20 +67,20 @@ export default async function ThreadPage({ params }: { params: Promise<{ slug: s
                     <button
                       type="submit"
                       disabled={index === 0}
-                      aria-label="Omhoog verplaatsen"
-                      className="flex h-7 w-7 items-center justify-center rounded-md border border-border text-xs transition-colors duration-150 hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                      aria-label="Move up"
+                      className="flex h-7 w-7 items-center justify-center rounded-md border border-border transition-colors duration-150 hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                     >
-                      ↑
+                      <ChevronUp className="h-4 w-4" aria-hidden="true" />
                     </button>
                   </form>
                   <form action={moveEntryInThreadAction.bind(null, thread.slug, thread.id, entry.id, "down")}>
                     <button
                       type="submit"
                       disabled={index === thread.entries.length - 1}
-                      aria-label="Omlaag verplaatsen"
-                      className="flex h-7 w-7 items-center justify-center rounded-md border border-border text-xs transition-colors duration-150 hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                      aria-label="Move down"
+                      className="flex h-7 w-7 items-center justify-center rounded-md border border-border transition-colors duration-150 hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                     >
-                      ↓
+                      <ChevronDown className="h-4 w-4" aria-hidden="true" />
                     </button>
                   </form>
                 </div>
@@ -107,11 +103,11 @@ export default async function ThreadPage({ params }: { params: Promise<{ slug: s
             ))}
           </ol>
         ) : (
-          <EmptyState title="Nog geen notities" body="Voeg een bestaande notitie toe aan deze draad." />
+          <EmptyState title="No entries yet" body="Add an existing entry to this thread." />
         )}
 
         <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
-          <h2 className="mb-3 text-sm font-semibold">Notitie toevoegen</h2>
+          <h2 className="mb-3 text-sm font-semibold">Add entry</h2>
           <AddEntryToThreadForm threadSlug={thread.slug} threadId={thread.id} entryOptions={availableEntries} />
         </section>
       </div>

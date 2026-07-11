@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/empty-state";
 import { SetupNotice } from "@/components/setup-notice";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button-link";
 import { sourceTypes } from "@/domain/context";
 import { sourceTypeDetails } from "@/domain/taxonomy";
 import type { SourceSummary } from "@/repositories/context-repository";
@@ -33,7 +34,7 @@ function SourceCard({ source }: { source: SourceSummary }) {
   return (
     <Link
       href={`/sources/${source.id}`}
-      className="flex flex-col gap-2 rounded-md border border-border bg-surface p-4 transition-colors duration-200 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 cursor-pointer"
+      className="flex flex-col gap-2 rounded-md border border-border bg-surface p-4 transition-colors duration-150 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 cursor-pointer"
     >
       <div className="flex items-start justify-between gap-3">
         <span className="text-sm font-medium leading-5">{source.title}</span>
@@ -60,10 +61,25 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
   const urlParams = toStringRecord(rawSearchParams);
 
   try {
-    const [sources, themes] = await Promise.all([getSources(urlParams), listThemes()]);
+    const [{ items: sources, total, page, pageSize }, themes] = await Promise.all([
+      getSources(urlParams),
+      listThemes()
+    ]);
 
     const activeType = param(rawSearchParams, "type");
     const activeTheme = param(rawSearchParams, "themeSlug");
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+    function pageHref(targetPage: number): string {
+      const next = new URLSearchParams(urlParams);
+      if (targetPage <= 1) {
+        next.delete("page");
+      } else {
+        next.set("page", String(targetPage));
+      }
+      const qs = next.toString();
+      return qs ? `/sources?${qs}` : "/sources";
+    }
 
     return (
       <div className="mx-auto grid max-w-6xl gap-5">
@@ -127,18 +143,13 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
 
             <div className="flex gap-2">
               <Button type="submit">Filter</Button>
-              <Link
-                href="/sources"
-                className="inline-flex h-10 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-              >
-                Reset
-              </Link>
+              <ButtonLink href="/sources" variant="secondary">Reset</ButtonLink>
             </div>
           </form>
 
           <Link
             href="/sources/new"
-            className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+            className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-[var(--color-primary-foreground)] shadow-sm transition-colors hover:bg-primary-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
           >
             <Plus className="h-4 w-4" aria-hidden="true" />
             New source
@@ -146,11 +157,44 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
         </div>
 
         {sources.length > 0 ? (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {sources.map((source) => (
-              <SourceCard key={source.id} source={source} />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {sources.map((source) => (
+                <SourceCard key={source.id} source={source} />
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between gap-4 border-t border-border pt-4 text-sm text-muted-foreground">
+              <p>
+                {total === 0
+                  ? "No sources"
+                  : `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, total)} of ${total} sources`}
+              </p>
+              <div className="flex items-center gap-2">
+                <ButtonLink
+                  href={pageHref(page - 1)}
+                  variant="secondary"
+                  size="sm"
+                  aria-disabled={page <= 1}
+                  className={page <= 1 ? "pointer-events-none opacity-50" : undefined}
+                >
+                  Previous
+                </ButtonLink>
+                <span className="tabular-nums">
+                  Page {page} of {totalPages}
+                </span>
+                <ButtonLink
+                  href={pageHref(page + 1)}
+                  variant="secondary"
+                  size="sm"
+                  aria-disabled={page >= totalPages}
+                  className={page >= totalPages ? "pointer-events-none opacity-50" : undefined}
+                >
+                  Next
+                </ButtonLink>
+              </div>
+            </div>
+          </>
         ) : (
           <div className="rounded-lg border border-border bg-surface p-8">
             <EmptyState

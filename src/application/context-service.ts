@@ -2,7 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 
-import { buildContextMirror } from "@/ai-context/context-mirror";
+import { buildContextMirror, generateBundle, type GeneratedBundle } from "@/ai-context/context-mirror";
 import { sanatanaTaxonomyExtension } from "@/ai-context/sanatana-taxonomy";
 import { createPrismaContextRepository } from "@/infrastructure/database/prisma-context-repository";
 import { writeContextMirror } from "@/infrastructure/files/context-mirror-writer";
@@ -44,6 +44,7 @@ import {
   updateSourceCommandSchema,
   updateTaskStatusCommandSchema,
   updateThemeCommandSchema,
+  type BundleSelection,
   type DecisionStatus,
   type QuestionStatus
 } from "@/domain/context";
@@ -344,7 +345,7 @@ export async function validateQuestionClosing(
 
   const decisions = await repository.listDecisionsForQuestion(questionId);
   return decisions.length === 0
-    ? "Question kan niet afgesloten worden zonder Decision (of markeer als abandoned)."
+    ? "A question cannot be closed without a decision (or mark it as abandoned)."
     : null;
 }
 
@@ -398,7 +399,7 @@ export async function updateDecisionStatusFromForm(
   if (!isValidDecisionStatusTransition(currentStatus, parsed.data.status)) {
     return {
       ok: false as const,
-      state: { status: "error" as const, message: `Kan status niet wijzigen van "${currentStatus}" naar "${parsed.data.status}".` }
+      state: { status: "error" as const, message: `Cannot change status from "${currentStatus}" to "${parsed.data.status}".` }
     };
   }
 
@@ -490,7 +491,7 @@ export async function mergeThemesFromForm(sourceThemeId: string, formData: FormD
   const parsed = parseMergeThemeFormData(sourceThemeId, formData);
 
   if (!parsed.success) {
-    return { ok: false as const, state: errorState("Kies een doelthema.", parsed.error) };
+    return { ok: false as const, state: errorState("Choose a target theme.", parsed.error) };
   }
 
   return withDbErrorHandling(async () => {
@@ -516,7 +517,7 @@ export async function addEntryToThreadFromForm(threadId: string, formData: FormD
   const parsed = parseAddEntryToThreadFormData(threadId, formData);
 
   if (!parsed.success) {
-    return { ok: false as const, state: errorState("Kies een notitie om toe te voegen.", parsed.error) };
+    return { ok: false as const, state: errorState("Choose an entry to add.", parsed.error) };
   }
 
   return withDbErrorHandling(async () => {
@@ -534,7 +535,7 @@ export async function moveEntryInThread(
   const parsed = parseMoveEntryInThreadFormData(threadId, entryId, direction);
 
   if (!parsed.success) {
-    return { ok: false as const, state: errorState("Kan notitie niet verplaatsen.", parsed.error) };
+    return { ok: false as const, state: errorState("Could not move the entry.", parsed.error) };
   }
 
   return withDbErrorHandling(async () => {
@@ -685,16 +686,23 @@ const laxListSourcesQuerySchema = listSourcesQuerySchema.extend({
   status: recordStatusSchema.optional().catch(undefined)
 });
 
+export const SOURCES_PAGE_SIZE = 60;
+
 export async function listSources(repository: SourceRepository, params?: Record<string, string | undefined>) {
+  const page = Math.max(1, Math.trunc(parseOptionalNumber(params?.["page"] ?? null) ?? 1));
+
   const parsed = laxListSourcesQuerySchema.parse({
     search: parseOptionalString(params?.["search"] ?? null),
     type: parseOptionalString(params?.["type"] ?? null),
     themeSlug: parseOptionalString(params?.["themeSlug"] ?? null),
     status: parseOptionalString(params?.["status"] ?? null),
-    limit: 100
+    limit: SOURCES_PAGE_SIZE,
+    offset: (page - 1) * SOURCES_PAGE_SIZE
   });
 
-  return repository.listSources(parsed);
+  const [items, total] = await Promise.all([repository.listSources(parsed), repository.countSources(parsed)]);
+
+  return { items, total, page, pageSize: SOURCES_PAGE_SIZE };
 }
 
 const laxListEntriesQuerySchema = listEntriesQuerySchema.extend({
@@ -724,4 +732,17 @@ export async function rebuildMirror(repository?: SnapshotRepository) {
   const snapshot = await (repository ?? createPrismaContextRepository()).getContextMirrorSnapshot();
   const build = buildContextMirror(snapshot, new Date(), [sanatanaTaxonomyExtension]);
   return writeContextMirror(build);
+}
+
+export async function generateContextBundle(
+  selection: BundleSelection,
+  repository?: SnapshotRepository
+): Promise<GeneratedBundle> {
+  const snapshot = await (repository ?? createPrismaContextRepository()).getContextMirrorSnapshot();
+  return generateBundle(snapshot, {
+    scope: "manual",
+    purpose: "Manual bundle export from the Command Center",
+    privacyFloor: selection.privacyFloor,
+    selection
+  });
 }

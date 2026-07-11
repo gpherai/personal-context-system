@@ -50,7 +50,7 @@ export default async function DashboardPage() {
   const { overview } = load;
 
   return (
-    <div className="mx-auto grid max-w-7xl gap-8">
+    <div className="mx-auto grid max-w-6xl gap-8">
       <header className="flex flex-col gap-4 border-b border-border pb-6 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-primary">Today</p>
@@ -69,10 +69,10 @@ export default async function DashboardPage() {
       </header>
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="System counts">
-        <Stat label="Notities"       value={overview.counts.entries}       href="/ledger"  />
-        <Stat label="Openstaande vragen" value={overview.counts.openQuestions} href="/cabinet" />
-        <Stat label="Thema's"        value={overview.counts.themes}        href="/cabinet" />
-        <Stat label="Projecten"      value={overview.counts.projects}      href="/cabinet" />
+        <Stat label="Entries"        value={overview.counts.entries}       href="/ledger"  />
+        <Stat label="Open questions" value={overview.counts.openQuestions} href="/cabinet" />
+        <Stat label="Themes"         value={overview.counts.themes}        href="/cabinet" />
+        <Stat label="Projects"       value={overview.counts.projects}      href="/cabinet" />
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1fr_360px]">

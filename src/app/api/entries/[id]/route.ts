@@ -7,6 +7,9 @@ import type { EntryRecord } from "@/repositories/context-repository";
 
 import { apiError, apiOk, withApiErrors } from "../../_lib";
 
+// Trusted local CRUD surface (read + write by id). This is NOT the outward
+// shareable boundary — that is /api/entries (list) and /api/dashboard, which
+// only ever return shareable records. These by-id routes assume a trusted caller.
 export const dynamic = "force-dynamic";
 
 type EntryDetailDto = {

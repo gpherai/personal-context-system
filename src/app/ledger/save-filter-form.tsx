@@ -25,7 +25,7 @@ export function SaveFilterForm({ params }: { params: SavedFilterParams }) {
   const [state, action, pending] = useActionState(createSavedFilterAction, initialMutationState);
 
   return (
-    <form action={action} className="grid gap-3 border border-border bg-surface p-4">
+    <form action={action} className="grid gap-3 rounded-lg border border-border bg-surface p-4 shadow-sm">
       <div>
         <h2 className="text-sm font-semibold">Save current filter</h2>
         <p className="mt-1 text-sm text-muted-foreground">Persist this Ledger query for repeated review.</p>

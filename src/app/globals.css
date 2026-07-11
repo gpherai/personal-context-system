@@ -227,7 +227,7 @@ body {
 }
 
 ::selection {
-  color: white;
+  color: var(--color-primary-foreground);
   background: var(--color-primary);
 }
 

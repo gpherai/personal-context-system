@@ -17,7 +17,7 @@ export const questionStatuses = ["open", "active", "parked", "answered", "refram
 export const questionClosingStatuses = ["answered", "reframed"] as const satisfies readonly QuestionStatus[];
 export const decisionStatuses = ["proposed", "accepted", "deferred", "follow_up_planned", "closed"] as const;
 export const taskStatuses = ["open", "in_progress", "done", "cancelled"] as const;
-export const sourceTypes = ["video", "book", "post", "image", "sadhana", "upadesha", "stotra", "deity_concept", "teacher"] as const;
+export const sourceTypes = ["video", "book", "post", "image", "sadhana", "upadesha", "stotra", "deity_concept", "teacher", "conversation"] as const;
 export const referenceKinds = ["url", "book", "article", "film", "game", "repository", "external_record", "other"] as const;
 
 export type EntryType = (typeof entryTypes)[number];
@@ -296,6 +296,23 @@ const teacherMetadataSchema = z.object({
   period: z.string().trim().max(120).optional()
 });
 
+const conversationMessageSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  text: z.string(),
+  timestamp: z.string()
+});
+
+const conversationMetadataSchema = z.object({
+  type: z.literal("conversation"),
+  provider: z.enum(["chatgpt", "claude", "gemini"]).default("chatgpt"),
+  conversationId: z.string().trim().min(1),
+  model: z.string().trim().max(120).optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  messageCount: z.number().int().min(0),
+  messages: z.array(conversationMessageSchema)
+});
+
 export const sourceMetadataSchema = z.discriminatedUnion("type", [
   videoMetadataSchema,
   bookMetadataSchema,
@@ -305,7 +322,8 @@ export const sourceMetadataSchema = z.discriminatedUnion("type", [
   upadeshaMetadataSchema,
   stotraMetadataSchema,
   deityConceptMetadataSchema,
-  teacherMetadataSchema
+  teacherMetadataSchema,
+  conversationMetadataSchema
 ]);
 
 export type SourceMetadata = z.infer<typeof sourceMetadataSchema>;
@@ -349,8 +367,26 @@ export const listSourcesQuerySchema = z.object({
   type: sourceTypeSchema.optional(),
   themeSlug: z.string().trim().optional(),
   status: recordStatusSchema.optional(),
-  limit: z.number().int().min(1).max(200).default(50)
+  limit: z.number().int().min(1).max(200).default(50),
+  offset: z.number().int().min(0).default(0)
 });
+
+export const bundleRecordTypes = ["entry", "source"] as const;
+export type BundleRecordType = (typeof bundleRecordTypes)[number];
+
+const defaultBundleSourceTypes = sourceTypes.filter((t) => t !== "conversation");
+
+export const bundleSelectionSchema = z.object({
+  privacyFloor: privacyLevelSchema.default("private"),
+  recordTypes: z.array(z.enum(bundleRecordTypes)).min(1).default(["entry", "source"]),
+  sourceTypes: z.array(sourceTypeSchema).default(defaultBundleSourceTypes),
+  themeSlugs: z.array(z.string().trim().min(1)).default([]),
+  occurredFrom: z.date().optional(),
+  occurredTo: z.date().optional(),
+  ids: z.array(z.string().trim().min(1)).default([])
+});
+
+export type BundleSelection = z.infer<typeof bundleSelectionSchema>;
 
 export function metadataToSearchText(metadata: SourceMetadata): string {
   const parts: string[] = [];
@@ -389,6 +425,9 @@ export function metadataToSearchText(metadata: SourceMetadata): string {
     case "teacher":
       push(metadata.tradition, metadata.lineage, metadata.language, metadata.period);
       break;
+    case "conversation":
+      push(metadata.model);
+      break;
   }
 
   return parts.join(" ");
@@ -414,7 +453,7 @@ export const mergeThemeCommandSchema = z
     targetThemeId: z.string().min(1)
   })
   .refine((val) => val.sourceThemeId !== val.targetThemeId, {
-    message: "Bron- en doelthema moeten verschillend zijn",
+    message: "Source and target theme must be different",
     path: ["targetThemeId"]
   });
 

@@ -63,7 +63,7 @@ export function ReferenceForm({ entryId }: { entryId: string }) {
       <label className="grid gap-1.5 text-sm font-medium">
         Description
         <textarea
-          className="min-h-20 rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          className="field-textarea min-h-20"
           name="description"
         />
       </label>
@@ -121,7 +121,7 @@ export function AttachmentForm({ entryId }: { entryId: string }) {
       <label className="grid gap-1.5 text-sm font-medium">
         Description
         <textarea
-          className="min-h-20 rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          className="field-textarea min-h-20"
           name="description"
         />
       </label>
@@ -152,7 +152,7 @@ export function ThreadForm({ entryId }: { entryId: string }) {
       <label className="grid gap-1.5 text-sm font-medium">
         Description
         <textarea
-          className="min-h-20 rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          className="field-textarea min-h-20"
           name="description"
         />
       </label>

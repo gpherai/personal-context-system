@@ -14,17 +14,17 @@ export function sanatanaTaxonomyExtension({ themes, generatedAtIso }: MirrorBuil
     {
       path: "sanatana/taxonomy.md",
       contents: [
-        "# Sanatana Taxonomie",
+        "# Sanatana Taxonomy",
         "",
         `Generated: ${generatedAtIso}`,
         "",
-        "## Tradities",
+        "## Traditions",
         "",
         traditions.length
           ? traditions.map((t) => `- ${sanitizeInline(t.name)} (${t.slug})`).join("\n")
-          : "- Geen",
+          : "- None",
         "",
-        "## Godheden",
+        "## Deities",
         "",
         deities.length
           ? deities
@@ -34,13 +34,13 @@ export function sanatanaTaxonomyExtension({ themes, generatedAtIso }: MirrorBuil
                 return `- ${sanitizeInline(t.name)}${aliases} (${t.slug})`;
               })
               .join("\n")
-          : "- Geen",
+          : "- None",
         "",
-        "## Onderwerpen",
+        "## Topics",
         "",
         topics.length
           ? topics.map((t) => `- ${sanitizeInline(t.name)} (${t.slug})`).join("\n")
-          : "- Geen",
+          : "- None",
         ""
       ].join("\n")
     }

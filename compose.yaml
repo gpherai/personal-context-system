@@ -10,6 +10,11 @@ services:
     ports:
       - "54329:5432"
     volumes:
+      # PGDATA is /var/lib/postgresql/data; this mounts its parent, which still
+      # persists the data subdir. The idiomatic path is /var/lib/postgresql/data,
+      # but the existing local volume already holds data under this parent mount —
+      # do NOT switch the path without first migrating the volume, or Postgres
+      # will init an empty PGDATA and the existing database will appear lost.
       - pcs-postgres-data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U pcs -d personal_context_system"]

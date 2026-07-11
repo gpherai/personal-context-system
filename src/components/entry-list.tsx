@@ -17,8 +17,8 @@ export function EntryList({ entries }: { entries: EntryListItem[] }) {
   if (!entries.length) {
     return (
       <EmptyState
-        title="Nog geen notities"
-        body="Leg de eerste gedachte, vraag of projectaantekening vast."
+        title="No entries yet"
+        body="Capture your first thought, question, or project note."
       />
     );
   }
@@ -59,7 +59,7 @@ export function EntryList({ entries }: { entries: EntryListItem[] }) {
           </div>
           <div className="shrink-0 text-right text-xs text-muted-foreground">
             <div className="font-medium">{formatDate(entry.occurredAt ?? entry.capturedAt)}</div>
-            <div className="mt-0.5 opacity-70">vastgelegd {formatDate(entry.capturedAt)}</div>
+            <div className="mt-0.5 opacity-70">captured {formatDate(entry.capturedAt)}</div>
           </div>
         </article>
       ))}

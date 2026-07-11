@@ -29,7 +29,7 @@ export default async function CabinetPage() {
     const cabinet = await getCabinetOverview();
 
     return (
-      <div className="mx-auto grid max-w-7xl gap-8">
+      <div className="mx-auto grid max-w-6xl gap-8">
         <header className="border-b border-border pb-6">
           <p className="text-xs font-semibold uppercase tracking-widest text-primary">Cabinet</p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">Structured archive</h1>
@@ -78,7 +78,7 @@ export default async function CabinetPage() {
           <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
             <div className="mb-3 flex items-center gap-2">
               <Library className="h-4 w-4 text-accent" aria-hidden="true" />
-              <h2 className="text-sm font-semibold">{"Thema’s"}</h2>
+              <h2 className="text-sm font-semibold">Themes</h2>
             </div>
             <div className="grid gap-1">
               {cabinet.themes.length ? (
@@ -93,7 +93,7 @@ export default async function CabinetPage() {
                   </Link>
                 ))
               ) : (
-                <EmptyState title="Geen thema's" body="Thema's verschijnen wanneer notities worden vastgelegd met thema-namen." />
+                <EmptyState title="No themes" body="Themes appear when entries are captured with theme names." />
               )}
             </div>
           </div>
@@ -101,7 +101,7 @@ export default async function CabinetPage() {
           <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
             <div className="mb-3 flex items-center gap-2">
               <Layers className="h-4 w-4 text-primary" aria-hidden="true" />
-              <h2 className="text-sm font-semibold">Projecten</h2>
+              <h2 className="text-sm font-semibold">Projects</h2>
             </div>
             <div className="grid gap-1">
               {cabinet.projects.length ? (
@@ -116,7 +116,7 @@ export default async function CabinetPage() {
                   </Link>
                 ))
               ) : (
-                <EmptyState title="Geen projecten" body="Projecten verschijnen wanneer notities worden vastgelegd met projectnamen." />
+                <EmptyState title="No projects" body="Projects appear when entries are captured with project names." />
               )}
             </div>
           </div>
@@ -124,7 +124,7 @@ export default async function CabinetPage() {
           <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
             <div className="mb-3 flex items-center gap-2">
               <CircleHelp className="h-4 w-4 text-caution" aria-hidden="true" />
-              <h2 className="text-sm font-semibold">Vragen</h2>
+              <h2 className="text-sm font-semibold">Questions</h2>
             </div>
             <div className="grid gap-3">
               {cabinet.questions.length ? (
@@ -139,7 +139,7 @@ export default async function CabinetPage() {
                   </Link>
                 ))
               ) : (
-                <EmptyState title="Geen vragen" body="Vraag-notities maken aparte vraagrecords aan." />
+                <EmptyState title="No questions" body="Question entries create separate tracked question records." />
               )}
             </div>
           </div>
@@ -147,7 +147,7 @@ export default async function CabinetPage() {
           <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
             <div className="mb-3 flex items-center gap-2">
               <BookOpen className="h-4 w-4 text-primary" aria-hidden="true" />
-              <h2 className="text-sm font-semibold">Draden</h2>
+              <h2 className="text-sm font-semibold">Threads</h2>
             </div>
             <div className="grid gap-1">
               {cabinet.threads.length ? (
@@ -161,7 +161,7 @@ export default async function CabinetPage() {
                   </Link>
                 ))
               ) : (
-                <EmptyState title="Geen draden" body="Draden verschijnen wanneer notities tot reeksen worden samengesteld." />
+                <EmptyState title="No threads" body="Threads appear when entries are composed into sequences." />
               )}
             </div>
           </div>
@@ -171,13 +171,13 @@ export default async function CabinetPage() {
           <div className="mb-3 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <BookMarked className="h-4 w-4 text-primary" aria-hidden="true" />
-              <h2 className="text-sm font-semibold">Bronnen</h2>
+              <h2 className="text-sm font-semibold">Sources</h2>
             </div>
             <Link
               href="/sources"
               className="text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded"
             >
-              {cabinet.sourceCount} totaal →
+              {cabinet.sourceCount} total →
             </Link>
           </div>
           {cabinet.sourceCount > 0 ? (
@@ -194,19 +194,19 @@ export default async function CabinetPage() {
                 ))}
             </div>
           ) : (
-            <EmptyState title="Geen bronnen" body="Bronnen verschijnen hier zodra ze zijn aangemaakt." />
+            <EmptyState title="No sources" body="Sources appear here once they are created." />
           )}
         </section>
 
         <section className="grid gap-3">
           <div className="flex items-center gap-2">
             <Archive className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-            <h2 className="text-base font-semibold text-foreground">Gearchiveerde notities</h2>
+            <h2 className="text-base font-semibold text-foreground">Archived entries</h2>
           </div>
           {cabinet.archivedEntries.length ? (
             <EntryList entries={cabinet.archivedEntries} />
           ) : (
-            <EmptyState title="Geen gearchiveerde notities" body="Gearchiveerde notities verschijnen hier nadat hun status is gewijzigd." />
+            <EmptyState title="No archived entries" body="Archived entries appear here after their status is changed." />
           )}
         </section>
       </div>
