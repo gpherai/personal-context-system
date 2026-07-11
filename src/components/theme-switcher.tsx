@@ -93,11 +93,13 @@ export function ThemeSwitcher() {
     applyToDOM(theme, next);
   }
 
-  if (!mounted) return <div className="h-10" aria-hidden="true" />;
+  if (!mounted) return <div className="h-24" aria-hidden="true" />;
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3">
-      <div className="flex items-center gap-2" role="group" aria-label="Select theme">
+    <div className="grid gap-1 px-3 py-3">
+      {/* Own row, centered: 4 × 44px touch targets + gaps already fill most of the
+          240px sidebar width — sharing a row with the mode toggle overflowed it. */}
+      <div className="flex items-center justify-center gap-2" role="group" aria-label="Select theme">
         {themes.map((t) => (
           <button
             key={t.name}
@@ -121,14 +123,14 @@ export function ThemeSwitcher() {
 
       <button
         type="button"
-        aria-label={`Switch to ${mode === "light" ? "dark" : "light"} mode`}
         onClick={toggleMode}
-        className="ml-auto cursor-pointer rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+        className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
       >
         {mode === "dark"
           ? <Sun className="h-4 w-4" aria-hidden="true" />
           : <Moon className="h-4 w-4" aria-hidden="true" />
         }
+        <span>{mode === "dark" ? "Light mode" : "Dark mode"}</span>
       </button>
     </div>
   );
