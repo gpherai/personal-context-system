@@ -78,27 +78,7 @@ export const sourceTypeDetails = {
   },
   image: {
     label: "Image",
-    description: "Photo, drawing, yantra, or other visual source."
-  },
-  sadhana: {
-    label: "Sadhana",
-    description: "Spiritual practice: puja, meditation, japa, or ritual."
-  },
-  upadesha: {
-    label: "Upadesha",
-    description: "Teaching or instruction from a teacher or tradition."
-  },
-  stotra: {
-    label: "Stotra",
-    description: "Hymn, mantra, or prayer in text or audio form."
-  },
-  deity_concept: {
-    label: "Deity / concept",
-    description: "Description or study of a deity, concept, or philosophical idea."
-  },
-  teacher: {
-    label: "Teacher",
-    description: "Teacher, guru, or tradition lineage holder as a named entity."
+    description: "Photo, drawing, or other visual source."
   },
   conversation: {
     label: "Conversation",

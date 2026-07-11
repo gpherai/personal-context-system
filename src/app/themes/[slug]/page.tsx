@@ -15,16 +15,10 @@ import { MergeThemeForm, RenameThemeForm } from "./theme-forms";
 export const dynamic = "force-dynamic";
 
 const categoryLabels: Record<string, string> = {
-  deity: "Deity",
-  tradition: "Tradition",
-  topic: "Topic",
   tag: "Tag"
 };
 
 const categoryTones: Record<string, "blue" | "teal" | "amber" | "neutral"> = {
-  deity: "blue",
-  tradition: "teal",
-  topic: "amber",
   tag: "neutral"
 };
 

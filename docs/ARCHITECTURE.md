@@ -222,29 +222,25 @@ Track path, media type, checksum, size, title, description, and related domain o
 
 ### Source
 
-`Source` is a first-class model for Sanatana knowledge sources. It is distinct from `Reference`, which is a lightweight external link. A Source has a fixed type, structured type-specific metadata, and connects to both themes and entries.
+`Source` is a first-class model for saved knowledge sources (web content, imported conversations, etc). It is distinct from `Reference`, which is a lightweight external link. A Source has a fixed type, structured type-specific metadata, and connects to both themes and entries.
 
 SourceType enum (immutable after creation):
 
 - `video` — YouTube or other video content
 - `book` — physical or digital book
 - `post` — article, blog post, online text
-- `image` — visual source (deity images, artwork, diagrams)
-- `sadhana` — practice or ritual context
-- `upadesha` — teaching or discourse
-- `stotra` — hymn or devotional text
-- `deity_concept` — conceptual record for a deity form
-- `teacher` — teacher, lineage holder, or commentator
+- `image` — visual source (photos, artwork, diagrams)
+- `conversation` — imported AI chat transcript (ChatGPT, Claude, Gemini)
 
-Each source type has a discriminated Zod metadata schema in `src/domain/context.ts`. The `metadata` JSONB field stores type-specific data (e.g., `authorName`, `publishYear`, `youtubeUrl`, `mantras`). A derived `searchText` column is populated by `metadataToSearchText()` to make JSONB fields queryable via full-text search.
+Each source type has a discriminated Zod metadata schema in `src/domain/context.ts`. The `metadata` JSONB field stores type-specific data (e.g., `authorName`, `publishYear`, `youtubeUrl`). A derived `searchText` column is populated by `metadataToSearchText()` to make JSONB fields queryable via full-text search.
 
-Sources connect to themes via `SourceTheme` junction (replacing the separate KB ItemDeity/Tradition/Topic/Tag joins) and to entries via `EntrySource` junction.
+Sources connect to themes via `SourceTheme` junction and to entries via `EntrySource` junction.
+
+Sanatana Dharma-specific source types (sadhana/upadesha/stotra/deity_concept/teacher) and taxonomy categories (deity/tradition/topic) were migrated out to the separate `sanatana-kb` repo (2026-07-11) — see its `.project/todos.md` for the receiving-side design.
 
 ### Theme (Taxonomy-as-Theme)
 
-Sanatana taxonomy categories (deity, tradition, topic, tag) are stored as `Theme` records with `metadata.category`. This avoids separate Deity/Tradition/Topic tables while enabling category-filtered views.
-
-Theme hierarchy uses `parentThemeId`. A cycle guard in the repository (BFS ancestor walk) prevents circular parent references before any `setThemeParent` call.
+Theme records support a `metadata.category` of `tag` for lightweight categorization. Theme hierarchy uses `parentThemeId`. A cycle guard in the repository (BFS ancestor walk) prevents circular parent references before any `setThemeParent` call.
 
 ### Reference
 

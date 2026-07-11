@@ -17,7 +17,7 @@ export const questionStatuses = ["open", "active", "parked", "answered", "refram
 export const questionClosingStatuses = ["answered", "reframed"] as const satisfies readonly QuestionStatus[];
 export const decisionStatuses = ["proposed", "accepted", "deferred", "follow_up_planned", "closed"] as const;
 export const taskStatuses = ["open", "in_progress", "done", "cancelled"] as const;
-export const sourceTypes = ["video", "book", "post", "image", "sadhana", "upadesha", "stotra", "deity_concept", "teacher", "conversation"] as const;
+export const sourceTypes = ["video", "book", "post", "image", "conversation"] as const;
 export const referenceKinds = ["url", "book", "article", "film", "game", "repository", "external_record", "other"] as const;
 
 export type EntryType = (typeof entryTypes)[number];
@@ -73,7 +73,7 @@ export function findForbiddenMetadataKeys(metadata: Record<string, unknown>): st
 
 export const metadataSchema = z.record(z.string(), z.unknown());
 
-export const themeCategories = ["deity", "tradition", "topic", "tag"] as const;
+export const themeCategories = ["tag"] as const;
 export type ThemeCategory = (typeof themeCategories)[number];
 
 export const themeMetadataSchema = z.object({
@@ -259,43 +259,6 @@ const imageMetadataSchema = z.object({
   photographer: z.string().trim().max(240).optional()
 });
 
-const sadhanaMetadataSchema = z.object({
-  type: z.literal("sadhana"),
-  language: z.string().trim().max(40).optional(),
-  format: z.enum(["text", "audio", "video"]).optional(),
-  steps: z.array(z.string().trim().min(1).max(1000)).default([]),
-  mantras: z.array(z.string().trim().min(1).max(500)).default([])
-});
-
-const upadeshaMetadataSchema = z.object({
-  type: z.literal("upadesha"),
-  language: z.string().trim().max(40).optional(),
-  format: z.enum(["text", "audio", "video"]).optional(),
-  chapters: z.array(z.string().trim().min(1).max(500)).default([])
-});
-
-const stotraMetadataSchema = z.object({
-  type: z.literal("stotra"),
-  language: z.string().trim().max(40).optional(),
-  script: z.string().trim().max(80).optional(),
-  mantras: z.array(z.string().trim().min(1).max(500)).default([])
-});
-
-const deityConceptMetadataSchema = z.object({
-  type: z.literal("deity_concept"),
-  language: z.string().trim().max(40).optional(),
-  aliases: z.array(z.string().trim().min(1).max(240)).default([]),
-  mantras: z.array(z.string().trim().min(1).max(500)).default([])
-});
-
-const teacherMetadataSchema = z.object({
-  type: z.literal("teacher"),
-  tradition: z.string().trim().max(240).optional(),
-  lineage: z.string().trim().max(240).optional(),
-  language: z.string().trim().max(40).optional(),
-  period: z.string().trim().max(120).optional()
-});
-
 const conversationMessageSchema = z.object({
   role: z.enum(["user", "assistant"]),
   text: z.string(),
@@ -318,11 +281,6 @@ export const sourceMetadataSchema = z.discriminatedUnion("type", [
   bookMetadataSchema,
   postMetadataSchema,
   imageMetadataSchema,
-  sadhanaMetadataSchema,
-  upadeshaMetadataSchema,
-  stotraMetadataSchema,
-  deityConceptMetadataSchema,
-  teacherMetadataSchema,
   conversationMetadataSchema
 ]);
 
@@ -409,21 +367,6 @@ export function metadataToSearchText(metadata: SourceMetadata): string {
       break;
     case "image":
       push(metadata.alt, metadata.photographer);
-      break;
-    case "sadhana":
-      push(metadata.language, metadata.format, ...metadata.steps, ...metadata.mantras);
-      break;
-    case "upadesha":
-      push(metadata.language, metadata.format, ...metadata.chapters);
-      break;
-    case "stotra":
-      push(metadata.language, metadata.script, ...metadata.mantras);
-      break;
-    case "deity_concept":
-      push(metadata.language, ...metadata.aliases, ...metadata.mantras);
-      break;
-    case "teacher":
-      push(metadata.tradition, metadata.lineage, metadata.language, metadata.period);
       break;
     case "conversation":
       push(metadata.model);

@@ -17,7 +17,7 @@ export default async function NewSourcePage() {
           <p className="text-xs font-semibold uppercase tracking-widest text-primary">Sources</p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight">New source</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Add a new knowledge source to the Sanatana knowledge base.
+            Add a new source.
           </p>
         </header>
         <section className="mt-6 rounded-lg border border-border bg-surface p-5 shadow-sm">

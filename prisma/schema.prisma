@@ -48,11 +48,6 @@ enum SourceType {
   book
   post
   image
-  sadhana
-  upadesha
-  stotra
-  deity_concept
-  teacher
   conversation
 }
 

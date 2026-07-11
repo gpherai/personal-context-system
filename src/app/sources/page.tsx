@@ -85,9 +85,9 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
       <div className="mx-auto grid max-w-6xl gap-5">
         <header className="border-b border-border pb-5">
           <p className="text-xs font-semibold uppercase tracking-widest text-primary">Sources</p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight">Sanatana knowledge sources</h1>
+          <h1 className="mt-1 text-3xl font-bold tracking-tight">Sources</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Videos, books, posts, sadhanas, and other sources from the Sanatana knowledge base.
+            Videos, books, posts, and imported conversations.
           </p>
         </header>
 

@@ -150,43 +150,6 @@ function SourceMetadataSection({ metadata }: { metadata: SourceMetadata }) {
           <MetadataField label="Photographer" value={metadata.photographer} />
         </dl>
       );
-    case "sadhana":
-      return (
-        <dl className="grid gap-3 sm:grid-cols-2">
-          <MetadataField label="Language" value={metadata.language} />
-          <MetadataField label="Format" value={metadata.format} />
-        </dl>
-      );
-    case "upadesha":
-      return (
-        <dl className="grid gap-3 sm:grid-cols-2">
-          <MetadataField label="Language" value={metadata.language} />
-          <MetadataField label="Format" value={metadata.format} />
-        </dl>
-      );
-    case "stotra":
-      return (
-        <dl className="grid gap-3 sm:grid-cols-2">
-          <MetadataField label="Language" value={metadata.language} />
-          <MetadataField label="Script" value={metadata.script} />
-        </dl>
-      );
-    case "deity_concept":
-      return (
-        <dl className="grid gap-3 sm:grid-cols-2">
-          <MetadataField label="Language" value={metadata.language} />
-          <MetadataList label="Aliases" values={metadata.aliases} />
-        </dl>
-      );
-    case "teacher":
-      return (
-        <dl className="grid gap-3 sm:grid-cols-2">
-          <MetadataField label="Tradition" value={metadata.tradition} />
-          <MetadataField label="Lineage" value={metadata.lineage} />
-          <MetadataField label="Language" value={metadata.language} />
-          <MetadataField label="Period" value={metadata.period} />
-        </dl>
-      );
     case "conversation":
       return (
         <dl className="grid gap-3 sm:grid-cols-2">
