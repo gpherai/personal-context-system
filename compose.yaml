@@ -4,9 +4,9 @@ services:
     container_name: personal-context-system-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: pcs
-      POSTGRES_PASSWORD: pcs
-      POSTGRES_DB: personal_context_system
+      POSTGRES_USER: ${POSTGRES_USER:-pcs}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pcs}
+      POSTGRES_DB: ${POSTGRES_DB:-personal_context_system}
     ports:
       - "54329:5432"
     volumes:
@@ -16,11 +16,87 @@ services:
       # do NOT switch the path without first migrating the volume, or Postgres
       # will init an empty PGDATA and the existing database will appear lost.
       - pcs-postgres-data:/var/lib/postgresql
+    networks:
+      - pcs-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U pcs -d personal_context_system"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pcs} -d ${POSTGRES_DB:-personal_context_system}"]
       interval: 5s
       timeout: 5s
       retries: 10
 
+  # Runs `prisma migrate deploy` once, then exits. Gates `app` via depends_on
+  # so the app never starts against an unmigrated schema.
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: personal-context-system-migrate
+    command: node_modules/.bin/prisma migrate deploy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-pcs}:${POSTGRES_PASSWORD:-pcs}@db:5432/${POSTGRES_DB:-personal_context_system}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - pcs-network
+    restart: "no"
+    profiles:
+      - app
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: personal-context-system-app
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+    ports:
+      - "${APP_HOST:-0.0.0.0}:${APP_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: "1"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-pcs}:${POSTGRES_PASSWORD:-pcs}@db:5432/${POSTGRES_DB:-personal_context_system}
+      CONTEXT_MIRROR_DIR: ${CONTEXT_MIRROR_DIR:-data/context-mirror}
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
+    networks:
+      - pcs-network
+    profiles:
+      - app
+
+  # One-off import: docker compose --profile import run --rm import-chatgpt
+  import-chatgpt:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-pcs}:${POSTGRES_PASSWORD:-pcs}@db:5432/${POSTGRES_DB:-personal_context_system}
+    command: node_modules/.bin/tsx scripts/import-chatgpt-export.ts
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - pcs-network
+    profiles:
+      - import
+
 volumes:
   pcs-postgres-data:
+
+networks:
+  pcs-network:
+    driver: bridge
