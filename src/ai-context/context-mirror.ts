@@ -308,6 +308,12 @@ function sourceList(sources: SourceRecord[]): string {
     .join("\n");
 }
 
+// Conversation transcripts can run to hundreds of thousands of characters (see
+// docs/PLAN-conversation-mining.md); writing the full body per file would let a
+// handful of long chats balloon the mirror. Cap it and point at `pcs conv show`
+// for the rest, which reads by message range instead of dumping everything.
+const CONVERSATION_BODY_PREVIEW_CHARS = 4000;
+
 function sourceMarkdown(source: SourceRecord, generatedAtIso: string): string {
   const metaEntries = Object.entries(source.metadata)
     .filter(([k]) => k !== "type")
@@ -322,6 +328,10 @@ function sourceMarkdown(source: SourceRecord, generatedAtIso: string): string {
     ? source.references.map((r) => `- ${sanitizeInline(r.title)}${r.url ? ": " + r.url : ""}`)
     : [];
 
+  const isConversation = source.type === "conversation";
+  const bodyTruncated = isConversation && (source.body?.length ?? 0) > CONVERSATION_BODY_PREVIEW_CHARS;
+  const bodyText = bodyTruncated ? `${source.body!.slice(0, CONVERSATION_BODY_PREVIEW_CHARS)}\n\n[...truncated]` : source.body;
+
   return [
     `# ${sanitizeInline(source.title)}`,
     "",
@@ -335,7 +345,8 @@ function sourceMarkdown(source: SourceRecord, generatedAtIso: string): string {
     ...(metaEntries.length ? ["## Metadata", "", ...metaEntries, ""] : []),
     ...(source.description ? ["## Description", "", wrapUserContent(source.description), ""] : []),
     ...(referencesLines.length ? ["## References", "", ...referencesLines, ""] : []),
-    ...(source.body ? ["## Body", "", wrapUserContent(source.body), ""] : [])
+    ...(bodyTruncated ? [`Full transcript: \`npm run pcs -- conv show ${source.id}\``, ""] : []),
+    ...(bodyText ? ["## Body", "", wrapUserContent(bodyText), ""] : [])
   ].join("\n");
 }
 

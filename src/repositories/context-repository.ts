@@ -3,6 +3,7 @@ import type {
   CreateAttachmentCommand,
   CreateDecisionCommand,
   CreateEntryCommand,
+  CreateExcerptCommand,
   CreateQuestionCommand,
   CreateReferenceCommand,
   CreateSavedFilterCommand,
@@ -97,8 +98,29 @@ export interface SourceSummary {
   updatedAt: Date;
 }
 
+export interface SourceMessageRecord {
+  id: string;
+  position: number;
+  role: string;
+  text: string;
+  model?: string;
+  occurredAt?: Date;
+}
+
+export interface ExcerptRecord {
+  id: string;
+  sourceId: string;
+  messageId?: string;
+  text: string;
+  note?: string;
+  createdAt: Date;
+  entries: { id: string; title: string }[];
+}
+
 export interface SourceRecord extends SourceSummary {
   entries: { id: string; title: string }[];
+  messages: SourceMessageRecord[];
+  excerpts: ExcerptRecord[];
 }
 
 export interface SavedFilterRecord {
@@ -136,6 +158,7 @@ export interface EntryRecord extends EntryListItem {
   references: ReferenceRecord[];
   attachments: AttachmentRecord[];
   sources: { id: string; type: SourceType; title: string }[];
+  excerpts: (Pick<ExcerptRecord, "id" | "text" | "note"> & { sourceId: string; sourceTitle: string })[];
 }
 
 export interface QuestionRecord {
@@ -285,6 +308,9 @@ export interface SourceRepository {
   unlinkSourceFromTheme(sourceId: string, themeId: string): Promise<void>;
   linkSourceToReference(sourceId: string, referenceId: string): Promise<void>;
   unlinkSourceFromReference(sourceId: string, referenceId: string): Promise<void>;
+  createExcerpt(command: CreateExcerptCommand): Promise<ExcerptRecord>;
+  linkEntryToExcerpt(entryId: string, excerptId: string): Promise<void>;
+  unlinkEntryFromExcerpt(entryId: string, excerptId: string): Promise<void>;
 }
 
 export interface QuestionRepository {

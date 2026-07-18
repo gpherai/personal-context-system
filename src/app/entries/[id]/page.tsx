@@ -223,6 +223,28 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
           </div>
         </section>
 
+        {entry.excerpts.length > 0 && (
+          <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
+            <h2 className="text-sm font-semibold">Citations</h2>
+            <div className="mt-3 grid gap-3">
+              {entry.excerpts.map((excerpt) => (
+                <div key={excerpt.id} className="border-t border-border pt-3 first:border-t-0 first:pt-0">
+                  <blockquote className="border-l-2 border-border pl-3 text-sm italic leading-6 text-muted-foreground">
+                    &ldquo;{excerpt.text}&rdquo;
+                  </blockquote>
+                  {excerpt.note && <p className="mt-1 text-sm leading-6">{excerpt.note}</p>}
+                  <Link
+                    href={`/sources/${excerpt.sourceId}`}
+                    className="mt-1 inline-block text-xs text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                  >
+                    From: {excerpt.sourceTitle}
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         <section className="grid gap-4">
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">

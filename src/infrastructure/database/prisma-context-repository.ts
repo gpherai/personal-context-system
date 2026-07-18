@@ -5,6 +5,7 @@ import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import {
   entryStatuses,
   entryTypes,
+  excerptTextIsQuoted,
   metadataToSearchText,
   sourceTypes,
   savedFilterParamsSchema,
@@ -14,6 +15,7 @@ import {
   type CreateAttachmentCommand,
   type CreateDecisionCommand,
   type CreateEntryCommand,
+  type CreateExcerptCommand,
   type CreateQuestionCommand,
   type CreateReferenceCommand,
   type CreateSavedFilterCommand,
@@ -46,6 +48,7 @@ import type {
   DecisionRecord,
   EntryListItem,
   EntryRecord,
+  ExcerptRecord,
   GraphSnapshot,
   JsonObject,
   NamedRecord,
@@ -54,6 +57,7 @@ import type {
   QuestionRecord,
   ReferenceRecord,
   SavedFilterRecord,
+  SourceMessageRecord,
   SourceRecord,
   SourceSummary,
   TaskRecord,
@@ -98,6 +102,15 @@ const entryInclude = {
     include: {
       source: {
         select: { id: true, type: true, title: true }
+      }
+    }
+  },
+  excerpts: {
+    include: {
+      excerpt: {
+        include: {
+          source: { select: { id: true, title: true } }
+        }
       }
     }
   }
@@ -185,14 +198,48 @@ function mapSourceSummary(source: SourceWithRelations): SourceSummary | null {
   };
 }
 
-function mapSource(source: SourceWithRelations): SourceRecord | null {
+function mapSource(
+  source: SourceWithRelations & {
+    messages?: { id: string; position: number; role: string; text: string; model: string | null; occurredAt: Date | null }[];
+    excerpts?: {
+      id: string;
+      sourceId: string;
+      messageId: string | null;
+      text: string;
+      note: string | null;
+      createdAt: Date;
+      entries: { entry: { id: string; title: string } }[];
+    }[];
+  }
+): SourceRecord | null {
   const summary = mapSourceSummary(source);
   if (!summary) return null;
   return {
     ...summary,
     entries: source.entries
       .map(({ entry }) => ({ id: entry.id, title: entry.title }))
-      .sort((a, b) => a.title.localeCompare(b.title))
+      .sort((a, b) => a.title.localeCompare(b.title)),
+    messages: (source.messages ?? []).map(
+      (m): SourceMessageRecord => ({
+        id: m.id,
+        position: m.position,
+        role: m.role,
+        text: m.text,
+        model: optional(m.model),
+        occurredAt: optional(m.occurredAt)
+      })
+    ),
+    excerpts: (source.excerpts ?? []).map(
+      (e): ExcerptRecord => ({
+        id: e.id,
+        sourceId: e.sourceId,
+        messageId: optional(e.messageId),
+        text: e.text,
+        note: optional(e.note),
+        createdAt: e.createdAt,
+        entries: e.entries.map(({ entry }) => ({ id: entry.id, title: entry.title }))
+      })
+    )
   };
 }
 
@@ -296,7 +343,16 @@ function mapEntry(entry: EntryWithRelations): EntryRecord {
       .sort((a, b) => (a.title ?? a.path).localeCompare(b.title ?? b.path)),
     sources: entry.sources
       .map(({ source }) => ({ id: source.id, type: source.type, title: source.title }))
-      .sort((a, b) => a.title.localeCompare(b.title))
+      .sort((a, b) => a.title.localeCompare(b.title)),
+    excerpts: entry.excerpts
+      .map(({ excerpt }) => ({
+        id: excerpt.id,
+        text: excerpt.text,
+        note: optional(excerpt.note),
+        sourceId: excerpt.source.id,
+        sourceTitle: excerpt.source.title
+      }))
+      .sort((a, b) => a.sourceTitle.localeCompare(b.sourceTitle))
   };
 }
 
@@ -560,6 +616,21 @@ export class PrismaContextRepository implements ContextRepository {
     }
   }
 
+  private async syncEntryLinks(tx: Prisma.TransactionClient, entryId: string, sourceIds: string[], excerptIds: string[]) {
+    await tx.entrySource.deleteMany({ where: { entryId } });
+    await tx.entryExcerpt.deleteMany({ where: { entryId } });
+
+    const uniqueSourceIds = [...new Set(sourceIds)];
+    if (uniqueSourceIds.length > 0) {
+      await tx.entrySource.createMany({ data: uniqueSourceIds.map((sourceId) => ({ entryId, sourceId })) });
+    }
+
+    const uniqueExcerptIds = [...new Set(excerptIds)];
+    if (uniqueExcerptIds.length > 0) {
+      await tx.entryExcerpt.createMany({ data: uniqueExcerptIds.map((excerptId) => ({ entryId, excerptId })) });
+    }
+  }
+
   private async retryOnSlugConflict<T>(baseSlug: string, createFn: (slug: string) => Promise<T>): Promise<T> {
     let suffix = 2;
     let slug = baseSlug;
@@ -637,6 +708,7 @@ export class PrismaContextRepository implements ContextRepository {
       });
 
       await this.syncEntryNames(tx, created.id, command.themeNames, command.projectNames);
+      await this.syncEntryLinks(tx, created.id, command.sourceIds, command.excerptIds);
 
       if (command.type === "question") {
         await this.ensureOriginQuestion(tx, created);
@@ -669,6 +741,7 @@ export class PrismaContextRepository implements ContextRepository {
       });
 
       await this.syncEntryNames(tx, command.id, command.themeNames, command.projectNames);
+      await this.syncEntryLinks(tx, command.id, command.sourceIds, command.excerptIds);
 
       // Sync question prompt if this entry has an associated question (title may have changed)
       const linkedQuestion = await tx.question.findUnique({
@@ -1450,16 +1523,18 @@ export class PrismaContextRepository implements ContextRepository {
   }
 
   private async findSourceSearchIds(search: string): Promise<string[]> {
+    // 'dutch' config stems the mostly-Dutch imported content (was 'simple', no
+    // stemming); the GIN index on Source is built with the matching config.
     // Fetch the full ranked candidate set (fixed cap, not `limit`) so the
     // type/status/theme filters can be applied across all matches before limiting.
     const rows = await this.prisma.$queryRaw<{ id: string }[]>`
       SELECT "id"
       FROM "Source"
-      WHERE to_tsvector('simple', coalesce("title", '') || ' ' || coalesce("body", '') || ' ' || coalesce("searchText", ''))
-        @@ plainto_tsquery('simple', ${search})
+      WHERE to_tsvector('dutch', coalesce("title", '') || ' ' || coalesce("body", '') || ' ' || coalesce("searchText", ''))
+        @@ plainto_tsquery('dutch', ${search})
       ORDER BY ts_rank(
-        to_tsvector('simple', coalesce("title", '') || ' ' || coalesce("body", '') || ' ' || coalesce("searchText", '')),
-        plainto_tsquery('simple', ${search})
+        to_tsvector('dutch', coalesce("title", '') || ' ' || coalesce("body", '') || ' ' || coalesce("searchText", '')),
+        plainto_tsquery('dutch', ${search})
       ) DESC
       LIMIT 200
     `;
@@ -1519,7 +1594,19 @@ export class PrismaContextRepository implements ContextRepository {
   }
 
   async getSource(id: string): Promise<SourceRecord | null> {
-    const source = await this.prisma.source.findUnique({ where: { id }, include: sourceInclude });
+    const source = await this.prisma.source.findUnique({
+      where: { id },
+      include: {
+        ...sourceInclude,
+        messages: { orderBy: { position: "asc" } },
+        excerpts: {
+          orderBy: { createdAt: "asc" },
+          include: {
+            entries: { include: { entry: { select: { id: true, title: true } } } }
+          }
+        }
+      }
+    });
     return source ? mapSource(source) : null;
   }
 
@@ -1555,6 +1642,59 @@ export class PrismaContextRepository implements ContextRepository {
 
   async unlinkEntryFromSource(entryId: string, sourceId: string): Promise<void> {
     await this.prisma.entrySource.deleteMany({ where: { entryId, sourceId } });
+  }
+
+  async createExcerpt(command: CreateExcerptCommand): Promise<ExcerptRecord> {
+    let sourceText: string | null = null;
+
+    if (command.messageId) {
+      const message = await this.prisma.sourceMessage.findUnique({
+        where: { id: command.messageId },
+        select: { sourceId: true, text: true }
+      });
+      if (!message || message.sourceId !== command.sourceId) {
+        throw new Error(`Message "${command.messageId}" does not belong to source "${command.sourceId}".`);
+      }
+      sourceText = message.text;
+    } else {
+      const source = await this.prisma.source.findUnique({ where: { id: command.sourceId }, select: { body: true } });
+      sourceText = source?.body ?? null;
+    }
+
+    if (sourceText === null || !excerptTextIsQuoted(command.text, sourceText)) {
+      throw new Error("Excerpt text must be a literal quote from the source/message text.");
+    }
+
+    const created = await this.prisma.sourceExcerpt.create({
+      data: {
+        sourceId: command.sourceId,
+        messageId: command.messageId ?? null,
+        text: command.text,
+        note: command.note ?? null
+      }
+    });
+
+    return {
+      id: created.id,
+      sourceId: created.sourceId,
+      messageId: optional(created.messageId),
+      text: created.text,
+      note: optional(created.note),
+      createdAt: created.createdAt,
+      entries: []
+    };
+  }
+
+  async linkEntryToExcerpt(entryId: string, excerptId: string): Promise<void> {
+    await this.prisma.entryExcerpt.upsert({
+      where: { entryId_excerptId: { entryId, excerptId } },
+      update: {},
+      create: { entryId, excerptId }
+    });
+  }
+
+  async unlinkEntryFromExcerpt(entryId: string, excerptId: string): Promise<void> {
+    await this.prisma.entryExcerpt.deleteMany({ where: { entryId, excerptId } });
   }
 
   async linkSourceToTheme(sourceId: string, themeId: string): Promise<void> {

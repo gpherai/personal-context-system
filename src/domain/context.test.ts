@@ -4,6 +4,7 @@ import {
   createEntryCommandSchema,
   createReferenceCommandSchema,
   createSourceCommandSchema,
+  excerptTextIsQuoted,
   parseNameList,
   parseOptionalDate,
   slugifyName,
@@ -131,4 +132,18 @@ describe("context domain validation", () => {
     });
   });
 
+});
+
+describe("excerptTextIsQuoted", () => {
+  it("accepts an exact substring", () => {
+    expect(excerptTextIsQuoted("the answer is 42", "Well, the answer is 42, apparently.")).toBe(true);
+  });
+
+  it("collapses whitespace before comparing", () => {
+    expect(excerptTextIsQuoted("the  answer\nis 42", "the answer is 42")).toBe(true);
+  });
+
+  it("rejects text that isn't a literal quote", () => {
+    expect(excerptTextIsQuoted("the answer is 43", "the answer is 42")).toBe(false);
+  });
 });

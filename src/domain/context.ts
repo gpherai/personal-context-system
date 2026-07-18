@@ -99,7 +99,9 @@ export const createEntryCommandSchema = z.object({
   occurredAt: z.date().optional(),
   metadata: metadataSchema.default({}),
   themeNames: z.array(z.string().trim().min(1).max(160)).default([]),
-  projectNames: z.array(z.string().trim().min(1).max(180)).default([])
+  projectNames: z.array(z.string().trim().min(1).max(180)).default([]),
+  sourceIds: z.array(z.string().trim().min(1)).default([]),
+  excerptIds: z.array(z.string().trim().min(1)).default([])
 });
 
 export const listEntriesQuerySchema = z.object({
@@ -219,6 +221,13 @@ export const createReferenceCommandSchema = z
     }
   });
 
+export const createExcerptCommandSchema = z.object({
+  sourceId: z.string().min(1),
+  messageId: z.string().trim().min(1).optional(),
+  text: z.string().trim().min(1, "Excerpt text is required").max(8000),
+  note: z.string().trim().max(2000).optional()
+});
+
 export const createAttachmentCommandSchema = z.object({
   entryId: z.string().min(1),
   path: z.string().trim().min(1, "Path is required").max(4000),
@@ -259,21 +268,20 @@ const imageMetadataSchema = z.object({
   photographer: z.string().trim().max(240).optional()
 });
 
-const conversationMessageSchema = z.object({
-  role: z.enum(["user", "assistant"]),
-  text: z.string(),
-  timestamp: z.string()
-});
-
 const conversationMetadataSchema = z.object({
   type: z.literal("conversation"),
   provider: z.enum(["chatgpt", "claude", "gemini"]).default("chatgpt"),
   conversationId: z.string().trim().min(1),
   model: z.string().trim().max(120).optional(),
+  models: z.array(z.string().trim().min(1)).default([]),
   createdAt: z.string(),
   updatedAt: z.string(),
   messageCount: z.number().int().min(0),
-  messages: z.array(conversationMessageSchema)
+  charCount: z.number().int().min(0).default(0),
+  isArchived: z.boolean().default(false),
+  isStarred: z.boolean().default(false),
+  isStudyMode: z.boolean().default(false),
+  pinnedTime: z.string().optional()
 });
 
 export const sourceMetadataSchema = z.discriminatedUnion("type", [
@@ -432,6 +440,7 @@ export type CreateQuestionCommand = z.infer<typeof createQuestionCommandSchema>;
 export type ListQuestionsQuery = z.infer<typeof listQuestionsQuerySchema>;
 export type PromoteEntryToQuestionCommand = z.infer<typeof promoteEntryToQuestionCommandSchema>;
 export type CreateReferenceCommand = z.infer<typeof createReferenceCommandSchema>;
+export type CreateExcerptCommand = z.infer<typeof createExcerptCommandSchema>;
 export type CreateAttachmentCommand = z.infer<typeof createAttachmentCommandSchema>;
 export type CreateThreadCommand = z.infer<typeof createThreadCommandSchema>;
 export type CreateSourceCommand = z.infer<typeof createSourceCommandSchema>;
@@ -540,6 +549,13 @@ export function parseOptionalNumber(value: string | null | undefined): number | 
 
   const parsed = Number(text);
   return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+// Guards against fabricated citations: an excerpt must be a literal (whitespace-
+// collapsed) substring of the message/source text it's quoting.
+export function excerptTextIsQuoted(excerptText: string, sourceText: string): boolean {
+  const normalize = (s: string) => s.replace(/\s+/g, " ").trim();
+  return normalize(sourceText).includes(normalize(excerptText));
 }
 
 export function titleFromBody(body: string): string {

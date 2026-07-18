@@ -11,8 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button-link";
 import { formatDateTime, isValidId, labelize } from "@/lib/format";
 import { sourceTypeDetails } from "@/domain/taxonomy";
-import type { ChatGptExportMessage } from "@/domain/chatgpt-export";
 import type { SourceMetadata } from "@/domain/context";
+import type { SourceMessageRecord } from "@/repositories/context-repository";
 
 import { deleteSourceAction } from "../actions";
 
@@ -65,23 +65,23 @@ const markdownComponents: Components = {
   )
 };
 
-function ConversationTranscript({ messages }: { messages: ChatGptExportMessage[] }) {
+function ConversationTranscript({ messages }: { messages: SourceMessageRecord[] }) {
   if (!messages.length) {
     return <p className="text-sm text-muted-foreground">No messages.</p>;
   }
 
   return (
     <div className="grid gap-3">
-      {messages.map((message, index) => (
+      {messages.map((message) => (
         <div
-          key={index}
+          key={message.id}
           className={`grid gap-1.5 rounded-md border border-border bg-surface p-3 ${
             message.role === "user" ? "border-l-4 border-l-primary/50" : ""
           }`}
         >
           <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
             <Badge tone={message.role === "user" ? "blue" : "neutral"}>{labelize(message.role)}</Badge>
-            <span>{formatDateTime(new Date(message.timestamp))}</span>
+            {message.occurredAt && <span>{formatDateTime(message.occurredAt)}</span>}
           </div>
           <div className="grid gap-2 text-sm leading-7 [&>:first-child]:mt-0 [&>:last-child]:mb-0">
             <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
@@ -224,7 +224,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
         {source.metadata.type === "conversation" ? (
           <section className="grid gap-3">
             <h2 className="text-sm font-semibold">Transcript</h2>
-            <ConversationTranscript messages={source.metadata.messages} />
+            <ConversationTranscript messages={source.messages} />
           </section>
         ) : (
           source.body && (
@@ -270,6 +270,35 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
                 >
                   {theme.name}
                 </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {source.excerpts.length > 0 && (
+          <section className="grid gap-3">
+            <h2 className="text-sm font-semibold">Excerpts</h2>
+            <div className="grid gap-3">
+              {source.excerpts.map((excerpt) => (
+                <div key={excerpt.id} className="rounded-md border border-border bg-surface p-3">
+                  <blockquote className="border-l-2 border-border pl-3 text-sm italic leading-6 text-muted-foreground">
+                    &ldquo;{excerpt.text}&rdquo;
+                  </blockquote>
+                  {excerpt.note && <p className="mt-2 text-sm leading-6">{excerpt.note}</p>}
+                  {excerpt.entries.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {excerpt.entries.map((entry) => (
+                        <Link
+                          key={entry.id}
+                          href={`/entries/${entry.id}`}
+                          className="inline-flex h-7 items-center rounded-md border border-border bg-surface-muted px-2 text-xs transition-colors duration-150 hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                        >
+                          {entry.title}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </section>

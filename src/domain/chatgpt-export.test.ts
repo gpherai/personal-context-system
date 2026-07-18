@@ -126,4 +126,93 @@ describe("parseChatGptConversation", () => {
     expect(parsed.model).toBe("gpt-5");
     expect(parsed.createdAt).toBe(new Date(1700000000 * 1000).toISOString());
   });
+
+  it("follows the active path via current_node + parent, dropping abandoned regeneration branches", () => {
+    const raw: ChatGptExportConversation = {
+      conversation_id: "conv_branch",
+      title: "Branch",
+      current_node: "kept",
+      mapping: {
+        root: { message: null, parent: undefined },
+        user_msg: { ...textMessage("user", "question", 100), parent: "root" },
+        abandoned: { ...textMessage("assistant", "regenerated away", 200), parent: "user_msg" },
+        kept: { ...textMessage("assistant", "final answer", 300), parent: "user_msg" }
+      }
+    };
+
+    const parsed = parseChatGptConversation(raw);
+
+    expect(parsed.messages.map((m) => m.text)).toEqual(["question", "final answer"]);
+  });
+
+  it("falls back to a full mapping scan when current_node is missing or invalid", () => {
+    const raw: ChatGptExportConversation = {
+      conversation_id: "conv_missing_current",
+      title: "No current_node",
+      current_node: "does-not-exist",
+      mapping: {
+        second: { ...textMessage("assistant", "second reply", 200), parent: "first" },
+        first: { ...textMessage("user", "first message", 100), parent: undefined }
+      }
+    };
+
+    const parsed = parseChatGptConversation(raw);
+
+    expect(parsed.messages.map((m) => m.text)).toEqual(["first message", "second reply"]);
+  });
+
+  it("assigns a message id, model, and extracted urls per message", () => {
+    const raw: ChatGptExportConversation = {
+      conversation_id: "conv_ids",
+      title: "IDs",
+      mapping: {
+        a: {
+          message: {
+            id: "msg-abc",
+            author: { role: "assistant" },
+            content: { content_type: "text", parts: ["see this"] },
+            create_time: 100,
+            metadata: {
+              model_slug: "gpt-5-2",
+              content_references: [
+                {
+                  type: "sources_footnote",
+                  sources: [{ url: "https://example.com/a" }, { url: "https://example.com/b" }]
+                }
+              ]
+            }
+          }
+        }
+      }
+    };
+
+    const parsed = parseChatGptConversation(raw);
+
+    expect(parsed.messages[0].id).toBe("msg-abc");
+    expect(parsed.messages[0].model).toBe("gpt-5-2");
+    expect(parsed.messages[0].urls.sort()).toEqual(["https://example.com/a", "https://example.com/b"]);
+    expect(parsed.models).toEqual(["gpt-5-2"]);
+  });
+
+  it("carries conversation-level flags and derived stats", () => {
+    const raw: ChatGptExportConversation = {
+      conversation_id: "conv_flags",
+      title: "Flags",
+      is_archived: true,
+      is_starred: true,
+      is_study_mode: true,
+      pinned_time: 1700000000,
+      mapping: {
+        a: textMessage("user", "hi", 100)
+      }
+    };
+
+    const parsed = parseChatGptConversation(raw);
+
+    expect(parsed.isArchived).toBe(true);
+    expect(parsed.isStarred).toBe(true);
+    expect(parsed.isStudyMode).toBe(true);
+    expect(parsed.pinnedTime).toBe(new Date(1700000000 * 1000).toISOString());
+    expect(parsed.charCount).toBe("hi".length);
+  });
 });

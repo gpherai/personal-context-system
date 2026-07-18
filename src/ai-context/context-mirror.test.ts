@@ -27,7 +27,8 @@ describe("context mirror", () => {
             threads: [],
             references: [],
             attachments: [],
-            sources: []
+            sources: [],
+            excerpts: []
           }
         ],
         openQuestions: [],
@@ -63,7 +64,8 @@ describe("generateBundle", () => {
     threads: [],
     references: [],
     attachments: [],
-    sources: []
+    sources: [],
+    excerpts: []
   };
 
   function snapshotWith(privacyLevel: "private" | "sensitive" | "shareable", metadata: Record<string, string> = {}) {
@@ -120,6 +122,8 @@ describe("generateBundle", () => {
       themes: [],
       references: [],
       entries: [],
+      messages: [],
+      excerpts: [],
       createdAt: generatedAt,
       updatedAt: generatedAt,
       ...overrides
@@ -164,7 +168,8 @@ describe("applyBundleSelection", () => {
     threads: [],
     references: [],
     attachments: [],
-    sources: []
+    sources: [],
+    excerpts: []
   };
 
   const baseSource: SourceRecord = {
@@ -177,6 +182,8 @@ describe("applyBundleSelection", () => {
     themes: [{ id: "t1", slug: "theme-a", name: "Theme A" }],
     references: [],
     entries: [],
+    messages: [],
+    excerpts: [],
     createdAt: generatedAt,
     updatedAt: generatedAt
   };
@@ -188,7 +195,24 @@ describe("applyBundleSelection", () => {
     ];
     const sources = [
       { ...baseSource, id: "source_1", type: "video" as const },
-      { ...baseSource, id: "source_2", type: "conversation" as const, metadata: { type: "conversation" as const, provider: "chatgpt" as const, conversationId: "c1", createdAt: generatedAt.toISOString(), updatedAt: generatedAt.toISOString(), messageCount: 0, messages: [] } }
+      {
+        ...baseSource,
+        id: "source_2",
+        type: "conversation" as const,
+        metadata: {
+          type: "conversation" as const,
+          provider: "chatgpt" as const,
+          conversationId: "c1",
+          models: [],
+          createdAt: generatedAt.toISOString(),
+          updatedAt: generatedAt.toISOString(),
+          messageCount: 0,
+          charCount: 0,
+          isArchived: false,
+          isStarred: false,
+          isStudyMode: false
+        }
+      }
     ];
 
     const result = applyBundleSelection(entries, sources, {

@@ -100,6 +100,7 @@ model Entry {
   references          EntryReference[]
   attachments         EntryAttachment[]
   sources             EntrySource[]
+  excerpts            EntryExcerpt[]
   originatedQuestion Question?         @relation("QuestionOrigin")
 
   @@index([type])
@@ -277,10 +278,59 @@ model Source {
   themes      SourceTheme[]
   entries     EntrySource[]
   references  SourceReference[]
+  messages    SourceMessage[]
+  excerpts    SourceExcerpt[]
 
   @@index([type])
   @@index([status])
   @@index([privacyLevel])
+}
+
+model SourceMessage {
+  id         String    @id @default(cuid())
+  sourceId   String
+  externalId String?   @db.VarChar(80)
+  position   Int
+  role       String    @db.VarChar(20)
+  text       String    @db.Text
+  model      String?   @db.VarChar(120)
+  occurredAt DateTime? @db.Timestamptz(6)
+  metadata   Json      @default("{}")
+  createdAt  DateTime  @default(now()) @db.Timestamptz(6)
+
+  source   Source          @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  excerpts SourceExcerpt[]
+
+  @@unique([sourceId, position])
+  @@index([sourceId])
+}
+
+model SourceExcerpt {
+  id        String   @id @default(cuid())
+  sourceId  String
+  messageId String?
+  text      String   @db.Text
+  note      String?  @db.Text
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  source  Source         @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  message SourceMessage? @relation(fields: [messageId], references: [id], onDelete: SetNull)
+  entries EntryExcerpt[]
+
+  @@index([sourceId])
+  @@index([messageId])
+}
+
+model EntryExcerpt {
+  entryId   String
+  excerptId String
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  entry   Entry         @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  excerpt SourceExcerpt @relation(fields: [excerptId], references: [id], onDelete: Cascade)
+
+  @@id([entryId, excerptId])
+  @@index([excerptId])
 }
 
 model SourceTheme {
