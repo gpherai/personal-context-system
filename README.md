@@ -34,4 +34,10 @@ Useful commands:
 - `npm run lint`
 - `npm run test`
 - `npm run build`
-- `npm run mirror:build`
+- `npm run check` — typecheck + lint + test + build
+- `npm run mirror:build` — rebuild the AI-readable context mirror
+- `npm run db:studio` — Prisma Studio
+- `npm run db:seed`
+- `npm run pcs` — context CLI (`tsx scripts/pcs.ts`)
+- `npm run import:chatgpt` — import a ChatGPT export into Sources
+- `npm run backup:create` / `npm run backup:restore` — local backup of canonical data
