@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseChatGptConversation, type ChatGptExportConversation } from "./chatgpt-export";
+import { chatGptProjectName, parseChatGptConversation, type ChatGptExportConversation } from "./chatgpt-export";
 
 function textMessage(role: "user" | "assistant", text: string, createTime: number) {
   return {
@@ -231,5 +231,16 @@ describe("parseChatGptConversation", () => {
 
     expect(parseChatGptConversation(withProject).projectId).toBe("g-p-67adc80836648191886e73d3e10d6ec6");
     expect(parseChatGptConversation(withoutProject).projectId).toBeUndefined();
+  });
+});
+
+describe("chatGptProjectName", () => {
+  it("resolves a known projectId to its manually mapped name", () => {
+    expect(chatGptProjectName("g-p-67adc74960788191af52e0a12985148c")).toBe("🕉️Pathik");
+  });
+
+  it("returns undefined for an unknown or missing projectId", () => {
+    expect(chatGptProjectName("g-p-does-not-exist")).toBeUndefined();
+    expect(chatGptProjectName(undefined)).toBeUndefined();
   });
 });

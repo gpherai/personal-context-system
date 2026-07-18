@@ -2,6 +2,17 @@
 // (`conversations-*.json`). No Prisma/zip access here so this stays unit-testable
 // without a database or the export file itself.
 
+import projectNames from "./chatgpt-project-names.json";
+
+// The export never carries a human-readable ChatGPT Project/GPT name for
+// conversation_template_id, only the opaque hash — this is a manually
+// maintained lookup (see chatgpt-project-names.json) filled in as they're
+// identified in the ChatGPT web UI.
+export function chatGptProjectName(projectId: string | undefined): string | undefined {
+  if (!projectId) return undefined;
+  return (projectNames as Record<string, string>)[projectId];
+}
+
 export interface ChatGptExportMessage {
   id: string;
   role: "user" | "assistant";

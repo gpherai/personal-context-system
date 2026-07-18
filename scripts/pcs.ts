@@ -24,6 +24,7 @@ import "dotenv/config";
 
 import { PrismaPg } from "@prisma/adapter-pg";
 
+import { chatGptProjectName } from "../src/domain/chatgpt-export";
 import { excerptTextIsQuoted, slugifyName } from "../src/domain/context";
 import { PrismaClient } from "../src/generated/prisma/client";
 
@@ -129,7 +130,12 @@ async function cmdConvList(flags: Flags) {
     .filter((s) => !starredOnly || s.meta.isStarred === true)
     .filter((s) => !from || (s.meta.createdAt ?? "") >= from)
     .filter((s) => minMessages === undefined || (s.meta.messageCount ?? 0) >= minMessages)
-    .filter((s) => !projectId || s.meta.projectId === projectId)
+    .filter(
+      (s) =>
+        !projectId ||
+        s.meta.projectId === projectId ||
+        (chatGptProjectName(s.meta.projectId)?.toLowerCase().includes(projectId.toLowerCase()) ?? false)
+    )
     .filter((s) => {
       if (!unminedOnly) return true;
       const hasDirectLink = s.entries.length > 0;
@@ -147,7 +153,10 @@ async function cmdConvList(flags: Flags) {
   for (const row of rows) {
     const date = row.meta.createdAt?.slice(0, 10) ?? "unknown";
     const star = row.meta.isStarred ? "*" : " ";
-    const project = row.meta.projectId ? `  (project: ${row.meta.projectId})` : "";
+    const projectLabel = row.meta.projectId
+      ? (chatGptProjectName(row.meta.projectId) ?? row.meta.projectId)
+      : undefined;
+    const project = projectLabel ? `  (project: ${projectLabel})` : "";
     console.log(`${star} ${row.id}  ${date}  [${row.meta.messageCount ?? 0} msg]  ${row.title}${project}`);
   }
   console.log(`\n${rows.length} gesprek(ken) getoond.`);

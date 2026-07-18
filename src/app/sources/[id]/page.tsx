@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button-link";
 import { formatDateTime, isValidId, labelize } from "@/lib/format";
 import { sourceTypeDetails } from "@/domain/taxonomy";
+import { chatGptProjectName } from "@/domain/chatgpt-export";
 import type { SourceMetadata } from "@/domain/context";
 import type { SourceMessageRecord } from "@/repositories/context-repository";
 
@@ -157,7 +158,16 @@ function SourceMetadataSection({ metadata }: { metadata: SourceMetadata }) {
           <MetadataField label="Model" value={metadata.model} />
           <MetadataField label="Messages" value={metadata.messageCount} />
           <MetadataField label="Started" value={formatDateTime(new Date(metadata.createdAt))} />
-          <MetadataField label="ChatGPT project" value={metadata.projectId} />
+          <MetadataField
+            label="ChatGPT project"
+            value={
+              metadata.projectId
+                ? chatGptProjectName(metadata.projectId)
+                  ? `${chatGptProjectName(metadata.projectId)} (${metadata.projectId})`
+                  : metadata.projectId
+                : undefined
+            }
+          />
         </dl>
       );
   }
