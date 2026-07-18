@@ -26,6 +26,8 @@ npm run db:migrate
 npm run dev
 ```
 
+PCS draait lokaal standaard op `http://localhost:3001`. Elke app in deze workspace heeft een vaste poort, zodat de opstartvolgorde geen poort bepaalt. Alleen voor een bewust tijdelijk tweede exemplaar kun je overriden met bijvoorbeeld `PORT=4011 npm run dev`; zet `PORT` niet in `.env`, want Next.js leest die waarde voordat env-bestanden geladen zijn.
+
 Useful commands:
 
 - `npm run typecheck`
