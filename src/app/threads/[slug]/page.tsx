@@ -68,7 +68,7 @@ export default async function ThreadPage({ params }: { params: Promise<{ slug: s
                       type="submit"
                       disabled={index === 0}
                       aria-label="Move up"
-                      className="flex h-7 w-7 items-center justify-center rounded-md border border-border transition-colors duration-150 hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                      className="flex h-11 w-11 items-center justify-center rounded-md border border-border transition-colors duration-150 hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                     >
                       <ChevronUp className="h-4 w-4" aria-hidden="true" />
                     </button>
@@ -78,7 +78,7 @@ export default async function ThreadPage({ params }: { params: Promise<{ slug: s
                       type="submit"
                       disabled={index === thread.entries.length - 1}
                       aria-label="Move down"
-                      className="flex h-7 w-7 items-center justify-center rounded-md border border-border transition-colors duration-150 hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                      className="flex h-11 w-11 items-center justify-center rounded-md border border-border transition-colors duration-150 hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                     >
                       <ChevronDown className="h-4 w-4" aria-hidden="true" />
                     </button>

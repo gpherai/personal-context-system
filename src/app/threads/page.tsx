@@ -15,10 +15,10 @@ export default async function ThreadsPage() {
 
     return (
       <div className="mx-auto grid max-w-6xl gap-6">
-        <header className="border-b border-border pb-5">
+        <header className="border-b border-border pb-6">
           <p className="text-xs font-semibold uppercase tracking-widest text-primary">Threads</p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight">Curated thought sequences</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+          <h1 className="mt-2 text-3xl font-bold tracking-tight">Curated thought sequences</h1>
+          <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted-foreground">
             Threads collect entries into a deliberate sequence once a line of thought becomes durable.
           </p>
         </header>

@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { FormMessage } from "@/components/form-message";
 import type { SavedFilterParams } from "@/domain/context";
 
 import { initialMutationState } from "@/application/action-states";
@@ -57,9 +58,7 @@ export function SaveFilterForm({ params }: { params: SavedFilterParams }) {
           placeholder="Optional note"
         />
       </label>
-      {state.message && (
-        <p className={state.status === "error" ? "text-sm text-danger" : "text-sm text-accent"}>{state.message}</p>
-      )}
+      <FormMessage state={state} />
     </form>
   );
 }

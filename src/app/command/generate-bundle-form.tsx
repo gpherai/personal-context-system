@@ -39,16 +39,22 @@ export function GenerateBundleForm() {
         </div>
       </fieldset>
 
-      <label className="grid gap-1.5 text-sm font-medium">
-        Source types
-        <select className="field-select" name="sourceTypes" multiple defaultValue={[...defaultBundleSourceTypes]}>
+      <fieldset className="grid gap-1.5 text-sm font-medium">
+        <legend>Source types</legend>
+        <div className="flex flex-wrap gap-3 text-sm font-normal">
           {sourceTypes.map((type) => (
-            <option key={type} value={type}>
+            <label key={type} className="flex items-center gap-1.5">
+              <input
+                type="checkbox"
+                name="sourceTypes"
+                value={type}
+                defaultChecked={(defaultBundleSourceTypes as readonly string[]).includes(type)}
+              />
               {labelize(type)}
-            </option>
+            </label>
           ))}
-        </select>
-      </label>
+        </div>
+      </fieldset>
 
       <label className="grid gap-1.5 text-sm font-medium">
         Theme slugs
@@ -68,7 +74,7 @@ export function GenerateBundleForm() {
 
       <label className="grid gap-1.5 text-sm font-medium">
         IDs (one per line)
-        <textarea className="field-input" name="ids" rows={3} placeholder="entry_abc123" />
+        <textarea className="field-textarea" name="ids" rows={3} placeholder="entry_abc123" />
       </label>
 
       <p className="text-xs leading-5 text-muted-foreground">
@@ -87,7 +93,7 @@ export function GenerateBundleForm() {
       )}
 
       {state.status === "success" && state.manifest && (
-        <div className="grid gap-2 rounded-md border border-success/30 bg-success/8 p-3 text-sm">
+        <div role="status" aria-live="polite" className="grid gap-2 rounded-md border border-success/30 bg-success/8 p-3 text-sm">
           <p className="font-medium text-success">{state.message}</p>
           <dl className="grid gap-1 text-xs text-muted-foreground">
             <div className="flex justify-between gap-3">

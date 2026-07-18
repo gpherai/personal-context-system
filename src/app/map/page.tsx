@@ -29,10 +29,10 @@ export default async function MapPage() {
 
     return (
       <div className="mx-auto grid max-w-6xl gap-6">
-        <header className="border-b border-border pb-5">
+        <header className="border-b border-border pb-6">
           <p className="text-xs font-semibold uppercase tracking-widest text-primary">Map</p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight">Relationship map</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+          <h1 className="mt-2 text-3xl font-bold tracking-tight">Relationship map</h1>
+          <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted-foreground">
             A structured map of explicit links. It stays text-first until enough relationship data exists for a visual graph.
           </p>
         </header>

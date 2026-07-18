@@ -46,9 +46,7 @@ function SourceCard({ source }: { source: SourceSummary }) {
       {source.themes.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {source.themes.map((theme) => (
-            <span key={theme.id} className="inline-flex h-5 items-center rounded px-2 text-xs bg-surface-muted text-muted-foreground">
-              {theme.name}
-            </span>
+            <Badge key={theme.id} tone="neutral">{theme.name}</Badge>
           ))}
         </div>
       )}
@@ -83,10 +81,10 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
 
     return (
       <div className="mx-auto grid max-w-6xl gap-5">
-        <header className="border-b border-border pb-5">
+        <header className="border-b border-border pb-6">
           <p className="text-xs font-semibold uppercase tracking-widest text-primary">Sources</p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight">Sources</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+          <h1 className="mt-2 text-3xl font-bold tracking-tight">Source library</h1>
+          <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted-foreground">
             Videos, books, posts, and imported conversations.
           </p>
         </header>
@@ -147,13 +145,10 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
             </div>
           </form>
 
-          <Link
-            href="/sources/new"
-            className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-[var(--color-primary-foreground)] shadow-sm transition-colors hover:bg-primary-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-          >
+          <ButtonLink href="/sources/new" variant="primary" className="shrink-0">
             <Plus className="h-4 w-4" aria-hidden="true" />
             New source
-          </Link>
+          </ButtonLink>
         </div>
 
         {sources.length > 0 ? (

@@ -134,7 +134,7 @@ export function TaskForm({ questionId }: { questionId: string }) {
       </label>
       <label className="grid gap-1.5 text-sm font-medium">
         Due date
-        <input className="field-select" type="date" name="dueAt" />
+        <input className="field-input" type="date" name="dueAt" />
       </label>
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={pending}>

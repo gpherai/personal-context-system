@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { FormMessage } from "@/components/form-message";
 import { referenceKinds } from "@/domain/context";
 import { labelize } from "@/lib/format";
 
@@ -13,14 +14,6 @@ import {
   addReferenceAction,
   createThreadWithEntryAction
 } from "./actions";
-
-function Message({ state }: { state: typeof initialMutationState }) {
-  if (!state.message) {
-    return null;
-  }
-
-  return <p className={state.status === "error" ? "text-sm text-danger" : "text-sm text-accent"}>{state.message}</p>;
-}
 
 export function ReferenceForm({ entryId }: { entryId: string }) {
   const actionWithEntry = addReferenceAction.bind(null, entryId);
@@ -71,7 +64,7 @@ export function ReferenceForm({ entryId }: { entryId: string }) {
         <Button type="submit" variant="secondary" disabled={pending}>
           {pending ? "Adding..." : "Add reference"}
         </Button>
-        <Message state={state} />
+        <FormMessage state={state} />
       </div>
     </form>
   );
@@ -129,7 +122,7 @@ export function AttachmentForm({ entryId }: { entryId: string }) {
         <Button type="submit" variant="secondary" disabled={pending}>
           {pending ? "Adding..." : "Add attachment metadata"}
         </Button>
-        <Message state={state} />
+        <FormMessage state={state} />
       </div>
     </form>
   );
@@ -160,7 +153,7 @@ export function ThreadForm({ entryId }: { entryId: string }) {
         <Button type="submit" variant="secondary" disabled={pending}>
           {pending ? "Creating..." : "Create thread from entry"}
         </Button>
-        <Message state={state} />
+        <FormMessage state={state} />
       </div>
     </form>
   );

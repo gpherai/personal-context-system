@@ -70,10 +70,10 @@ export function ConfirmDialog({
           {message}
         </p>
         <div className="mt-5 flex justify-end gap-3">
-          <Button type="button" variant="secondary" onClick={onCancel}>
+          <Button type="button" variant="secondary" autoFocus={tone === "danger"} onClick={onCancel}>
             {cancelLabel}
           </Button>
-          <Button autoFocus type="button" variant={tone} onClick={onConfirm}>
+          <Button type="button" variant={tone} autoFocus={tone !== "danger"} onClick={onConfirm}>
             {confirmLabel}
           </Button>
         </div>

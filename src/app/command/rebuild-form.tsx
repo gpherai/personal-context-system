@@ -4,6 +4,7 @@ import { RefreshCw } from "lucide-react";
 import { useActionState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { FormMessage } from "@/components/form-message";
 
 import { initialRebuildMirrorState, rebuildMirrorAction } from "./actions";
 
@@ -16,9 +17,7 @@ export function RebuildMirrorForm() {
         <RefreshCw className="h-4 w-4" aria-hidden="true" />
         {pending ? "Rebuilding..." : "Rebuild context mirror"}
       </Button>
-      {state.message && (
-        <p className={state.status === "error" ? "text-sm text-danger" : "text-sm text-accent"}>{state.message}</p>
-      )}
+      <FormMessage state={state} />
     </form>
   );
 }

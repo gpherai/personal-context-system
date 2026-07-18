@@ -6,6 +6,7 @@ import { getDashboardOverview } from "@/application/query-service";
 import { EntryList } from "@/components/entry-list";
 import { SetupNotice } from "@/components/setup-notice";
 import { Badge } from "@/components/ui/badge";
+import { ButtonLink } from "@/components/ui/button-link";
 import type { DashboardOverview } from "@/repositories/context-repository";
 import { labelize } from "@/lib/format";
 
@@ -59,13 +60,10 @@ export default async function DashboardPage() {
             Current work, active questions, and recent capture from the local database.
           </p>
         </div>
-        <Link
-          href="/capture"
-          className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-[var(--color-primary-foreground)] shadow-sm transition-colors hover:bg-primary-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-        >
+        <ButtonLink href="/capture" variant="primary">
           <PenLine className="h-4 w-4" aria-hidden="true" />
           Capture
-        </Link>
+        </ButtonLink>
       </header>
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="System counts">
