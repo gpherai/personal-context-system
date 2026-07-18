@@ -12,7 +12,7 @@
  * logica uit PrismaContextRepository i.p.v. die klasse te importeren.
  *
  * Gebruik:
- *   npm run pcs -- conv list [--starred] [--from 2025-01] [--min-messages 10] [--unmined] [--limit 20]
+ *   npm run pcs -- conv list [--starred] [--from 2025-01] [--min-messages 10] [--unmined] [--project <id>] [--limit 20]
  *   npm run pcs -- conv search "<query>" [--limit 20]
  *   npm run pcs -- conv show <sourceId> [--from 0] [--to 20]
  *   npm run pcs -- excerpt add <sourceId> --message <position> --text "..." [--note "..."]
@@ -94,6 +94,7 @@ interface ConversationMetadata {
   messageCount?: number;
   isStarred?: boolean;
   isArchived?: boolean;
+  projectId?: string;
 }
 
 function asConversationMetadata(value: unknown): ConversationMetadata | null {
@@ -108,6 +109,7 @@ async function cmdConvList(flags: Flags) {
   const from = flagString(flags, "from"); // "YYYY-MM"
   const minMessages = flagNumber(flags, "min-messages");
   const unminedOnly = flagBool(flags, "unmined");
+  const projectId = flagString(flags, "project");
   const limit = flagNumber(flags, "limit") ?? 20;
 
   const sources = await prisma.source.findMany({
@@ -127,6 +129,7 @@ async function cmdConvList(flags: Flags) {
     .filter((s) => !starredOnly || s.meta.isStarred === true)
     .filter((s) => !from || (s.meta.createdAt ?? "") >= from)
     .filter((s) => minMessages === undefined || (s.meta.messageCount ?? 0) >= minMessages)
+    .filter((s) => !projectId || s.meta.projectId === projectId)
     .filter((s) => {
       if (!unminedOnly) return true;
       const hasDirectLink = s.entries.length > 0;
@@ -144,7 +147,8 @@ async function cmdConvList(flags: Flags) {
   for (const row of rows) {
     const date = row.meta.createdAt?.slice(0, 10) ?? "unknown";
     const star = row.meta.isStarred ? "*" : " ";
-    console.log(`${star} ${row.id}  ${date}  [${row.meta.messageCount ?? 0} msg]  ${row.title}`);
+    const project = row.meta.projectId ? `  (project: ${row.meta.projectId})` : "";
+    console.log(`${star} ${row.id}  ${date}  [${row.meta.messageCount ?? 0} msg]  ${row.title}${project}`);
   }
   console.log(`\n${rows.length} gesprek(ken) getoond.`);
 }
@@ -305,7 +309,7 @@ async function main() {
   console.log(
     [
       "Onbekend commando. Beschikbaar:",
-      "  pcs conv list [--starred] [--from 2025-01] [--min-messages 10] [--unmined] [--limit 20]",
+      "  pcs conv list [--starred] [--from 2025-01] [--min-messages 10] [--unmined] [--project <id>] [--limit 20]",
       '  pcs conv search "<query>" [--limit 20]',
       "  pcs conv show <sourceId> [--from 0] [--to 20]",
       '  pcs excerpt add <sourceId> --message <position> --text "..." [--note "..."]',

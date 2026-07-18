@@ -90,7 +90,8 @@ async function main() {
         isArchived: parsed.isArchived,
         isStarred: parsed.isStarred,
         isStudyMode: parsed.isStudyMode,
-        pinnedTime: parsed.pinnedTime
+        pinnedTime: parsed.pinnedTime,
+        projectId: parsed.projectId
       });
 
       const sourceData = {

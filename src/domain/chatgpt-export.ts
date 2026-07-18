@@ -26,6 +26,7 @@ export interface ParsedChatGptConversation {
   isStudyMode: boolean;
   models: string[];
   charCount: number;
+  projectId?: string;
 }
 
 interface ChatGptMappingMessage {
@@ -53,6 +54,7 @@ export interface ChatGptExportConversation {
   is_starred?: unknown;
   pinned_time?: unknown;
   is_study_mode?: unknown;
+  conversation_template_id?: unknown;
   mapping?: Record<string, ChatGptMappingNode> | unknown;
 }
 
@@ -212,6 +214,7 @@ export function parseChatGptConversation(raw: ChatGptExportConversation): Parsed
     pinnedTime: unixToIso(raw.pinned_time),
     isStudyMode: raw.is_study_mode === true,
     models,
-    charCount
+    charCount,
+    projectId: typeof raw.conversation_template_id === "string" ? raw.conversation_template_id : undefined
   };
 }

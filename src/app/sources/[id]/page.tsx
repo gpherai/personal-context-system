@@ -157,6 +157,7 @@ function SourceMetadataSection({ metadata }: { metadata: SourceMetadata }) {
           <MetadataField label="Model" value={metadata.model} />
           <MetadataField label="Messages" value={metadata.messageCount} />
           <MetadataField label="Started" value={formatDateTime(new Date(metadata.createdAt))} />
+          <MetadataField label="ChatGPT project" value={metadata.projectId} />
         </dl>
       );
   }

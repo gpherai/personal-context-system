@@ -215,4 +215,21 @@ describe("parseChatGptConversation", () => {
     expect(parsed.pinnedTime).toBe(new Date(1700000000 * 1000).toISOString());
     expect(parsed.charCount).toBe("hi".length);
   });
+
+  it("carries the ChatGPT project id from conversation_template_id, when present", () => {
+    const withProject: ChatGptExportConversation = {
+      conversation_id: "conv_project",
+      title: "In a project",
+      conversation_template_id: "g-p-67adc80836648191886e73d3e10d6ec6",
+      mapping: { a: textMessage("user", "hi", 100) }
+    };
+    const withoutProject: ChatGptExportConversation = {
+      conversation_id: "conv_no_project",
+      title: "No project",
+      mapping: { a: textMessage("user", "hi", 100) }
+    };
+
+    expect(parseChatGptConversation(withProject).projectId).toBe("g-p-67adc80836648191886e73d3e10d6ec6");
+    expect(parseChatGptConversation(withoutProject).projectId).toBeUndefined();
+  });
 });

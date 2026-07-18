@@ -281,7 +281,8 @@ const conversationMetadataSchema = z.object({
   isArchived: z.boolean().default(false),
   isStarred: z.boolean().default(false),
   isStudyMode: z.boolean().default(false),
-  pinnedTime: z.string().optional()
+  pinnedTime: z.string().optional(),
+  projectId: z.string().trim().min(1).optional()
 });
 
 export const sourceMetadataSchema = z.discriminatedUnion("type", [
