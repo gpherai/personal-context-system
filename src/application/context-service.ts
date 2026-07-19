@@ -694,14 +694,17 @@ export async function listSources(repository: SourceRepository, params?: Record<
     search: parseOptionalString(params?.["search"] ?? null),
     type: parseOptionalString(params?.["type"] ?? null),
     themeSlug: parseOptionalString(params?.["themeSlug"] ?? null),
-    status: parseOptionalString(params?.["status"] ?? null),
+    // Default to active-only so archived sources (e.g. after conversation
+    // mining is done) drop out of the main list/search without deleting them.
+    // An explicit ?status= still overrides this.
+    status: parseOptionalString(params?.["status"] ?? null) ?? "active",
     limit: SOURCES_PAGE_SIZE,
     offset: (page - 1) * SOURCES_PAGE_SIZE
   });
 
-  const [items, total] = await Promise.all([repository.listSources(parsed), repository.countSources(parsed)]);
+  const { items, total, searchCapped } = await repository.listSourcesWithTotal(parsed);
 
-  return { items, total, page, pageSize: SOURCES_PAGE_SIZE };
+  return { items, total, page, pageSize: SOURCES_PAGE_SIZE, searchCapped };
 }
 
 const laxListEntriesQuerySchema = listEntriesQuerySchema.extend({

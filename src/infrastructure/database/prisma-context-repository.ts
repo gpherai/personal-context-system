@@ -57,6 +57,7 @@ import type {
   QuestionRecord,
   ReferenceRecord,
   SavedFilterRecord,
+  SourceListResult,
   SourceMessageRecord,
   SourceRecord,
   SourceSummary,
@@ -66,6 +67,11 @@ import type {
 
 import { DatabaseUnavailableError } from "@/application/errors";
 import { getPrismaClient } from "./client";
+
+// Ranked-candidate cap for Source full-text search: how many rows the raw
+// tsvector/ts_rank query considers before type/status/theme filtering and
+// pagination. Matches between findSourceSearchIds and listSourcesWithTotal.
+const SOURCE_SEARCH_CANDIDATE_LIMIT = 200;
 
 const entryInclude = {
   themes: {
@@ -1530,13 +1536,13 @@ export class PrismaContextRepository implements ContextRepository {
     const rows = await this.prisma.$queryRaw<{ id: string }[]>`
       SELECT "id"
       FROM "Source"
-      WHERE to_tsvector('dutch', coalesce("title", '') || ' ' || coalesce("body", '') || ' ' || coalesce("searchText", ''))
+      WHERE to_tsvector('dutch', coalesce("title", '') || ' ' || coalesce("description", '') || ' ' || coalesce("body", '') || ' ' || coalesce("searchText", ''))
         @@ plainto_tsquery('dutch', ${search})
       ORDER BY ts_rank(
-        to_tsvector('dutch', coalesce("title", '') || ' ' || coalesce("body", '') || ' ' || coalesce("searchText", '')),
+        to_tsvector('dutch', coalesce("title", '') || ' ' || coalesce("description", '') || ' ' || coalesce("body", '') || ' ' || coalesce("searchText", '')),
         plainto_tsquery('dutch', ${search})
       ) DESC
-      LIMIT 200
+      LIMIT ${SOURCE_SEARCH_CANDIDATE_LIMIT}
     `;
     return rows.map((r) => r.id);
   }
@@ -1550,47 +1556,62 @@ export class PrismaContextRepository implements ContextRepository {
   }
 
   async listSources(query?: ListSourcesQuery): Promise<SourceSummary[]> {
+    return (await this.listSourcesWithTotal(query)).items;
+  }
+
+  async countSources(query?: ListSourcesQuery): Promise<number> {
+    return (await this.listSourcesWithTotal(query)).total;
+  }
+
+  async listSourcesWithTotal(query?: ListSourcesQuery): Promise<SourceListResult> {
     const limit = Math.min(query?.limit ?? 50, 200);
     const offset = Math.max(query?.offset ?? 0, 0);
     const where = this.buildSourceWhere(query);
 
-    let searchIds: string[] | undefined;
-    if (query?.search) {
-      searchIds = await this.findSourceSearchIds(query.search);
-      where.id = { in: searchIds };
+    if (!query?.search) {
+      const [sources, total] = await Promise.all([
+        this.prisma.source.findMany({ where, include: sourceInclude, orderBy: [{ title: "asc" }], skip: offset, take: limit }),
+        this.prisma.source.count({ where })
+      ]);
+      return {
+        items: sources.map(mapSourceSummary).filter((s): s is SourceSummary => s !== null),
+        total,
+        searchCapped: false
+      };
     }
 
-    const sources = await this.prisma.source.findMany({
-      where,
-      include: sourceInclude,
-      orderBy: [{ title: "asc" }],
-      skip: searchIds ? undefined : offset,
-      take: searchIds ? undefined : limit
+    // One ranked-candidate query, then a cheap id-only lookup to apply
+    // type/status/theme filters, then a single hydrated fetch for just the
+    // requested page — avoids running the FTS query twice (list + count) and
+    // avoids pulling full records (with relations) for every candidate.
+    const searchIds = await this.findSourceSearchIds(query.search);
+    const rank = new Map(searchIds.map((id, i) => [id, i]));
+
+    const filteredRows = await this.prisma.source.findMany({
+      where: { ...where, id: { in: searchIds } },
+      select: { id: true }
     });
+    const orderedIds = filteredRows
+      .map((row) => row.id)
+      .sort((a, b) => (rank.get(a) ?? Infinity) - (rank.get(b) ?? Infinity));
 
-    if (searchIds) {
-      const rank = new Map(searchIds.map((id, i) => [id, i]));
-      return sources
-        .sort((a, b) => (rank.get(a.id) ?? Infinity) - (rank.get(b.id) ?? Infinity))
-        .slice(offset, offset + limit)
-        .map(mapSourceSummary)
-        .filter((s): s is SourceSummary => s !== null);
-    }
+    const pageIds = orderedIds.slice(offset, offset + limit);
+    const pageSources = pageIds.length
+      ? await this.prisma.source.findMany({ where: { id: { in: pageIds } }, include: sourceInclude })
+      : [];
+    const byId = new Map(pageSources.map((source) => [source.id, source]));
 
-    return sources.map(mapSourceSummary).filter((s): s is SourceSummary => s !== null);
-  }
+    const items = pageIds
+      .map((id) => byId.get(id))
+      .filter((source): source is SourceWithRelations => source !== undefined)
+      .map(mapSourceSummary)
+      .filter((s): s is SourceSummary => s !== null);
 
-  async countSources(query?: ListSourcesQuery): Promise<number> {
-    const where = this.buildSourceWhere(query);
-
-    if (query?.search) {
-      // Matches the 200-candidate ranking cap in listSources/findSourceSearchIds:
-      // total for a search query is reported as min(actual filtered matches, 200).
-      const searchIds = await this.findSourceSearchIds(query.search);
-      return this.prisma.source.count({ where: { ...where, id: { in: searchIds } } });
-    }
-
-    return this.prisma.source.count({ where });
+    return {
+      items,
+      total: orderedIds.length,
+      searchCapped: searchIds.length >= SOURCE_SEARCH_CANDIDATE_LIMIT
+    };
   }
 
   async getSource(id: string): Promise<SourceRecord | null> {

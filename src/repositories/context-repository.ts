@@ -98,6 +98,13 @@ export interface SourceSummary {
   updatedAt: Date;
 }
 
+export interface SourceListResult {
+  items: SourceSummary[];
+  total: number;
+  /** true when a `search` query hit the ranked-candidate cap — `total` may undercount actual matches. */
+  searchCapped: boolean;
+}
+
 export interface SourceMessageRecord {
   id: string;
   position: number;
@@ -300,6 +307,7 @@ export interface SourceRepository {
   deleteSource(id: string): Promise<void>;
   listSources(query?: ListSourcesQuery): Promise<SourceSummary[]>;
   countSources(query?: ListSourcesQuery): Promise<number>;
+  listSourcesWithTotal(query?: ListSourcesQuery): Promise<SourceListResult>;
   listSourcesByType(type: SourceType, limit?: number): Promise<SourceSummary[]>;
   getSource(id: string): Promise<SourceRecord | null>;
   linkEntryToSource(entryId: string, sourceId: string): Promise<void>;

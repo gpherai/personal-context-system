@@ -59,7 +59,7 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
   const urlParams = toStringRecord(rawSearchParams);
 
   try {
-    const [{ items: sources, total, page, pageSize }, themes] = await Promise.all([
+    const [{ items: sources, total, page, pageSize, searchCapped }, themes] = await Promise.all([
       getSources(urlParams),
       listThemes()
     ]);
@@ -150,6 +150,12 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
             New source
           </ButtonLink>
         </div>
+
+        {searchCapped && (
+          <p className="text-xs text-muted-foreground">
+            Meer dan {total} resultaten voor deze zoekopdracht — verfijn je zoekterm om alles te vinden.
+          </p>
+        )}
 
         {sources.length > 0 ? (
           <>
