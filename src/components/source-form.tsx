@@ -3,9 +3,8 @@
 import { useActionState, useState } from "react";
 
 import { initialMutationState } from "@/application/action-states";
-import { FieldError } from "@/components/field-error";
 import { TaxonomyPicker } from "@/components/taxonomy-picker";
-import { Button } from "@/components/ui/button";
+import { Alert, Button, Field, Panel } from "@/components/ui";
 import { privacyLevels, sourceTypes, type SourceType, type RecordStatus, type PrivacyLevel, type SourceMetadata } from "@/domain/context";
 import { sourceTypeDetails } from "@/domain/taxonomy";
 import { labelize } from "@/lib/format";
@@ -37,17 +36,6 @@ interface SourceFormProps {
   isEdit?: boolean;
 }
 
-function Field({ label, error, children }: { label: string; error?: string[]; children: React.ReactNode }) {
-  return (
-    <label className="grid gap-1.5 text-sm font-medium">
-      {label}
-      {children}
-      <FieldError errors={error} />
-    </label>
-  );
-}
-
-
 function MetadataFields({
   type,
   initial,
@@ -68,38 +56,69 @@ function MetadataFields({
     case "video":
       return (
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Channel" error={err("channel")}><input className="field-input" name="channel" defaultValue={str("channel")} /></Field>
-          <Field label="Duration (s)" error={err("duration")}><input className="field-input" name="duration" defaultValue={num("duration")} type="number" min="0" /></Field>
-          <Field label="Language" error={err("language")}><input className="field-input" name="language" defaultValue={str("language")} /></Field>
+          <Field name="channel" label="Channel" errors={err("channel")}>
+            {(p) => <input className="field-input" defaultValue={str("channel")} {...p} />}
+          </Field>
+          <Field name="duration" label="Duration (s)" errors={err("duration")}>
+            {(p) => <input className="field-input" defaultValue={num("duration")} type="number" min="0" {...p} />}
+          </Field>
+          <Field name="language" label="Language" errors={err("language")}>
+            {(p) => <input className="field-input" defaultValue={str("language")} {...p} />}
+          </Field>
         </div>
       );
     case "book":
       return (
         <div className="grid gap-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Authors (comma-separated)" error={err("authors")}><input className="field-input" name="authors" defaultValue={csv("authors")} /></Field>
-            <Field label="ISBN" error={err("isbn")}><input className="field-input" name="isbn" defaultValue={str("isbn")} /></Field>
-            <Field label="Year" error={err("year")}><input className="field-input" name="year" defaultValue={num("year")} type="number" /></Field>
-            <Field label="Publisher" error={err("publisher")}><input className="field-input" name="publisher" defaultValue={str("publisher")} /></Field>
-            <Field label="Language" error={err("language")}><input className="field-input" name="language" defaultValue={str("language")} /></Field>
+            <Field name="authors" label="Authors" hint="Comma-separated." errors={err("authors")}>
+              {(p) => <input className="field-input" defaultValue={csv("authors")} {...p} />}
+            </Field>
+            <Field name="isbn" label="ISBN" errors={err("isbn")}>
+              {(p) => <input className="field-input" defaultValue={str("isbn")} {...p} />}
+            </Field>
+            <Field name="year" label="Year" errors={err("year")}>
+              {(p) => <input className="field-input" defaultValue={num("year")} type="number" {...p} />}
+            </Field>
+            <Field name="publisher" label="Publisher" errors={err("publisher")}>
+              {(p) => <input className="field-input" defaultValue={str("publisher")} {...p} />}
+            </Field>
+            <Field name="language" label="Language" errors={err("language")}>
+              {(p) => <input className="field-input" defaultValue={str("language")} {...p} />}
+            </Field>
           </div>
-          <Field label="Chapters (one per line)" error={err("chapters")}>
-            <textarea className="field-textarea" name="chapters" defaultValue={lines("chapters")} placeholder="Chapter 1&#10;Chapter 2" />
+          <Field name="chapters" label="Chapters" hint="One per line." errors={err("chapters")}>
+            {(p) => (
+              <textarea
+                className="field-textarea"
+                defaultValue={lines("chapters")}
+                placeholder="Chapter 1&#10;Chapter 2"
+                {...p}
+              />
+            )}
           </Field>
         </div>
       );
     case "post":
       return (
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Author" error={err("author")}><input className="field-input" name="author" defaultValue={str("author")} /></Field>
-          <Field label="Published" error={err("publishedAt")}><input className="field-input" name="publishedAt" defaultValue={str("publishedAt")} /></Field>
+          <Field name="author" label="Author" errors={err("author")}>
+            {(p) => <input className="field-input" defaultValue={str("author")} {...p} />}
+          </Field>
+          <Field name="publishedAt" label="Published" errors={err("publishedAt")}>
+            {(p) => <input className="field-input" defaultValue={str("publishedAt")} {...p} />}
+          </Field>
         </div>
       );
     case "image":
       return (
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Alt text" error={err("alt")}><input className="field-input" name="alt" defaultValue={str("alt")} /></Field>
-          <Field label="Photographer" error={err("photographer")}><input className="field-input" name="photographer" defaultValue={str("photographer")} /></Field>
+          <Field name="alt" label="Alt text" errors={err("alt")}>
+            {(p) => <input className="field-input" defaultValue={str("alt")} {...p} />}
+          </Field>
+          <Field name="photographer" label="Photographer" errors={err("photographer")}>
+            {(p) => <input className="field-input" defaultValue={str("photographer")} {...p} />}
+          </Field>
         </div>
       );
     default:
@@ -150,30 +169,38 @@ function ReferencesSection({ existingReferences }: { existingReferences: Referen
       {(existing.length > 0 || newRefs.length > 0) && (
         <div className="grid gap-2">
           {existing.map((ref) => (
-            <div key={ref.id} className="flex items-center justify-between gap-3 rounded-md border border-border bg-surface px-3 py-2 text-sm">
+            <Panel
+              key={ref.id}
+              as="div"
+              pad="none"
+              className="flex items-center justify-between gap-3 px-3 py-2 text-sm"
+            >
               <div className="min-w-0">
-                <p className="font-medium truncate">{ref.title}</p>
-                {ref.url && <p className="truncate text-xs text-muted-foreground">{ref.url}</p>}
+                <p className="truncate font-medium">{ref.title}</p>
+                {ref.url && <p className="truncate font-mono text-xs text-muted-foreground">{ref.url}</p>}
               </div>
               <button
                 type="button"
                 onClick={() => removeExisting(ref.id)}
-                className="inline-flex h-11 shrink-0 items-center rounded-md px-3 text-xs font-medium text-danger transition-colors hover:bg-danger/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30"
+                className="inline-flex h-11 shrink-0 cursor-pointer items-center rounded-md px-3 text-xs font-medium text-danger transition-colors duration-150 hover:bg-danger/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30"
               >
                 Remove
               </button>
-            </div>
+            </Panel>
           ))}
           {newRefs.map((ref) => (
-            <div key={ref.url} className="flex items-center justify-between gap-3 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm">
+            <div
+              key={ref.url}
+              className="flex items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-sm"
+            >
               <div className="min-w-0">
-                <p className="font-medium truncate">{ref.title}</p>
-                <p className="truncate text-xs text-muted-foreground">{ref.url}</p>
+                <p className="truncate font-medium">{ref.title}</p>
+                <p className="truncate font-mono text-xs text-muted-foreground">{ref.url}</p>
               </div>
               <button
                 type="button"
                 onClick={() => removeNew(ref.url)}
-                className="inline-flex h-11 shrink-0 items-center rounded-md px-3 text-xs font-medium text-danger transition-colors hover:bg-danger/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30"
+                className="inline-flex h-11 shrink-0 cursor-pointer items-center rounded-md px-3 text-xs font-medium text-danger transition-colors duration-150 hover:bg-danger/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30"
               >
                 Remove
               </button>
@@ -184,6 +211,7 @@ function ReferencesSection({ existingReferences }: { existingReferences: Referen
 
       <div className="grid gap-2 sm:grid-cols-[1fr_180px]">
         <input
+          aria-label="Reference URL"
           className="field-input"
           onChange={(e) => setUrlInput(e.target.value)}
           placeholder="https://…"
@@ -191,6 +219,7 @@ function ReferencesSection({ existingReferences }: { existingReferences: Referen
           value={urlInput}
         />
         <input
+          aria-label="Reference title"
           className="field-input"
           onChange={(e) => setTitleInput(e.target.value)}
           placeholder="Title (optional)"
@@ -198,13 +227,9 @@ function ReferencesSection({ existingReferences }: { existingReferences: Referen
           value={titleInput}
         />
       </div>
-      <button
-        type="button"
-        onClick={addUrl}
-        className="inline-flex h-9 w-fit items-center rounded-md border border-border bg-surface px-3 text-sm font-medium transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-      >
+      <Button type="button" variant="secondary" size="sm" className="w-fit" onClick={addUrl}>
         Add URL
-      </button>
+      </Button>
     </div>
   );
 }
@@ -217,106 +242,108 @@ export function SourceForm({ action, themes, initial, isEdit = false }: SourceFo
   const initialMeta = initial?.metadata as Record<string, unknown> | undefined;
   const existingReferences = initial?.references ?? [];
   const isReadOnlyConversation = isEdit && initial?.type === "conversation";
+  const readOnlyClassName = isReadOnlyConversation ? " bg-surface-muted text-muted-foreground" : "";
 
   return (
-    <form action={formAction} className="grid gap-5">
+    <form action={formAction} className="grid gap-4">
       {state.status === "error" && (
-        <div role="alert" aria-live="polite" className="border-l-4 border-danger bg-danger/8 px-4 py-3 text-sm text-danger">
-          {state.message ?? "The source could not be saved."}
-        </div>
+        <Alert live tone="danger">{state.message ?? "The source could not be saved."}</Alert>
       )}
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <Field label="Type" error={state.fieldErrors?.type}>
-          {isEdit ? (
-            <>
-              <input type="hidden" name="type" value={initial?.type ?? ""} />
-              <div className="field-input flex items-center bg-surface-muted text-muted-foreground">
-                {initial?.type ? sourceTypeDetails[initial.type as keyof typeof sourceTypeDetails]?.label : "—"}
-              </div>
-            </>
-          ) : (
-            <select
-              className="field-select"
-              name="type"
-              defaultValue={initial?.type ?? ""}
-              onChange={(e) => setSelectedType(e.target.value)}
-              required
-            >
-              <option value="">Choose a type…</option>
-              {sourceTypes
-                .filter((type) => type !== "conversation")
-                .map((type) => (
-                  <option key={type} value={type}>
-                    {sourceTypeDetails[type].label}
-                  </option>
-                ))}
+        <Field name="type" label="Type" errors={state.fieldErrors?.type}>
+          {(p) =>
+            isEdit ? (
+              <>
+                <input type="hidden" name="type" value={initial?.type ?? ""} />
+                <div id={p.id} className="field-input flex items-center bg-surface-muted text-muted-foreground">
+                  {initial?.type ? sourceTypeDetails[initial.type as keyof typeof sourceTypeDetails]?.label : "—"}
+                </div>
+              </>
+            ) : (
+              <select
+                className="field-select"
+                defaultValue={initial?.type ?? ""}
+                onChange={(e) => setSelectedType(e.target.value)}
+                required
+                {...p}
+              >
+                <option value="">Choose a type…</option>
+                {sourceTypes
+                  .filter((type) => type !== "conversation")
+                  .map((type) => (
+                    <option key={type} value={type}>
+                      {sourceTypeDetails[type].label}
+                    </option>
+                  ))}
+              </select>
+            )
+          }
+        </Field>
+
+        <Field name="status" label="Status" errors={state.fieldErrors?.status}>
+          {(p) => (
+            <select className="field-select" defaultValue={initial?.status ?? "active"} {...p}>
+              <option value="active">Active</option>
+              <option value="archived">Archived</option>
             </select>
           )}
         </Field>
 
-        <Field label="Status" error={state.fieldErrors?.status}>
-          <select className="field-select" name="status" defaultValue={initial?.status ?? "active"}>
-            <option value="active">Active</option>
-            <option value="archived">Archived</option>
-          </select>
-        </Field>
-
-        <Field label="Privacy" error={state.fieldErrors?.privacyLevel}>
-          <select className="field-select" name="privacyLevel" defaultValue={initial?.privacyLevel ?? "private"}>
-            {privacyLevels.map((level) => (
-              <option key={level} value={level}>
-                {labelize(level)}
-              </option>
-            ))}
-          </select>
+        <Field name="privacyLevel" label="Privacy" errors={state.fieldErrors?.privacyLevel}>
+          {(p) => (
+            <select className="field-select" defaultValue={initial?.privacyLevel ?? "private"} {...p}>
+              {privacyLevels.map((level) => (
+                <option key={level} value={level}>
+                  {labelize(level)}
+                </option>
+              ))}
+            </select>
+          )}
         </Field>
       </div>
 
-      <Field label="Title" error={state.fieldErrors?.title}>
-        <input
-          className={isReadOnlyConversation ? "field-input bg-surface-muted text-muted-foreground" : "field-input"}
-          name="title"
-          defaultValue={initial?.title ?? ""}
-          placeholder="Name of the source"
-          readOnly={isReadOnlyConversation}
-          maxLength={320}
-          required
-        />
+      <Field name="title" label="Title" required errors={state.fieldErrors?.title}>
+        {(p) => (
+          <input
+            className={`field-input${readOnlyClassName}`}
+            defaultValue={initial?.title ?? ""}
+            placeholder="Name of the source"
+            readOnly={isReadOnlyConversation}
+            maxLength={320}
+            {...p}
+          />
+        )}
       </Field>
 
-      <Field label="Description">
-        <textarea
-          className={
-            isReadOnlyConversation
-              ? "field-textarea min-h-24 bg-surface-muted text-muted-foreground"
-              : "field-textarea min-h-24"
-          }
-          name="description"
-          defaultValue={initial?.description ?? ""}
-          placeholder="Optional short description"
-          readOnly={isReadOnlyConversation}
-          maxLength={4000}
-        />
+      <Field name="description" label="Description">
+        {(p) => (
+          <textarea
+            className={`field-textarea min-h-24${readOnlyClassName}`}
+            defaultValue={initial?.description ?? ""}
+            placeholder="Optional short description"
+            readOnly={isReadOnlyConversation}
+            maxLength={4000}
+            {...p}
+          />
+        )}
       </Field>
 
-      <Field label="Body / full text">
-        <textarea
-          className={
-            isReadOnlyConversation
-              ? "field-textarea min-h-32 bg-surface-muted text-muted-foreground"
-              : "field-textarea min-h-32"
-          }
-          name="body"
-          defaultValue={initial?.body ?? ""}
-          placeholder="Full text, article body, or extended notes…"
-          readOnly={isReadOnlyConversation}
-          maxLength={200000}
-        />
+      <Field name="body" label="Body / full text">
+        {(p) => (
+          <textarea
+            className={`field-textarea min-h-32${readOnlyClassName}`}
+            defaultValue={initial?.body ?? ""}
+            placeholder="Full text, article body, or extended notes…"
+            readOnly={isReadOnlyConversation}
+            maxLength={200000}
+            {...p}
+          />
+        )}
       </Field>
 
       {!isReadOnlyConversation && (selectedType || isEdit) && (
-        <fieldset className="grid gap-4 rounded-md border border-border p-4">
+        <fieldset className="grid gap-4 rounded-lg border border-border p-4">
           <legend className="px-1 text-xs font-medium text-muted-foreground">
             {selectedType ? sourceTypeDetails[selectedType as keyof typeof sourceTypeDetails]?.label ?? selectedType : ""} details
           </legend>
@@ -333,7 +360,7 @@ export function SourceForm({ action, themes, initial, isEdit = false }: SourceFo
         <TaxonomyPicker themes={themes} selectedIds={selectedThemeIds} />
       </div>
 
-      <fieldset className="grid gap-3 rounded-md border border-border p-4">
+      <fieldset className="grid gap-3 rounded-lg border border-border p-4">
         <legend className="px-1 text-xs font-medium text-muted-foreground">References (URLs)</legend>
         <ReferencesSection existingReferences={existingReferences} />
       </fieldset>

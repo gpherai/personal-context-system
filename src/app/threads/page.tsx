@@ -1,10 +1,8 @@
-import Link from "next/link";
-
 import { isDatabaseUnavailable } from "@/application/errors";
 import { getThreads } from "@/application/query-service";
 import { EmptyState } from "@/components/empty-state";
 import { SetupNotice } from "@/components/setup-notice";
-import { Badge } from "@/components/ui/badge";
+import { Badge, DataList, DataRow, DataTitle, PageHeader } from "@/components/ui";
 import { formatDateTime, labelize } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -15,31 +13,24 @@ export default async function ThreadsPage() {
 
     return (
       <div className="mx-auto grid max-w-6xl gap-6">
-        <header className="border-b border-border pb-6">
-          <p className="text-xs font-semibold uppercase tracking-widest text-primary">Threads</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight">Curated thought sequences</h1>
-          <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Threads collect entries into a deliberate sequence once a line of thought becomes durable.
-          </p>
-        </header>
+        <PageHeader
+          eyebrow="Threads"
+          title="Curated thought sequences"
+          description="Threads collect entries into a deliberate sequence once a line of thought becomes durable."
+        />
 
         {threads.length ? (
-          <section className="divide-y divide-border border border-border bg-surface">
+          <DataList label="Threads">
             {threads.map((thread) => (
-              <Link
-                key={thread.id}
-                href={`/threads/${thread.slug}`}
-                className="grid gap-2 px-5 py-4 transition-colors duration-150 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge>{labelize(thread.status)}</Badge>
-                  <span className="text-xs text-muted-foreground">Updated {formatDateTime(thread.updatedAt)}</span>
-                </div>
-                <h2 className="text-base font-semibold">{thread.title}</h2>
-                {thread.description && <p className="text-sm leading-6 text-muted-foreground">{thread.description}</p>}
-              </Link>
+              <DataRow key={thread.id} href={`/threads/${thread.slug}`}>
+                <DataTitle secondary={thread.description}>{thread.title}</DataTitle>
+                <Badge>{labelize(thread.status)}</Badge>
+                <span className="shrink-0 font-mono text-xs text-muted-foreground">
+                  {formatDateTime(thread.updatedAt)}
+                </span>
+              </DataRow>
             ))}
-          </section>
+          </DataList>
         ) : (
           <EmptyState title="No threads" body="Create a thread from the detail page of an entry." />
         )}

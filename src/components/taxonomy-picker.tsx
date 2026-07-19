@@ -53,11 +53,13 @@ export function TaxonomyPicker({ themes, selectedIds, name = "themeIds" }: Taxon
           filtered.map((theme) => (
             <label
               key={theme.id}
-              className="flex cursor-pointer items-center gap-3 px-3 py-2 text-sm hover:bg-surface-muted"
+              // min-h-11 keeps the whole row a 44px touch target; the box alone
+              // was 16px, well under the threshold.
+              className="flex min-h-11 cursor-pointer items-center gap-3 px-3 py-2 text-sm transition-colors duration-150 hover:bg-surface-muted"
             >
               <input
                 checked={selected.has(theme.id)}
-                className="h-4 w-4 rounded border border-border accent-primary"
+                className="h-5 w-5 shrink-0 cursor-pointer rounded border border-border accent-primary"
                 onChange={() => toggle(theme.id)}
                 type="checkbox"
               />

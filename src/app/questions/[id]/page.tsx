@@ -6,7 +6,7 @@ import { getQuestionById } from "@/application/query-service";
 import { DeleteForm } from "@/components/delete-form";
 import { EntryList } from "@/components/entry-list";
 import { SetupNotice } from "@/components/setup-notice";
-import { Badge } from "@/components/ui/badge";
+import { Badge, DetailHeader, Panel, PanelTitle } from "@/components/ui";
 import { formatDateTime, isValidId, labelize } from "@/lib/format";
 
 import { deleteQuestionAction } from "./actions";
@@ -28,58 +28,58 @@ export default async function QuestionPage({ params }: { params: Promise<{ id: s
     }
 
     return (
-      <div className="mx-auto grid max-w-4xl gap-5">
-        <header className="border-b border-border pb-5">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <Badge tone="amber">{labelize(question.status)}</Badge>
-              <h1 className="mt-3 text-3xl font-bold tracking-tight">{question.prompt}</h1>
-              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-                <span>Updated {formatDateTime(question.updatedAt)}</span>
-                {question.originEntryId && (
-                  <Link
-                    href={`/entries/${question.originEntryId}`}
-                    className="font-medium text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-                  >
-                    Original entry
-                  </Link>
-                )}
-              </div>
-              {question.summary && <p className="mt-3 text-sm leading-6 text-muted-foreground">{question.summary}</p>}
+      <div className="mx-auto grid max-w-4xl gap-6">
+        <DetailHeader
+          badges={<Badge tone="amber">{labelize(question.status)}</Badge>}
+          title={question.prompt}
+          description={question.summary}
+          meta={
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span>Updated {formatDateTime(question.updatedAt)}</span>
+              {question.originEntryId && (
+                <Link
+                  href={`/entries/${question.originEntryId}`}
+                  className="font-medium text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                >
+                  Original entry
+                </Link>
+              )}
             </div>
+          }
+          actions={
             <DeleteForm
               action={deleteQuestionAction.bind(null, question.id)}
               title="Delete question"
               message="This permanently deletes the question and its decisions/tasks. This cannot be undone."
               triggerLabel="Delete"
             />
-          </div>
-        </header>
+          }
+        />
 
-        <section className="grid gap-4 lg:grid-cols-[1fr_340px]">
-          <div className="grid gap-3">
-            <h2 className="text-lg font-semibold">Linked entries</h2>
+        <section className="grid gap-6 lg:grid-cols-[1fr_340px]">
+          <div className="grid gap-4">
+            <h2 className="text-base font-semibold">Linked entries</h2>
             <EntryList entries={question.entries} />
           </div>
           <aside className="grid content-start gap-4">
-            <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
-              <h2 className="mb-3 text-sm font-semibold">Question workflow</h2>
+            <Panel>
+              <PanelTitle>Question workflow</PanelTitle>
               <QuestionUpdateForm question={question} />
-            </div>
-            <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
-              <h2 className="mb-3 text-sm font-semibold">Decisions</h2>
+            </Panel>
+            <Panel>
+              <PanelTitle>Decisions</PanelTitle>
               <DecisionHistory decisions={question.decisions} questionId={question.id} />
               <div className="mt-4 border-t border-border pt-4">
                 <DecisionForm questionId={question.id} />
               </div>
-            </div>
-            <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
-              <h2 className="mb-3 text-sm font-semibold">Tasks</h2>
+            </Panel>
+            <Panel>
+              <PanelTitle>Tasks</PanelTitle>
               <TaskList tasks={question.tasks} questionId={question.id} />
               <div className="mt-4 border-t border-border pt-4">
                 <TaskForm questionId={question.id} />
               </div>
-            </div>
+            </Panel>
           </aside>
         </section>
       </div>

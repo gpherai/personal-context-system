@@ -7,8 +7,7 @@ import { isDatabaseUnavailable } from "@/application/errors";
 import { getSourceById } from "@/application/query-service";
 import { DeleteForm } from "@/components/delete-form";
 import { SetupNotice } from "@/components/setup-notice";
-import { Badge } from "@/components/ui/badge";
-import { ButtonLink } from "@/components/ui/button-link";
+import { Alert, Badge, ButtonLink, DetailHeader, Panel, PanelTitle } from "@/components/ui";
 import { formatDateTime, isValidId, labelize } from "@/lib/format";
 import { conversationProviderLabels, sourceTypeDetails } from "@/domain/taxonomy";
 import { chatGptProjectName } from "@/domain/chatgpt-export";
@@ -183,19 +182,20 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
 
     return (
       <article className="mx-auto grid max-w-4xl gap-6">
-        <header className="border-b border-border pb-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge tone="blue">{typeDetail.label}</Badge>
-                <Badge tone={source.status === "archived" ? "neutral" : "teal"}>{labelize(source.status)}</Badge>
-                <Badge tone={source.privacyLevel === "sensitive" ? "amber" : "neutral"}>
-                  {labelize(source.privacyLevel)}
-                </Badge>
-              </div>
-              <h1 className="mt-3 text-3xl font-bold tracking-tight">{source.title}</h1>
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end shrink-0">
+        <DetailHeader
+          badges={
+            <>
+              <Badge tone="blue">{typeDetail.label}</Badge>
+              <Badge tone={source.status === "archived" ? "neutral" : "teal"}>{labelize(source.status)}</Badge>
+              <Badge tone={source.privacyLevel === "sensitive" ? "amber" : "neutral"}>
+                {labelize(source.privacyLevel)}
+              </Badge>
+            </>
+          }
+          title={source.title}
+          description={source.description}
+          actions={
+            <>
               <ButtonLink href={`/sources/${source.id}/edit`} variant="primary" className="w-full sm:w-auto">
                 Edit
               </ButtonLink>
@@ -206,48 +206,42 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
                 triggerLabel="Delete"
                 triggerClassName="w-full sm:w-auto"
               />
-            </div>
-          </div>
-        </header>
+            </>
+          }
+        />
 
         {source.type === "conversation" && (
-          <p className="text-xs leading-5 text-muted-foreground">
-            Imported transcript — content is read-only. Promote a worthwhile insight to an Entry instead of editing
-            it here. Status, themes, and references can still be edited.
-          </p>
+          <Alert tone="info" title="Imported transcript">
+            Content is read-only. Promote a worthwhile insight to an Entry instead of editing it here. Status,
+            themes, and references can still be edited.
+          </Alert>
         )}
 
-        {source.description && (
-          <section>
-            <p className="text-sm leading-7 text-muted-foreground">{source.description}</p>
-          </section>
-        )}
-
-        <section className="grid gap-4 rounded-lg border border-border bg-surface p-4 shadow-sm">
-          <h2 className="text-sm font-semibold">{typeDetail.label} details</h2>
+        <Panel pad="sm">
+          <PanelTitle>{typeDetail.label} details</PanelTitle>
           <SourceMetadataSection metadata={source.metadata} />
-        </section>
+        </Panel>
 
         {source.metadata.type === "conversation" ? (
-          <section className="grid gap-3">
+          <section className="grid gap-4">
             <h2 className="text-sm font-semibold">Transcript</h2>
             <ConversationTranscript messages={source.messages} />
           </section>
         ) : (
           source.body && (
-            <section className="grid gap-3 rounded-lg border border-border bg-surface p-4 shadow-sm">
-              <h2 className="text-sm font-semibold">Body</h2>
-              <div className="whitespace-pre-wrap text-sm leading-7">{source.body}</div>
-            </section>
+            <Panel pad="sm">
+              <PanelTitle>Body</PanelTitle>
+              <div className="reading whitespace-pre-wrap">{source.body}</div>
+            </Panel>
           )
         )}
 
         {source.references.length > 0 && (
-          <section className="grid gap-3">
+          <section className="grid gap-4">
             <h2 className="text-sm font-semibold">References</h2>
             <div className="grid gap-2">
               {source.references.map((ref) => (
-                <div key={ref.id} className="rounded-md border border-border bg-surface px-3 py-2 text-sm">
+                <Panel key={ref.id} as="div" pad="none" className="px-3 py-2 text-sm">
                   <p className="font-medium">{ref.title}</p>
                   {ref.url && (
                     <a
@@ -259,21 +253,21 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
                       {ref.url}
                     </a>
                   )}
-                </div>
+                </Panel>
               ))}
             </div>
           </section>
         )}
 
         {source.themes.length > 0 && (
-          <section className="grid gap-3">
+          <section className="grid gap-4">
             <h2 className="text-sm font-semibold">Themes</h2>
             <div className="flex flex-wrap gap-2">
               {source.themes.map((theme) => (
                 <Link
                   key={theme.id}
                   href={`/themes/${theme.slug}`}
-                  className="inline-flex h-8 items-center cursor-pointer rounded-md border border-border bg-surface px-3 text-sm transition-colors duration-150 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                  className="inline-flex h-9 cursor-pointer items-center rounded-md border border-border bg-surface px-3 text-sm transition-colors duration-150 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                 >
                   {theme.name}
                 </Link>
@@ -283,12 +277,12 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
         )}
 
         {source.excerpts.length > 0 && (
-          <section className="grid gap-3">
+          <section className="grid gap-4">
             <h2 className="text-sm font-semibold">Excerpts</h2>
             <div className="grid gap-3">
               {source.excerpts.map((excerpt) => (
-                <div key={excerpt.id} className="rounded-md border border-border bg-surface p-3">
-                  <blockquote className="border-l-2 border-border pl-3 text-sm italic leading-6 text-muted-foreground">
+                <Panel key={excerpt.id} as="div" pad="none" className="p-3">
+                  <blockquote className="border-l-2 border-border pl-3 font-serif text-sm italic leading-6 text-muted-foreground">
                     &ldquo;{excerpt.text}&rdquo;
                   </blockquote>
                   {excerpt.note && <p className="mt-2 text-sm leading-6">{excerpt.note}</p>}
@@ -298,21 +292,21 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
                         <Link
                           key={entry.id}
                           href={`/entries/${entry.id}`}
-                          className="inline-flex h-7 items-center rounded-md border border-border bg-surface-muted px-2 text-xs transition-colors duration-150 hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                          className="inline-flex h-8 cursor-pointer items-center rounded-md border border-border bg-surface-muted px-2 text-xs transition-colors duration-150 hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                         >
                           {entry.title}
                         </Link>
                       ))}
                     </div>
                   )}
-                </div>
+                </Panel>
               ))}
             </div>
           </section>
         )}
 
         {source.entries.length > 0 && (
-          <section className="grid gap-3">
+          <section className="grid gap-4">
             <h2 className="text-sm font-semibold">Linked entries</h2>
             <div className="grid gap-1">
               {source.entries.map((entry) => (

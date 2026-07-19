@@ -5,8 +5,7 @@ import { isDatabaseUnavailable } from "@/application/errors";
 import { getDashboardOverview } from "@/application/query-service";
 import { EntryList } from "@/components/entry-list";
 import { SetupNotice } from "@/components/setup-notice";
-import { Badge } from "@/components/ui/badge";
-import { ButtonLink } from "@/components/ui/button-link";
+import { Badge, ButtonLink, PageHeader, Panel, PanelTitle, Stat } from "@/components/ui";
 import type { DashboardOverview } from "@/repositories/context-repository";
 import { labelize } from "@/lib/format";
 
@@ -25,18 +24,6 @@ async function loadDashboard(): Promise<DashboardLoad> {
   }
 }
 
-function Stat({ label, value, href }: { label: string; value: number; href: string }) {
-  return (
-    <Link
-      href={href}
-      className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-all duration-150 hover:border-primary/30 hover:shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-    >
-      <div className="text-3xl font-bold tabular-nums text-foreground">{value}</div>
-      <div className="mt-1 text-sm text-muted-foreground">{label}</div>
-    </Link>
-  );
-}
-
 export default async function DashboardPage() {
   const load = await loadDashboard();
 
@@ -51,35 +38,33 @@ export default async function DashboardPage() {
   const { overview } = load;
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-8">
-      <header className="flex flex-col gap-4 border-b border-border pb-6 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-primary">Today</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">Context</h1>
-          <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-muted-foreground">
-            Current work, active questions, and recent capture from the local database.
-          </p>
-        </div>
-        <ButtonLink href="/capture" variant="primary">
-          <PenLine className="h-4 w-4" aria-hidden="true" />
-          Capture
-        </ButtonLink>
-      </header>
+    <div className="mx-auto grid max-w-6xl gap-6">
+      <PageHeader
+        eyebrow="Today"
+        title="Context"
+        description="Current work, active questions, and recent capture from the local database."
+        actions={
+          <ButtonLink href="/capture" variant="primary">
+            <PenLine className="h-4 w-4" aria-hidden="true" />
+            Capture
+          </ButtonLink>
+        }
+      />
 
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="System counts">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="System counts">
         <Stat label="Entries"        value={overview.counts.entries}       href="/ledger"  />
         <Stat label="Open questions" value={overview.counts.openQuestions} href="/cabinet" />
         <Stat label="Themes"         value={overview.counts.themes}        href="/cabinet" />
         <Stat label="Projects"       value={overview.counts.projects}      href="/cabinet" />
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
-        <div className="grid gap-3">
+      <section className="grid gap-6 lg:grid-cols-[1fr_340px]">
+        <div className="grid gap-4">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-base font-semibold text-foreground">Recent entries</h2>
             <Link
               href="/ledger"
-              className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded"
+              className="inline-flex items-center gap-1 rounded text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
             >
               Ledger <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
             </Link>
@@ -88,18 +73,17 @@ export default async function DashboardPage() {
         </div>
 
         <aside className="grid content-start gap-4">
-          <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
-            <div className="mb-3 flex items-center gap-2">
-              <CircleHelp className="h-4 w-4 text-primary" aria-hidden="true" />
-              <h2 className="text-sm font-semibold">Question queue</h2>
-            </div>
-            <div className="space-y-3">
+          <Panel pad="sm">
+            <PanelTitle icon={<CircleHelp className="h-4 w-4 text-primary" aria-hidden="true" />}>
+              Question queue
+            </PanelTitle>
+            <div className="grid gap-3">
               {overview.openQuestions.length ? (
                 overview.openQuestions.map((question) => (
                   <Link
                     key={question.id}
                     href={`/questions/${question.id}`}
-                    className="block border-t border-border pt-3 transition-colors first:border-t-0 first:pt-0 cursor-pointer hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded"
+                    className="block cursor-pointer rounded border-t border-border pt-3 transition-colors duration-150 first:border-t-0 first:pt-0 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   >
                     <Badge tone="amber">{labelize(question.status)}</Badge>
                     <p className="mt-1.5 text-sm leading-relaxed">{question.prompt}</p>
@@ -109,23 +93,22 @@ export default async function DashboardPage() {
                 <p className="text-sm text-muted-foreground">No tracked questions yet.</p>
               )}
             </div>
-          </section>
+          </Panel>
 
-          <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
-            <div className="mb-3 flex items-center gap-2">
-              <Layers className="h-4 w-4 text-accent" aria-hidden="true" />
-              <h2 className="text-sm font-semibold">Active projects</h2>
-            </div>
-            <div className="space-y-1">
+          <Panel pad="sm">
+            <PanelTitle icon={<Layers className="h-4 w-4 text-accent" aria-hidden="true" />}>
+              Active projects
+            </PanelTitle>
+            <div className="grid gap-1">
               {overview.activeProjects.length ? (
                 overview.activeProjects.map((project) => (
                   <Link
                     key={project.id}
                     href={`/projects/${project.slug}`}
-                    className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm transition-colors cursor-pointer hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                    className="flex cursor-pointer items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm transition-colors duration-150 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   >
                     <span>{project.name}</span>
-                    <span className="text-xs tabular-nums text-muted-foreground">
+                    <span data-numeric="" className="font-mono text-xs text-muted-foreground">
                       {project.entryCount ?? 0}
                     </span>
                   </Link>
@@ -134,7 +117,7 @@ export default async function DashboardPage() {
                 <p className="text-sm text-muted-foreground">No projects yet.</p>
               )}
             </div>
-          </section>
+          </Panel>
         </aside>
       </section>
     </div>

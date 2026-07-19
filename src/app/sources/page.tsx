@@ -5,9 +5,7 @@ import { isDatabaseUnavailable } from "@/application/errors";
 import { getSources, listThemes } from "@/application/query-service";
 import { EmptyState } from "@/components/empty-state";
 import { SetupNotice } from "@/components/setup-notice";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ButtonLink } from "@/components/ui/button-link";
+import { Badge, Button, ButtonLink, PageHeader, Panel } from "@/components/ui";
 import { privacyLevels, recordStatuses, sourceSortOptions, sourceTypes } from "@/domain/context";
 import { conversationProviderLabels, sourceTypeDetails } from "@/domain/taxonomy";
 import { cn } from "@/lib/cn";
@@ -104,20 +102,20 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
     }
 
     return (
-      <div className="mx-auto grid max-w-6xl gap-5">
-        <header className="border-b border-border pb-6">
-          <p className="text-xs font-semibold uppercase tracking-widest text-primary">Sources</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight">Source library</h1>
-          <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Videos, books, posts, and imported conversations.
-          </p>
-        </header>
+      <div className="mx-auto grid max-w-6xl gap-6">
+        <PageHeader
+          eyebrow="Sources"
+          title="Source library"
+          description="Videos, books, posts, and imported conversations."
+          actions={
+            <ButtonLink href="/sources/new" variant="primary">
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              New source
+            </ButtonLink>
+          }
+        />
 
-        <div className="flex items-center justify-between gap-4">
-          <form
-            aria-label="Filter sources"
-            className="flex flex-wrap items-end gap-3"
-          >
+        <Panel as="form" pad="sm" aria-label="Filter sources" className="flex flex-wrap items-end gap-3">
             <label className="grid gap-1.5 text-xs font-medium">
               Search
               <span className="relative">
@@ -232,13 +230,7 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
               <Button type="submit">Filter</Button>
               <ButtonLink href="/sources" variant="secondary">Reset</ButtonLink>
             </div>
-          </form>
-
-          <ButtonLink href="/sources/new" variant="primary" className="shrink-0">
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            New source
-          </ButtonLink>
-        </div>
+        </Panel>
 
         {searchCapped && (
           <p className="text-xs text-muted-foreground">
@@ -284,12 +276,12 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
             </div>
           </>
         ) : (
-          <div className="rounded-lg border border-border bg-surface p-8">
+          <Panel pad="lg">
             <EmptyState
               title="No sources found"
               body="Adjust the filters or add a new source."
             />
-          </div>
+          </Panel>
         )}
       </div>
     );

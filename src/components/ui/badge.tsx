@@ -21,7 +21,9 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex h-5 items-center rounded-full border px-2 text-xs font-medium capitalize tracking-wide",
+        // No `capitalize`: labels arrive already cased from labelize(), and the
+        // utility fought it on multi-word values ("How To" instead of "How to").
+        "inline-flex h-6 items-center rounded-full border px-2.5 text-xs font-medium tracking-wide",
         tones[tone],
         className
       )}

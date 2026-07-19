@@ -3,7 +3,7 @@
 import { Package } from "lucide-react";
 import { useActionState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { Alert, Button, Field } from "@/components/ui";
 import { bundleRecordTypes, privacyLevels, sourceTypes } from "@/domain/context";
 import { labelize } from "@/lib/format";
 
@@ -16,23 +16,24 @@ export function GenerateBundleForm() {
 
   return (
     <form action={action} className="grid gap-3">
-      <label className="grid gap-1.5 text-sm font-medium">
-        Privacy floor
-        <select className="field-select" name="privacyFloor" defaultValue="shareable">
-          {privacyLevels.map((level) => (
-            <option key={level} value={level}>
-              {labelize(level)}
-            </option>
-          ))}
-        </select>
-      </label>
+      <Field name="privacyFloor" label="Privacy floor">
+        {(p) => (
+          <select className="field-select" defaultValue="shareable" {...p}>
+            {privacyLevels.map((level) => (
+              <option key={level} value={level}>
+                {labelize(level)}
+              </option>
+            ))}
+          </select>
+        )}
+      </Field>
 
       <fieldset className="grid gap-1.5 text-sm font-medium">
         <legend>Record types</legend>
         <div className="flex flex-wrap gap-3 text-sm font-normal">
           {bundleRecordTypes.map((type) => (
-            <label key={type} className="flex items-center gap-1.5">
-              <input type="checkbox" name="recordTypes" value={type} defaultChecked />
+            <label key={type} className="flex min-h-11 cursor-pointer items-center gap-2">
+              <input className="h-5 w-5 cursor-pointer accent-primary" type="checkbox" name="recordTypes" value={type} defaultChecked />
               {labelize(type)}
             </label>
           ))}
@@ -43,8 +44,9 @@ export function GenerateBundleForm() {
         <legend>Source types</legend>
         <div className="flex flex-wrap gap-3 text-sm font-normal">
           {sourceTypes.map((type) => (
-            <label key={type} className="flex items-center gap-1.5">
+            <label key={type} className="flex min-h-11 cursor-pointer items-center gap-2">
               <input
+                className="h-5 w-5 cursor-pointer accent-primary"
                 type="checkbox"
                 name="sourceTypes"
                 value={type}
@@ -56,26 +58,22 @@ export function GenerateBundleForm() {
         </div>
       </fieldset>
 
-      <label className="grid gap-1.5 text-sm font-medium">
-        Theme slugs
-        <input className="field-input" name="themeSlugs" placeholder="theme-a, theme-b" />
-      </label>
+      <Field name="themeSlugs" label="Theme slugs">
+        {(p) => <input className="field-input" placeholder="theme-a, theme-b" {...p} />}
+      </Field>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <label className="grid gap-1.5 text-sm font-medium">
-          Occurred from
-          <input className="field-input" type="date" name="occurredFrom" />
-        </label>
-        <label className="grid gap-1.5 text-sm font-medium">
-          Occurred to
-          <input className="field-input" type="date" name="occurredTo" />
-        </label>
+        <Field name="occurredFrom" label="Occurred from">
+          {(p) => <input className="field-input" type="date" {...p} />}
+        </Field>
+        <Field name="occurredTo" label="Occurred to">
+          {(p) => <input className="field-input" type="date" {...p} />}
+        </Field>
       </div>
 
-      <label className="grid gap-1.5 text-sm font-medium">
-        IDs (one per line)
-        <textarea className="field-textarea" name="ids" rows={3} placeholder="entry_abc123" />
-      </label>
+      <Field name="ids" label="IDs" hint="One per line.">
+        {(p) => <textarea className="field-textarea" rows={3} placeholder="entry_abc123" {...p} />}
+      </Field>
 
       <p className="text-xs leading-5 text-muted-foreground">
         Only records at or above this privacy floor, matching every filter above, are included. The bundle is
@@ -87,14 +85,11 @@ export function GenerateBundleForm() {
       </Button>
 
       {state.status === "error" && state.message && (
-        <p role="alert" aria-live="polite" className="text-sm text-danger">
-          {state.message}
-        </p>
+        <Alert live tone="danger">{state.message}</Alert>
       )}
 
       {state.status === "success" && state.manifest && (
-        <div role="status" aria-live="polite" className="grid gap-2 rounded-md border border-success/30 bg-success/8 p-3 text-sm">
-          <p className="font-medium text-success">{state.message}</p>
+        <Alert live tone="success" title={state.message}>
           <dl className="grid gap-1 text-xs text-muted-foreground">
             <div className="flex justify-between gap-3">
               <dt>Files</dt>
@@ -109,7 +104,7 @@ export function GenerateBundleForm() {
               <dd className="text-foreground">{state.manifest.generatedAt}</dd>
             </div>
           </dl>
-        </div>
+        </Alert>
       )}
     </form>
   );

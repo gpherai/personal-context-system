@@ -1,4 +1,4 @@
-import type { ElementType, HTMLAttributes, ReactNode } from "react";
+import type { ElementType, FormHTMLAttributes, HTMLAttributes, ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
 
@@ -33,11 +33,14 @@ export function Panel({
   pad = "md",
   className,
   ...props
-}: HTMLAttributes<HTMLElement> & {
-  as?: ElementType;
-  tone?: PanelTone;
-  pad?: PanelPad;
-}) {
+}: HTMLAttributes<HTMLElement> &
+  // Filter bars are panels that happen to be forms, so `as="form"` needs the
+  // form-only attributes to survive typechecking.
+  Pick<FormHTMLAttributes<HTMLFormElement>, "action" | "method"> & {
+    as?: ElementType;
+    tone?: PanelTone;
+    pad?: PanelPad;
+  }) {
   return (
     <Tag className={cn("rounded-lg border", tones[tone], pads[pad], className)} {...props} />
   );

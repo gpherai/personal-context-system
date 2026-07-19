@@ -15,7 +15,7 @@ export function RebuildMirrorForm() {
     <form action={action} className="grid gap-3">
       <Button type="submit" disabled={pending}>
         <RefreshCw className="h-4 w-4" aria-hidden="true" />
-        {pending ? "Rebuilding..." : "Rebuild context mirror"}
+        {pending ? "Rebuilding…" : "Rebuild context mirror"}
       </Button>
       <FormMessage state={state} />
     </form>

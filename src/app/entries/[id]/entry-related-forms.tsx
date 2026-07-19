@@ -62,7 +62,7 @@ export function ReferenceForm({ entryId }: { entryId: string }) {
       </label>
       <div className="flex items-center gap-3">
         <Button type="submit" variant="secondary" disabled={pending}>
-          {pending ? "Adding..." : "Add reference"}
+          {pending ? "Adding…" : "Add reference"}
         </Button>
         <FormMessage state={state} />
       </div>
@@ -120,7 +120,7 @@ export function AttachmentForm({ entryId }: { entryId: string }) {
       </label>
       <div className="flex items-center gap-3">
         <Button type="submit" variant="secondary" disabled={pending}>
-          {pending ? "Adding..." : "Add attachment metadata"}
+          {pending ? "Adding…" : "Add attachment metadata"}
         </Button>
         <FormMessage state={state} />
       </div>
@@ -151,7 +151,7 @@ export function ThreadForm({ entryId }: { entryId: string }) {
       </label>
       <div className="flex items-center gap-3">
         <Button type="submit" variant="secondary" disabled={pending}>
-          {pending ? "Creating..." : "Create thread from entry"}
+          {pending ? "Creating…" : "Create thread from entry"}
         </Button>
         <FormMessage state={state} />
       </div>

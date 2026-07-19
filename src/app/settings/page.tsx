@@ -103,7 +103,7 @@ export default function SettingsPage() {
             { level: "sensitive",  desc: "Marked clearly. Exclude or redact for shareable exports."   },
             { level: "shareable",  desc: "Candidate records for future stricter export bundles."       },
           ].map(({ level, desc }) => (
-            <Panel key={level} as="div" tone="outline" pad="none" className="p-3.5">
+            <Panel key={level} as="div" tone="outline" pad="sm">
               <p className="font-semibold text-foreground">{level}</p>
               <p className="mt-1 leading-relaxed text-muted-foreground">{desc}</p>
             </Panel>

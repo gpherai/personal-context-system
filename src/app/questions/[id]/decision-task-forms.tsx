@@ -2,8 +2,7 @@
 
 import { useActionState } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Badge, Button, Panel } from "@/components/ui";
 import { decisionStatuses, taskStatuses, type DecisionStatus, type TaskStatus } from "@/domain/context";
 import { formatDate, labelize } from "@/lib/format";
 import { FormMessage } from "@/components/form-message";
@@ -88,7 +87,7 @@ function DecisionStatusForm({ decision, questionId }: { decision: DecisionDto; q
         ))}
       </select>
       <Button type="submit" disabled={pending} variant="ghost">
-        {pending ? "..." : "Update"}
+        {pending ? "…" : "Update"}
       </Button>
       <FormMessage state={state} />
     </form>
@@ -103,16 +102,18 @@ export function DecisionHistory({ decisions, questionId }: { decisions: Decision
   return (
     <ul className="grid gap-3">
       {decisions.map((decision) => (
-        <li key={decision.id} className="rounded-md border border-border bg-surface p-3">
+        <Panel as="li" key={decision.id} pad="none" className="p-3">
           <div className="flex items-center justify-between gap-2">
             <Badge tone={decision.status === "closed" ? "neutral" : "blue"}>{labelize(decision.status)}</Badge>
-            <span className="text-xs text-muted-foreground">{formatDate(decision.decidedAt ?? decision.createdAt)}</span>
+            <span className="font-mono text-xs text-muted-foreground">
+              {formatDate(decision.decidedAt ?? decision.createdAt)}
+            </span>
           </div>
           <p className="mt-2 text-sm leading-6">{decision.decisionText}</p>
           <div className="mt-2">
             <DecisionStatusForm decision={decision} questionId={questionId} />
           </div>
-        </li>
+        </Panel>
       ))}
     </ul>
   );
@@ -158,7 +159,7 @@ function TaskStatusForm({ task, questionId }: { task: TaskDto; questionId: strin
         ))}
       </select>
       <Button type="submit" disabled={pending} variant="ghost">
-        {pending ? "..." : "Update"}
+        {pending ? "…" : "Update"}
       </Button>
       <FormMessage state={state} />
     </form>
@@ -173,16 +174,18 @@ export function TaskList({ tasks, questionId }: { tasks: TaskDto[]; questionId: 
   return (
     <ul className="grid gap-3">
       {tasks.map((task) => (
-        <li key={task.id} className="rounded-md border border-border bg-surface p-3">
+        <Panel as="li" key={task.id} pad="none" className="p-3">
           <div className="flex items-center justify-between gap-2">
             <Badge>{labelize(task.status)}</Badge>
-            {task.dueAt && <span className="text-xs text-muted-foreground">Due {formatDate(task.dueAt)}</span>}
+            {task.dueAt && (
+              <span className="font-mono text-xs text-muted-foreground">Due {formatDate(task.dueAt)}</span>
+            )}
           </div>
           <p className="mt-2 text-sm leading-6">{task.nextAction}</p>
           <div className="mt-2">
             <TaskStatusForm task={task} questionId={questionId} />
           </div>
-        </li>
+        </Panel>
       ))}
     </ul>
   );

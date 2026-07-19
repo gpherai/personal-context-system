@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { ButtonLink } from "@/components/ui/button-link";
+import { Button, ButtonLink, PageHeader, Panel, PanelTitle } from "@/components/ui";
 
 import { isDatabaseUnavailable } from "@/application/errors";
 import { getLedgerDropdowns, getLedgerEntries, getSavedFilters } from "@/application/query-service";
@@ -61,20 +60,16 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
 
     return (
       <div className="mx-auto grid max-w-6xl gap-6">
-        <header className="border-b border-border pb-6">
-          <p className="text-xs font-semibold uppercase tracking-widest text-primary">Ledger</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">Thinking ledger</h1>
-          <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-muted-foreground">
-            Chronological stream with structured filters.
-          </p>
-        </header>
+        <PageHeader
+          eyebrow="Ledger"
+          title="Thinking ledger"
+          description="Chronological stream with structured filters."
+        />
 
         <section className={hasCurrentFilter ? "grid gap-4 lg:grid-cols-[1fr_340px]" : "grid gap-4"}>
-          <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Context filters
-            </h2>
-            <div className="mt-3 grid gap-3">
+          <Panel pad="sm">
+            <PanelTitle>Context filters</PanelTitle>
+            <div className="grid gap-3">
               <div className="flex flex-wrap gap-2">
                 {systemSavedFilters.map((filter) => (
                   <Link
@@ -100,14 +95,16 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
                 </div>
               ) : null}
             </div>
-          </div>
+          </Panel>
           {hasCurrentFilter ? <SaveFilterForm params={currentFilterParams} /> : null}
         </section>
 
-        <form
+        <Panel
+          as="form"
+          pad="sm"
           action="/ledger"
           aria-label="Filter entries"
-          className="grid gap-3 rounded-lg border border-border bg-surface p-4 shadow-sm md:grid-cols-2 xl:grid-cols-[1fr_160px_140px_140px_160px_160px]"
+          className="grid gap-3 md:grid-cols-2 xl:grid-cols-[1fr_160px_140px_140px_160px_160px]"
         >
           <label className="grid gap-1.5 text-sm font-medium">
             Search
@@ -187,7 +184,7 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
             <Button type="submit">Apply</Button>
             <ButtonLink href="/ledger" variant="secondary">Clear</ButtonLink>
           </div>
-        </form>
+        </Panel>
 
         <EntryList entries={entries} />
       </div>

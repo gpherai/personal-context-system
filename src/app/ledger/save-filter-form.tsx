@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { Button, Field, Panel, PanelTitle } from "@/components/ui";
 import { FormMessage } from "@/components/form-message";
 import type { SavedFilterParams } from "@/domain/context";
 
@@ -26,39 +26,26 @@ export function SaveFilterForm({ params }: { params: SavedFilterParams }) {
   const [state, action, pending] = useActionState(createSavedFilterAction, initialMutationState);
 
   return (
-    <form action={action} className="grid gap-3 rounded-lg border border-border bg-surface p-4 shadow-sm">
-      <div>
-        <h2 className="text-sm font-semibold">Save current filter</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Persist this Ledger query for repeated review.</p>
-      </div>
+    <Panel as="form" pad="sm" action={action} className="grid gap-3">
+      <PanelTitle>Save current filter</PanelTitle>
+      <p className="-mt-2 text-sm text-muted-foreground">Persist this Ledger query for repeated review.</p>
       {filterParamKeys.map((key) => (
         <input key={key} name={key} type="hidden" value={params[key] ?? ""} />
       ))}
       <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-        <label className="grid gap-1.5 text-sm font-medium">
-          Name
-          <input
-            className="field-input"
-            name="name"
-            placeholder="Open architecture questions"
-            required
-          />
-        </label>
+        <Field name="name" label="Name" required>
+          {(p) => <input className="field-input" placeholder="Open architecture questions" {...p} />}
+        </Field>
         <div className="flex items-end">
           <Button type="submit" variant="secondary" disabled={pending}>
-            {pending ? "Saving..." : "Save filter"}
+            {pending ? "Saving…" : "Save filter"}
           </Button>
         </div>
       </div>
-      <label className="grid gap-1.5 text-sm font-medium">
-        Description
-        <input
-          className="field-input"
-          name="description"
-          placeholder="Optional note"
-        />
-      </label>
+      <Field name="description" label="Description">
+        {(p) => <input className="field-input" placeholder="Optional note" {...p} />}
+      </Field>
       <FormMessage state={state} />
-    </form>
+    </Panel>
   );
 }

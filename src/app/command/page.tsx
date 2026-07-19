@@ -3,6 +3,7 @@ import { Bot, FileText, FolderTree, Package, ShieldCheck, Terminal } from "lucid
 
 import { isDatabaseUnavailable } from "@/application/errors";
 import { getContextMirrorStatus, getSavedFilters } from "@/application/query-service";
+import { PageHeader, Panel, PanelTitle } from "@/components/ui";
 import { formatDateTime } from "@/lib/format";
 import { savedFilterHref, systemSavedFilters } from "@/lib/saved-filter-url";
 
@@ -24,20 +25,17 @@ export default async function CommandPage() {
 
   return (
     <div className="mx-auto grid max-w-6xl gap-6">
-      <header className="border-b border-border pb-6">
-        <p className="text-xs font-semibold uppercase tracking-widest text-primary">Command Center</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">AI context operations</h1>
-        <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-muted-foreground">
-          Generate local AI-readable projections from the canonical database.
-        </p>
-      </header>
+      <PageHeader
+        eyebrow="Command Center"
+        title="AI context operations"
+        description="Generate local AI-readable projections from the canonical database."
+      />
 
-      <section className="grid gap-4 md:grid-cols-[1fr_300px]">
-        <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
-          <div className="mb-4 flex items-center gap-2">
-            <FolderTree className="h-4 w-4 text-primary" aria-hidden="true" />
-            <h2 className="text-sm font-semibold">Context mirror</h2>
-          </div>
+      <section className="grid gap-4 lg:grid-cols-[1fr_300px]">
+        <Panel>
+          <PanelTitle icon={<FolderTree className="h-4 w-4 text-primary" aria-hidden="true" />}>
+            Context mirror
+          </PanelTitle>
           <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
             Output path:{" "}
             <code className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-xs">
@@ -47,50 +45,46 @@ export default async function CommandPage() {
           <RebuildMirrorForm />
 
           <div className="mt-5 border-t border-border pt-5">
-            <div className="mb-3 flex items-center gap-2">
-              <Package className="h-4 w-4 text-primary" aria-hidden="true" />
-              <h2 className="text-sm font-semibold">Verifiable bundle</h2>
-            </div>
+            <PanelTitle icon={<Package className="h-4 w-4 text-primary" aria-hidden="true" />}>
+              Verifiable bundle
+            </PanelTitle>
             <GenerateBundleForm />
           </div>
-        </div>
+        </Panel>
 
-        <aside className="grid gap-4 content-start">
-          <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
-            <div className="mb-2 flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-accent" aria-hidden="true" />
-              <h2 className="text-sm font-semibold">Write policy</h2>
-            </div>
+        <aside className="grid content-start gap-4">
+          <Panel pad="sm">
+            <PanelTitle icon={<ShieldCheck className="h-4 w-4 text-accent" aria-hidden="true" />}>
+              Write policy
+            </PanelTitle>
             <p className="text-sm leading-relaxed text-muted-foreground">
               AI reads generated projections first. Future writes must use validated commands.
             </p>
-          </div>
-          <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
-            <div className="mb-2 flex items-center gap-2">
-              <Bot className="h-4 w-4 text-primary" aria-hidden="true" />
-              <h2 className="text-sm font-semibold">Future adapters</h2>
-            </div>
+          </Panel>
+          <Panel pad="sm">
+            <PanelTitle icon={<Bot className="h-4 w-4 text-primary" aria-hidden="true" />}>
+              Future adapters
+            </PanelTitle>
             <p className="text-sm leading-relaxed text-muted-foreground">
               CLI and MCP wrap the same services as this UI.
             </p>
-          </div>
+          </Panel>
         </aside>
       </section>
 
-      <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
-        <div className="mb-3 flex items-center gap-2">
-          <Terminal className="h-4 w-4 text-primary" aria-hidden="true" />
-          <h2 className="text-sm font-semibold">Terminal command</h2>
-        </div>
+      <Panel>
+        <PanelTitle icon={<Terminal className="h-4 w-4 text-primary" aria-hidden="true" />}>
+          Terminal command
+        </PanelTitle>
         <code className="block overflow-x-auto rounded-md bg-surface-muted px-3 py-2 font-mono text-sm">
           npm run mirror:build
         </code>
-      </section>
+      </Panel>
 
-      <section className="grid gap-4 md:grid-cols-[300px_1fr]">
-        <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
-          <h2 className="text-sm font-semibold">Mirror status</h2>
-          <dl className="mt-3 grid gap-2.5 text-sm">
+      <section className="grid gap-4 lg:grid-cols-[300px_1fr]">
+        <Panel>
+          <PanelTitle>Mirror status</PanelTitle>
+          <dl className="grid gap-2.5 text-sm">
             <div>
               <dt className="font-medium text-foreground">State</dt>
               <dd className="mt-0.5 text-muted-foreground">
@@ -115,17 +109,17 @@ export default async function CommandPage() {
                 </div>
                 <div>
                   <dt className="font-medium text-foreground">Files</dt>
-                  <dd className="mt-0.5 text-muted-foreground">{mirrorStatus.files.length}</dd>
+                  <dd className="mt-0.5 font-mono text-muted-foreground">{mirrorStatus.files.length}</dd>
                 </div>
               </>
             )}
           </dl>
-        </div>
+        </Panel>
 
-        <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
-          <h2 className="text-sm font-semibold">Generated files</h2>
+        <Panel>
+          <PanelTitle>Generated files</PanelTitle>
           {mirrorStatus.files.length ? (
-            <div className="mt-3 grid max-h-96 gap-1 overflow-auto">
+            <div className="grid max-h-96 gap-1 overflow-auto">
               {mirrorStatus.files.slice(0, 80).map((file) => (
                 <code key={file} className="rounded bg-surface-muted px-2 py-1 font-mono text-xs text-muted-foreground">
                   {file}
@@ -133,16 +127,15 @@ export default async function CommandPage() {
               ))}
             </div>
           ) : (
-            <p className="mt-3 text-sm text-muted-foreground">No generated files found.</p>
+            <p className="text-sm text-muted-foreground">No generated files found.</p>
           )}
-        </div>
+        </Panel>
       </section>
 
-      <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
-        <div className="mb-3 flex items-center gap-2">
-          <FileText className="h-4 w-4 text-primary" aria-hidden="true" />
-          <h2 className="text-sm font-semibold">Context bundle variants</h2>
-        </div>
+      <Panel>
+        <PanelTitle icon={<FileText className="h-4 w-4 text-primary" aria-hidden="true" />}>
+          Context bundle variants
+        </PanelTitle>
         <div className="grid gap-4 md:grid-cols-2">
           {[
             { title: "Local full",     path: "bundles/local-full.md",      desc: "All local entries and the question queue." },
@@ -161,17 +154,17 @@ export default async function CommandPage() {
             </div>
           ))}
         </div>
-      </section>
+      </Panel>
 
-      <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
-        <h2 className="text-sm font-semibold">Context filters</h2>
-        <div className="mt-3 grid gap-3">
+      <Panel>
+        <PanelTitle>Context filters</PanelTitle>
+        <div className="grid gap-3">
           <div className="flex flex-wrap gap-2">
             {systemSavedFilters.map((filter) => (
               <Link
                 key={filter.name}
                 href={savedFilterHref(filter.params)}
-                className="inline-flex h-8 items-center cursor-pointer rounded-full border border-border bg-surface px-3.5 text-xs font-medium transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                className="inline-flex h-9 cursor-pointer items-center rounded-full border border-border bg-surface px-3.5 text-xs font-medium transition-colors duration-150 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:h-8"
               >
                 {filter.name}
               </Link>
@@ -183,7 +176,7 @@ export default async function CommandPage() {
                 <Link
                   key={filter.id}
                   href={savedFilterHref(filter.params)}
-                  className="inline-flex h-8 items-center cursor-pointer rounded-full border border-primary/25 bg-primary/8 px-3.5 text-xs font-medium text-primary transition-colors hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                  className="inline-flex h-9 cursor-pointer items-center rounded-full border border-primary/25 bg-primary/8 px-3.5 text-xs font-medium text-primary transition-colors duration-150 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:h-8"
                 >
                   {filter.name}
                 </Link>
@@ -191,7 +184,7 @@ export default async function CommandPage() {
             </div>
           ) : null}
         </div>
-      </section>
+      </Panel>
     </div>
   );
 }
