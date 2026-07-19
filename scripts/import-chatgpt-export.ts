@@ -100,7 +100,12 @@ async function main() {
         body: parsed.body,
         status: "active" as const,
         metadata: metadata as never,
-        searchText: metadataToSearchText(metadata) || null
+        searchText: metadataToSearchText(metadata) || null,
+        // Preserve the real conversation dates instead of letting Prisma's
+        // @default(now())/@updatedAt stamp the import run time — otherwise
+        // "sort by newest" reflects import order, not when the chat happened.
+        createdAt: new Date(parsed.createdAt),
+        updatedAt: new Date(parsed.updatedAt)
       };
 
       const existing = await prisma.source.findFirst({
