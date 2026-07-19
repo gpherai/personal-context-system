@@ -160,13 +160,7 @@ function SourceMetadataSection({ metadata }: { metadata: SourceMetadata }) {
           <MetadataField label="Started" value={formatDateTime(new Date(metadata.createdAt))} />
           <MetadataField
             label="ChatGPT project"
-            value={
-              metadata.projectId
-                ? chatGptProjectName(metadata.projectId)
-                  ? `${chatGptProjectName(metadata.projectId)} (${metadata.projectId})`
-                  : metadata.projectId
-                : undefined
-            }
+            value={metadata.projectId ? (chatGptProjectName(metadata.projectId) ?? "Unknown project") : undefined}
           />
         </dl>
       );
