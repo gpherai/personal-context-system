@@ -3,8 +3,9 @@ import type { EntryType, QuestionStatus, SourceType } from "./context";
 export const conversationProviderLabels = {
   chatgpt: "ChatGPT",
   claude: "Claude",
-  gemini: "Gemini"
-} satisfies Record<"chatgpt" | "claude" | "gemini", string>;
+  gemini: "Gemini",
+  "claude-code": "Claude Code"
+} satisfies Record<"chatgpt" | "claude" | "gemini" | "claude-code", string>;
 
 export interface TaxonomyDetail {
   label: string;
@@ -88,6 +89,6 @@ export const sourceTypeDetails = {
   },
   conversation: {
     label: "Conversation",
-    description: "Imported AI chat transcript (ChatGPT, Claude, Gemini)."
+    description: "Imported AI chat transcript (ChatGPT, Claude, Gemini, Claude Code)."
   }
 } satisfies Record<SourceType, TaxonomyDetail>;

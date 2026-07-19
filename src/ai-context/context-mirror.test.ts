@@ -214,6 +214,7 @@ describe("applyBundleSelection", () => {
           hasBranching: false,
           toolUseCount: 0,
           toolNames: [],
+          skillsUsed: [],
           hasThinking: false
         }
       }

@@ -270,7 +270,7 @@ const imageMetadataSchema = z.object({
 
 const conversationMetadataSchema = z.object({
   type: z.literal("conversation"),
-  provider: z.enum(["chatgpt", "claude", "gemini"]).default("chatgpt"),
+  provider: z.enum(["chatgpt", "claude", "gemini", "claude-code"]).default("chatgpt"),
   conversationId: z.string().trim().min(1),
   model: z.string().trim().max(120).optional(),
   models: z.array(z.string().trim().min(1)).default([]),
@@ -286,6 +286,7 @@ const conversationMetadataSchema = z.object({
   hasBranching: z.boolean().default(false),
   toolUseCount: z.number().int().min(0).default(0),
   toolNames: z.array(z.string().trim().min(1)).default([]),
+  skillsUsed: z.array(z.string().trim().min(1)).default([]),
   hasThinking: z.boolean().default(false)
 });
 
@@ -345,7 +346,7 @@ export const listSourcesQuerySchema = z.object({
   privacyLevel: privacyLevelSchema.optional(),
   // Conversation-only, but harmless as a generic filter: non-conversation
   // sources have no `provider` in metadata and simply won't match.
-  provider: z.enum(["chatgpt", "claude", "gemini"]).optional(),
+  provider: z.enum(["chatgpt", "claude", "gemini", "claude-code"]).optional(),
   // Only applies when `search` is absent — search results always order by
   // FTS rank (see SourceRepository.listSourcesWithTotal).
   sort: z.enum(sourceSortOptions).optional(),
