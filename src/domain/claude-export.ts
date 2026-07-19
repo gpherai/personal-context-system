@@ -31,6 +31,7 @@ export interface ParsedClaudeConversation {
   updatedAt: string;
   messages: ClaudeExportMessage[];
   messageCount: number;
+  rawMessageCount: number;
   toolOnlyMessageCount: number;
   body: string;
   charCount: number;
@@ -265,6 +266,7 @@ export function parseClaudeConversation(raw: ClaudeExportConversation): ParsedCl
     updatedAt: asString(raw.updated_at) ?? new Date(0).toISOString(),
     messages,
     messageCount: messages.length,
+    rawMessageCount: rawMessages.length,
     toolOnlyMessageCount,
     body: messageToBody(messages),
     charCount,

@@ -1,5 +1,11 @@
 import type { EntryType, QuestionStatus, SourceType } from "./context";
 
+export const conversationProviderLabels = {
+  chatgpt: "ChatGPT",
+  claude: "Claude",
+  gemini: "Gemini"
+} satisfies Record<"chatgpt" | "claude" | "gemini", string>;
+
 export interface TaxonomyDetail {
   label: string;
   description: string;

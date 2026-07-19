@@ -343,6 +343,9 @@ export const listSourcesQuerySchema = z.object({
   themeSlug: z.string().trim().optional(),
   status: recordStatusSchema.optional(),
   privacyLevel: privacyLevelSchema.optional(),
+  // Conversation-only, but harmless as a generic filter: non-conversation
+  // sources have no `provider` in metadata and simply won't match.
+  provider: z.enum(["chatgpt", "claude", "gemini"]).optional(),
   // Only applies when `search` is absent — search results always order by
   // FTS rank (see SourceRepository.listSourcesWithTotal).
   sort: z.enum(sourceSortOptions).optional(),

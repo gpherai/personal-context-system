@@ -106,7 +106,7 @@ async function seedThemesFromProjects(): Promise<{ created: number; updated: num
   return { created, updated };
 }
 
-async function importConversations(): Promise<{ created: number; updated: number }> {
+async function importConversations(): Promise<{ created: number; updated: number; deleted: number }> {
   const conversations = readZipJsonEntry("conversations.json") as ClaudeExportConversation[];
   if (!Array.isArray(conversations)) {
     throw new Error("Expected an array of conversations in conversations.json");
@@ -114,12 +114,31 @@ async function importConversations(): Promise<{ created: number; updated: number
 
   let created = 0;
   let updated = 0;
+  let deleted = 0;
 
   for (const raw of conversations) {
     const parsed = parseClaudeConversation(raw);
 
     if (!parsed.conversationId) {
       console.warn(`\nSkip gesprek zonder conversationId: "${parsed.title}"`);
+      continue;
+    }
+
+    const existing = await prisma.source.findFirst({
+      where: { metadata: { path: ["conversationId"], equals: parsed.conversationId } },
+      select: { id: true }
+    });
+
+    // Genuinely empty conversation (no chat_messages at all — an abandoned
+    // chat shell). Conversations that have messages but produced 0 kept text
+    // rows (image/attachment-only turns) are NOT skipped here: attachment
+    // content import is a planned follow-up, so those Sources stay in place.
+    if (parsed.rawMessageCount === 0) {
+      if (existing) {
+        await prisma.source.delete({ where: { id: existing.id } });
+        deleted++;
+        process.stdout.write("x");
+      }
       continue;
     }
 
@@ -145,11 +164,6 @@ async function importConversations(): Promise<{ created: number; updated: number
       metadata: metadata as never,
       searchText: metadataToSearchText(metadata) || null
     };
-
-    const existing = await prisma.source.findFirst({
-      where: { metadata: { path: ["conversationId"], equals: parsed.conversationId } },
-      select: { id: true }
-    });
 
     await prisma.$transaction(async (tx) => {
       const source = existing
@@ -188,7 +202,7 @@ async function importConversations(): Promise<{ created: number; updated: number
     }
   }
 
-  return { created, updated };
+  return { created, updated, deleted };
 }
 
 async function main() {
@@ -198,7 +212,10 @@ async function main() {
 
   console.log("\nGesprekken importeren uit conversations.json...");
   const convoResult = await importConversations();
-  console.log(`\n\nKlaar. ${convoResult.created} conversation-sources aangemaakt, ${convoResult.updated} bijgewerkt.`);
+  console.log(
+    `\n\nKlaar. ${convoResult.created} conversation-sources aangemaakt, ${convoResult.updated} bijgewerkt, ` +
+      `${convoResult.deleted} lege gesprekken verwijderd.`
+  );
 }
 
 main()

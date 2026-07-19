@@ -708,6 +708,7 @@ const laxListSourcesQuerySchema = listSourcesQuerySchema.extend({
   type: sourceTypeSchema.optional().catch(undefined),
   status: recordStatusSchema.optional().catch(undefined),
   privacyLevel: privacyLevelSchema.optional().catch(undefined),
+  provider: z.enum(["chatgpt", "claude", "gemini"]).optional().catch(undefined),
   sort: z.enum(sourceSortOptions).optional().catch(undefined)
 });
 
@@ -725,6 +726,7 @@ export async function listSources(repository: SourceRepository, params?: Record<
     // An explicit ?status= still overrides this.
     status: parseOptionalString(params?.["status"] ?? null) ?? "active",
     privacyLevel: parseOptionalString(params?.["privacyLevel"] ?? null),
+    provider: parseOptionalString(params?.["provider"] ?? null),
     sort: parseOptionalString(params?.["sort"] ?? null),
     limit: SOURCES_PAGE_SIZE,
     offset: (page - 1) * SOURCES_PAGE_SIZE

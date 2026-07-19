@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/button-link";
 import { privacyLevels, recordStatuses, sourceSortOptions, sourceTypes } from "@/domain/context";
-import { sourceTypeDetails } from "@/domain/taxonomy";
+import { conversationProviderLabels, sourceTypeDetails } from "@/domain/taxonomy";
 import { cn } from "@/lib/cn";
 import { labelize } from "@/lib/format";
 import type { SourceSummary } from "@/repositories/context-repository";
@@ -45,6 +45,8 @@ function privacyTone(privacy: SourceSummary["privacyLevel"]) {
 }
 
 function SourceCard({ source }: { source: SourceSummary }) {
+  const provider = source.metadata.type === "conversation" ? source.metadata.provider : undefined;
+
   return (
     <Link
       href={`/sources/${source.id}`}
@@ -52,8 +54,9 @@ function SourceCard({ source }: { source: SourceSummary }) {
     >
       <div className="flex items-start justify-between gap-3">
         <span className="text-sm font-medium leading-5">{source.title}</span>
-        <div className="flex shrink-0 gap-1.5">
+        <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
           <Badge tone="neutral">{sourceTypeDetails[source.type].label}</Badge>
+          {provider && <Badge tone="neutral">{conversationProviderLabels[provider]}</Badge>}
           <Badge tone={privacyTone(source.privacyLevel)}>{labelize(source.privacyLevel)}</Badge>
         </div>
       </div>
@@ -85,6 +88,7 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
     const activeTheme = param(rawSearchParams, "themeSlug");
     const activeStatus = param(rawSearchParams, "status");
     const activePrivacy = param(rawSearchParams, "privacyLevel");
+    const activeProvider = param(rawSearchParams, "provider");
     const activeSort = param(rawSearchParams, "sort");
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
@@ -188,6 +192,22 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
                 {privacyLevels.map((level) => (
                   <option key={level} value={level}>
                     {labelize(level)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="grid gap-1.5 text-xs font-medium">
+              AI
+              <select
+                className="field-select"
+                defaultValue={activeProvider}
+                name="provider"
+              >
+                <option value="">All AIs</option>
+                {Object.entries(conversationProviderLabels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
                   </option>
                 ))}
               </select>

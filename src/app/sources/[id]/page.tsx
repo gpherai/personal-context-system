@@ -10,7 +10,7 @@ import { SetupNotice } from "@/components/setup-notice";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button-link";
 import { formatDateTime, isValidId, labelize } from "@/lib/format";
-import { sourceTypeDetails } from "@/domain/taxonomy";
+import { conversationProviderLabels, sourceTypeDetails } from "@/domain/taxonomy";
 import { chatGptProjectName } from "@/domain/chatgpt-export";
 import type { SourceMetadata } from "@/domain/context";
 import type { SourceMessageRecord } from "@/repositories/context-repository";
@@ -154,7 +154,7 @@ function SourceMetadataSection({ metadata }: { metadata: SourceMetadata }) {
     case "conversation":
       return (
         <dl className="grid gap-3 sm:grid-cols-2">
-          <MetadataField label="Provider" value={labelize(metadata.provider)} />
+          <MetadataField label="Provider" value={conversationProviderLabels[metadata.provider]} />
           <MetadataField label="Model" value={metadata.model} />
           <MetadataField label="Messages" value={metadata.messageCount} />
           <MetadataField label="Started" value={formatDateTime(new Date(metadata.createdAt))} />

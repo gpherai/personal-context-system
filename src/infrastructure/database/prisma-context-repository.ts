@@ -1555,6 +1555,7 @@ export class PrismaContextRepository implements ContextRepository {
     if (query?.status) where.status = query.status;
     if (query?.privacyLevel) where.privacyLevel = query.privacyLevel;
     if (query?.themeSlug) where.themes = { some: { theme: { slug: query.themeSlug } } };
+    if (query?.provider) where.metadata = { path: ["provider"], equals: query.provider };
     return where;
   }
 

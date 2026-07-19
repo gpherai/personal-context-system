@@ -173,4 +173,42 @@ describe("parseClaudeConversation", () => {
     expect(parsed.toolOnlyMessageCount).toBe(1);
     expect(parsed.toolUseCount).toBe(1);
   });
+
+  it("reports rawMessageCount 0 for a conversation with no chat_messages at all", () => {
+    const raw: ClaudeExportConversation = {
+      uuid: "conv-6",
+      name: "",
+      created_at: "2025-01-01T00:00:00.000Z",
+      updated_at: "2025-01-01T00:00:00.000Z",
+      chat_messages: []
+    };
+
+    const parsed = parseClaudeConversation(raw);
+
+    expect(parsed.rawMessageCount).toBe(0);
+    expect(parsed.messageCount).toBe(0);
+  });
+
+  it("keeps rawMessageCount > 0 for an image-only message with no text, distinct from a truly empty conversation", () => {
+    const raw: ClaudeExportConversation = {
+      uuid: "conv-7",
+      name: "Image only",
+      created_at: "2025-01-01T00:00:00.000Z",
+      updated_at: "2025-01-01T00:00:00.000Z",
+      chat_messages: [
+        chatMessage({
+          uuid: "m1",
+          sender: "human",
+          createdAt: "2025-01-01T00:00:00.000Z",
+          content: [],
+          files: [{ file_uuid: "f1", file_name: "photo.png" }]
+        })
+      ]
+    };
+
+    const parsed = parseClaudeConversation(raw);
+
+    expect(parsed.rawMessageCount).toBe(1);
+    expect(parsed.messageCount).toBe(0);
+  });
 });
