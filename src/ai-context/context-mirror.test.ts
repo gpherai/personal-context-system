@@ -210,7 +210,11 @@ describe("applyBundleSelection", () => {
           charCount: 0,
           isArchived: false,
           isStarred: false,
-          isStudyMode: false
+          isStudyMode: false,
+          hasBranching: false,
+          toolUseCount: 0,
+          toolNames: [],
+          hasThinking: false
         }
       }
     ];

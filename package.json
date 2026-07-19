@@ -19,6 +19,7 @@
     "backup:create": "tsx scripts/create-local-backup.ts",
     "backup:restore": "tsx scripts/restore-local-backup.ts",
     "import:chatgpt": "tsx scripts/import-chatgpt-export.ts",
+    "import:claude": "tsx scripts/import-claude-export.ts",
     "pcs": "tsx scripts/pcs.ts",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build"
   },

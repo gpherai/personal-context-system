@@ -282,7 +282,11 @@ const conversationMetadataSchema = z.object({
   isStarred: z.boolean().default(false),
   isStudyMode: z.boolean().default(false),
   pinnedTime: z.string().optional(),
-  projectId: z.string().trim().min(1).optional()
+  projectId: z.string().trim().min(1).optional(),
+  hasBranching: z.boolean().default(false),
+  toolUseCount: z.number().int().min(0).default(0),
+  toolNames: z.array(z.string().trim().min(1)).default([]),
+  hasThinking: z.boolean().default(false)
 });
 
 export const sourceMetadataSchema = z.discriminatedUnion("type", [
