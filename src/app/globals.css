@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source not "../../docs/claude-code-sessions/**";
 
 @theme {
   --font-sans: var(--font-plus-jakarta), "Aptos", "Segoe UI", ui-sans-serif, system-ui, sans-serif;

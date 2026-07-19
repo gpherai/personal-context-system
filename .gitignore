@@ -32,6 +32,7 @@ data/backups/
 
 # Raw personal chat exports (large, contain secrets/PII) — never commit
 docs/*.zip
+docs/claude-code-sessions/
 
 # Logs and OS/editor noise
 *.log
