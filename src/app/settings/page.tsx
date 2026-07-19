@@ -1,4 +1,4 @@
-import { ThemeSwitcher } from "@/components/theme-switcher";
+import { ThemeSwitcher, themes } from "@/components/theme-switcher";
 
 export default function SettingsPage() {
   const mirrorDir = process.env.CONTEXT_MIRROR_DIR ?? "data/context-mirror";
@@ -18,10 +18,17 @@ export default function SettingsPage() {
         <div className="rounded-lg border border-border bg-surface shadow-sm">
           <div className="px-5 py-4">
             <p className="text-sm font-medium">Theme &amp; mode</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Four themes available: Ink (editorial blue), Saffron (warm earthy), Stone (cool teal), Brutalism (terminal hacker).
-              Each supports light and dark mode.
-            </p>
+            {/* Read from the theme registry so this copy cannot drift from the
+                themes that actually exist. */}
+            <dl className="mt-2 grid gap-1.5 text-sm">
+              {themes.map((theme) => (
+                <div key={theme.name} className="flex flex-wrap gap-x-2">
+                  <dt className="font-medium">{theme.label}</dt>
+                  <dd className="text-muted-foreground">{theme.description}</dd>
+                </div>
+              ))}
+            </dl>
+            <p className="mt-2 text-sm text-muted-foreground">Each supports light and dark mode.</p>
           </div>
           <div className="border-t border-border">
             <ThemeSwitcher />

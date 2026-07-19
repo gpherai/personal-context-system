@@ -16,7 +16,20 @@ const config = [
   {
     files: ["src/**/*.{ts,tsx}"],
     rules: {
-      "react-hooks/error-boundaries": "off"
+      "react-hooks/error-boundaries": "off",
+      // Server actions and react-markdown component overrides receive
+      // positional arguments they must accept but never use. The codebase
+      // already marks those with a leading underscore — honour that instead
+      // of reporting each one.
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+          destructuredArrayIgnorePattern: "^_"
+        }
+      ]
     }
   }
 ];
