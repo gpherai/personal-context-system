@@ -4,36 +4,14 @@ import { useSyncExternalStore } from "react";
 import { Moon, Sun } from "lucide-react";
 
 import { cn } from "@/lib/cn";
-
-// Single source of truth. Adding a theme means adding an entry here plus the
-// two matching selectors in globals.css — ThemeName is derived, so a typo in
-// one of the two places is a type error rather than a silent no-op.
-export const themes = [
-  {
-    name: "vellum",
-    label: "Vellum",
-    description: "Warm paper and ink indigo. Built for long reading.",
-    base: "var(--swatch-vellum-base)",
-    signal: "var(--swatch-vellum-signal)",
-  },
-  {
-    name: "graphite",
-    label: "Graphite",
-    description: "Achromatic greys with a violet signal. Built for dense scanning.",
-    base: "var(--swatch-graphite-base)",
-    signal: "var(--swatch-graphite-signal)",
-  },
-] as const;
-
-export type ThemeName = (typeof themes)[number]["name"];
-export type ThemeMode = "light" | "dark";
-
-const DEFAULT_THEME: ThemeName = "vellum";
-const DEFAULT_MODE: ThemeMode = "light";
-
-function isThemeName(value: string | undefined | null): value is ThemeName {
-  return themes.some((t) => t.name === value);
-}
+import {
+  DEFAULT_MODE,
+  DEFAULT_THEME,
+  isThemeName,
+  themes,
+  type ThemeMode,
+  type ThemeName,
+} from "@/lib/themes";
 
 function readCookie(name: string): string | undefined {
   if (typeof document === "undefined") return undefined;
