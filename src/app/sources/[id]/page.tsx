@@ -282,7 +282,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
             <div className="grid gap-3">
               {source.excerpts.map((excerpt) => (
                 <Panel key={excerpt.id} as="div" pad="none" className="p-3">
-                  <blockquote className="border-l-2 border-border pl-3 font-serif text-sm italic leading-6 text-muted-foreground">
+                  <blockquote className="serif-italic border-l-2 border-border pl-3 text-sm leading-6 text-muted-foreground">
                     &ldquo;{excerpt.text}&rdquo;
                   </blockquote>
                   {excerpt.note && <p className="mt-2 text-sm leading-6">{excerpt.note}</p>}

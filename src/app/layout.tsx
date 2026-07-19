@@ -8,19 +8,35 @@ import "./globals.css";
 
 // One superfamily, three roles: sans drives the interface, serif carries
 // long-form reading (transcripts, entry bodies), mono carries data.
+//
+// Every weight × style pair listed here becomes its own preloaded file, so the
+// lists are exactly what the app renders and nothing more.
+
+// Plex Sans has a variable cut on Google Fonts: omitting `weight` ships one
+// file that covers 400/500/600 instead of three static ones.
 const plexSans = IBM_Plex_Sans({
   subsets: ["latin"],
   variable: "--font-plex-sans",
   display: "swap",
-  weight: ["400", "500", "600"],
 });
 
+// Serif has no variable cut, so weight × style is a real cross product. Italic
+// is only ever used at 400 (blockquotes), so it gets its own call — asking for
+// weight ["400","600"] × style ["normal","italic"] here would also ship a
+// 600-italic face that nothing renders.
 const plexSerif = IBM_Plex_Serif({
   subsets: ["latin"],
   variable: "--font-plex-serif",
   display: "swap",
   weight: ["400", "600"],
-  style: ["normal", "italic"],
+});
+
+const plexSerifItalic = IBM_Plex_Serif({
+  subsets: ["latin"],
+  variable: "--font-plex-serif-italic",
+  display: "swap",
+  weight: ["400"],
+  style: ["italic"],
 });
 
 const plexMono = IBM_Plex_Mono({
@@ -43,7 +59,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html
       lang="en"
-      className={`${plexSans.variable} ${plexSerif.variable} ${plexMono.variable}${mode === "dark" ? " dark" : ""}`}
+      className={`${plexSans.variable} ${plexSerif.variable} ${plexSerifItalic.variable} ${plexMono.variable}${mode === "dark" ? " dark" : ""}`}
       data-theme={theme}
     >
       <body>

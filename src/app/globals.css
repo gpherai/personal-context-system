@@ -18,6 +18,12 @@
   --font-serif: var(--font-plex-serif), Georgia, ui-serif, serif;
   --font-mono:  var(--font-plex-mono), ui-monospace, "Cascadia Code", monospace;
 
+  /* Serif italic is a separate family, not a style of --font-serif: the italic
+     face is only loaded at weight 400, so it has to be requested by name.
+     Use the .serif-italic class below rather than `font-serif italic`, which
+     would synthesise a slant from the upright face. */
+  --font-serif-italic: var(--font-plex-serif-italic), Georgia, ui-serif, serif;
+
   /* ==========================================================
      DEFAULT DESIGN TOKENS — Theme: Vellum · Mode: light
      All colors in OKLCH (perceptually uniform, P3-capable).
@@ -211,6 +217,13 @@ body {
   .field-textarea:focus-visible {
     box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-primary) 22%, transparent);
     border-color: color-mix(in oklch, var(--color-primary) 55%, transparent);
+  }
+
+  /* Real italic serif, for quoted source text. */
+  .serif-italic {
+    font-family: var(--font-serif-italic);
+    font-style: italic;
+    font-weight: 400;
   }
 
   /* Long-form reading surface: transcript messages and entry bodies.

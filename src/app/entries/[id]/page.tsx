@@ -242,7 +242,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
             <div className="grid gap-3">
               {entry.excerpts.map((excerpt) => (
                 <div key={excerpt.id} className="border-t border-border pt-3 first:border-t-0 first:pt-0">
-                  <blockquote className="border-l-2 border-border pl-3 font-serif text-sm italic leading-6 text-muted-foreground">
+                  <blockquote className="serif-italic border-l-2 border-border pl-3 text-sm leading-6 text-muted-foreground">
                     &ldquo;{excerpt.text}&rdquo;
                   </blockquote>
                   {excerpt.note && <p className="mt-1 text-sm leading-6">{excerpt.note}</p>}
