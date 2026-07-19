@@ -6,8 +6,9 @@ import { initialMutationState } from "@/application/action-states";
 import { FieldError } from "@/components/field-error";
 import { TaxonomyPicker } from "@/components/taxonomy-picker";
 import { Button } from "@/components/ui/button";
-import { sourceTypes, type SourceType, type RecordStatus, type SourceMetadata } from "@/domain/context";
+import { privacyLevels, sourceTypes, type SourceType, type RecordStatus, type PrivacyLevel, type SourceMetadata } from "@/domain/context";
 import { sourceTypeDetails } from "@/domain/taxonomy";
+import { labelize } from "@/lib/format";
 import type { MutationState } from "@/application/action-states";
 import type { ReferenceRecord } from "@/repositories/context-repository";
 
@@ -20,6 +21,7 @@ interface Theme {
 interface SourceFormInitial {
   type?: SourceType;
   status?: RecordStatus;
+  privacyLevel?: PrivacyLevel;
   title?: string;
   description?: string;
   body?: string;
@@ -153,7 +155,11 @@ function ReferencesSection({ existingReferences }: { existingReferences: Referen
                 <p className="font-medium truncate">{ref.title}</p>
                 {ref.url && <p className="truncate text-xs text-muted-foreground">{ref.url}</p>}
               </div>
-              <button type="button" onClick={() => removeExisting(ref.id)} className="shrink-0 text-xs text-danger hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30">
+              <button
+                type="button"
+                onClick={() => removeExisting(ref.id)}
+                className="inline-flex h-11 shrink-0 items-center rounded-md px-3 text-xs font-medium text-danger transition-colors hover:bg-danger/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30"
+              >
                 Remove
               </button>
             </div>
@@ -164,7 +170,11 @@ function ReferencesSection({ existingReferences }: { existingReferences: Referen
                 <p className="font-medium truncate">{ref.title}</p>
                 <p className="truncate text-xs text-muted-foreground">{ref.url}</p>
               </div>
-              <button type="button" onClick={() => removeNew(ref.url)} className="shrink-0 text-xs text-danger hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30">
+              <button
+                type="button"
+                onClick={() => removeNew(ref.url)}
+                className="inline-flex h-11 shrink-0 items-center rounded-md px-3 text-xs font-medium text-danger transition-colors hover:bg-danger/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30"
+              >
                 Remove
               </button>
             </div>
@@ -206,6 +216,7 @@ export function SourceForm({ action, themes, initial, isEdit = false }: SourceFo
   const selectedThemeIds = initial?.themes?.map((t) => t.id) ?? [];
   const initialMeta = initial?.metadata as Record<string, unknown> | undefined;
   const existingReferences = initial?.references ?? [];
+  const isReadOnlyConversation = isEdit && initial?.type === "conversation";
 
   return (
     <form action={formAction} className="grid gap-5">
@@ -215,7 +226,7 @@ export function SourceForm({ action, themes, initial, isEdit = false }: SourceFo
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-3">
         <Field label="Type" error={state.fieldErrors?.type}>
           {isEdit ? (
             <>
@@ -230,6 +241,7 @@ export function SourceForm({ action, themes, initial, isEdit = false }: SourceFo
               name="type"
               defaultValue={initial?.type ?? ""}
               onChange={(e) => setSelectedType(e.target.value)}
+              required
             >
               <option value="">Choose a type…</option>
               {sourceTypes
@@ -249,37 +261,61 @@ export function SourceForm({ action, themes, initial, isEdit = false }: SourceFo
             <option value="archived">Archived</option>
           </select>
         </Field>
+
+        <Field label="Privacy" error={state.fieldErrors?.privacyLevel}>
+          <select className="field-select" name="privacyLevel" defaultValue={initial?.privacyLevel ?? "private"}>
+            {privacyLevels.map((level) => (
+              <option key={level} value={level}>
+                {labelize(level)}
+              </option>
+            ))}
+          </select>
+        </Field>
       </div>
 
       <Field label="Title" error={state.fieldErrors?.title}>
         <input
-          className="field-input"
+          className={isReadOnlyConversation ? "field-input bg-surface-muted text-muted-foreground" : "field-input"}
           name="title"
           defaultValue={initial?.title ?? ""}
           placeholder="Name of the source"
+          readOnly={isReadOnlyConversation}
+          maxLength={320}
           required
         />
       </Field>
 
       <Field label="Description">
         <textarea
-          className="field-textarea min-h-24"
+          className={
+            isReadOnlyConversation
+              ? "field-textarea min-h-24 bg-surface-muted text-muted-foreground"
+              : "field-textarea min-h-24"
+          }
           name="description"
           defaultValue={initial?.description ?? ""}
           placeholder="Optional short description"
+          readOnly={isReadOnlyConversation}
+          maxLength={4000}
         />
       </Field>
 
       <Field label="Body / full text">
         <textarea
-          className="field-textarea min-h-32"
+          className={
+            isReadOnlyConversation
+              ? "field-textarea min-h-32 bg-surface-muted text-muted-foreground"
+              : "field-textarea min-h-32"
+          }
           name="body"
           defaultValue={initial?.body ?? ""}
-          placeholder="Full text, katha, article body, or extended notes…"
+          placeholder="Full text, article body, or extended notes…"
+          readOnly={isReadOnlyConversation}
+          maxLength={200000}
         />
       </Field>
 
-      {(selectedType || isEdit) && (
+      {!isReadOnlyConversation && (selectedType || isEdit) && (
         <fieldset className="grid gap-4 rounded-md border border-border p-4">
           <legend className="px-1 text-xs font-medium text-muted-foreground">
             {selectedType ? sourceTypeDetails[selectedType as keyof typeof sourceTypeDetails]?.label ?? selectedType : ""} details

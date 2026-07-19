@@ -8,8 +8,10 @@ import { SetupNotice } from "@/components/setup-notice";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/button-link";
-import { sourceTypes } from "@/domain/context";
+import { privacyLevels, recordStatuses, sourceSortOptions, sourceTypes } from "@/domain/context";
 import { sourceTypeDetails } from "@/domain/taxonomy";
+import { cn } from "@/lib/cn";
+import { labelize } from "@/lib/format";
 import type { SourceSummary } from "@/repositories/context-repository";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +32,18 @@ function toStringRecord(raw: SearchParams): Record<string, string> {
   return result;
 }
 
+const sourceSortLabels: Record<(typeof sourceSortOptions)[number], string> = {
+  title: "Title (A–Z)",
+  createdAt: "Newest first",
+  updatedAt: "Recently updated"
+};
+
+function privacyTone(privacy: SourceSummary["privacyLevel"]) {
+  if (privacy === "sensitive") return "amber" as const;
+  if (privacy === "shareable") return "teal" as const;
+  return "neutral" as const;
+}
+
 function SourceCard({ source }: { source: SourceSummary }) {
   return (
     <Link
@@ -38,7 +52,10 @@ function SourceCard({ source }: { source: SourceSummary }) {
     >
       <div className="flex items-start justify-between gap-3">
         <span className="text-sm font-medium leading-5">{source.title}</span>
-        <Badge tone="neutral">{sourceTypeDetails[source.type].label}</Badge>
+        <div className="flex shrink-0 gap-1.5">
+          <Badge tone="neutral">{sourceTypeDetails[source.type].label}</Badge>
+          <Badge tone={privacyTone(source.privacyLevel)}>{labelize(source.privacyLevel)}</Badge>
+        </div>
       </div>
       {source.description && (
         <p className="line-clamp-2 text-xs leading-5 text-muted-foreground">{source.description}</p>
@@ -66,6 +83,9 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
 
     const activeType = param(rawSearchParams, "type");
     const activeTheme = param(rawSearchParams, "themeSlug");
+    const activeStatus = param(rawSearchParams, "status");
+    const activePrivacy = param(rawSearchParams, "privacyLevel");
+    const activeSort = param(rawSearchParams, "sort");
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
     function pageHref(targetPage: number): string {
@@ -139,6 +159,55 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
               </select>
             </label>
 
+            <label className="grid gap-1.5 text-xs font-medium">
+              Status
+              <select
+                className="field-select"
+                defaultValue={activeStatus}
+                name="status"
+              >
+                <option value="">Active</option>
+                {recordStatuses
+                  .filter((status) => status !== "active")
+                  .map((status) => (
+                    <option key={status} value={status}>
+                      {labelize(status)}
+                    </option>
+                  ))}
+              </select>
+            </label>
+
+            <label className="grid gap-1.5 text-xs font-medium">
+              Privacy
+              <select
+                className="field-select"
+                defaultValue={activePrivacy}
+                name="privacyLevel"
+              >
+                <option value="">All privacy levels</option>
+                {privacyLevels.map((level) => (
+                  <option key={level} value={level}>
+                    {labelize(level)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="grid gap-1.5 text-xs font-medium">
+              Sort
+              <select
+                className="field-select"
+                defaultValue={activeSort || "title"}
+                name="sort"
+              >
+                {sourceSortOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {sourceSortLabels[option]}
+                  </option>
+                ))}
+              </select>
+            </label>
+
             <div className="flex gap-2">
               <Button type="submit">Filter</Button>
               <ButtonLink href="/sources" variant="secondary">Reset</ButtonLink>
@@ -153,7 +222,7 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
 
         {searchCapped && (
           <p className="text-xs text-muted-foreground">
-            Meer dan {total} resultaten voor deze zoekopdracht — verfijn je zoekterm om alles te vinden.
+            More than {total} results for this search — narrow your search term to see everything.
           </p>
         )}
 
@@ -175,9 +244,8 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
                 <ButtonLink
                   href={pageHref(page - 1)}
                   variant="secondary"
-                  size="sm"
                   aria-disabled={page <= 1}
-                  className={page <= 1 ? "pointer-events-none opacity-50" : undefined}
+                  className={cn("min-h-11", page <= 1 ? "pointer-events-none opacity-50" : undefined)}
                 >
                   Previous
                 </ButtonLink>
@@ -187,9 +255,8 @@ export default async function SourcesPage({ searchParams }: { searchParams: Prom
                 <ButtonLink
                   href={pageHref(page + 1)}
                   variant="secondary"
-                  size="sm"
                   aria-disabled={page >= totalPages}
-                  className={page >= totalPages ? "pointer-events-none opacity-50" : undefined}
+                  className={cn("min-h-11", page >= totalPages ? "pointer-events-none opacity-50" : undefined)}
                 >
                   Next
                 </ButtonLink>

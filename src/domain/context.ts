@@ -300,6 +300,7 @@ const sourceCommandBaseSchema = z.object({
   description: z.string().trim().max(4000).optional(),
   body: z.string().trim().max(200000).optional(),
   status: recordStatusSchema.default("active"),
+  privacyLevel: privacyLevelSchema.default("private"),
   metadata: sourceMetadataSchema,
   themeIds: z.array(z.string().trim().min(1)).default([]),
   referenceIds: z.array(z.string().trim().min(1)).default([]),
@@ -329,11 +330,18 @@ export const deleteSourceCommandSchema = z.object({
   id: z.string().min(1)
 });
 
+export const sourceSortOptions = ["title", "createdAt", "updatedAt"] as const;
+export type SourceSortOption = (typeof sourceSortOptions)[number];
+
 export const listSourcesQuerySchema = z.object({
   search: z.string().trim().optional(),
   type: sourceTypeSchema.optional(),
   themeSlug: z.string().trim().optional(),
   status: recordStatusSchema.optional(),
+  privacyLevel: privacyLevelSchema.optional(),
+  // Only applies when `search` is absent — search results always order by
+  // FTS rank (see SourceRepository.listSourcesWithTotal).
+  sort: z.enum(sourceSortOptions).optional(),
   limit: z.number().int().min(1).max(200).default(50),
   offset: z.number().int().min(0).default(0)
 });

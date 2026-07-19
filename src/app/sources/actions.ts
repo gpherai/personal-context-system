@@ -8,6 +8,7 @@ import {
   deleteSource,
   makeSourceErrorState,
   parseCreateSourceFormData,
+  parseUpdateConversationSourceFormData,
   parseUpdateSourceFormData,
   updateSource,
   type MutationState
@@ -39,10 +40,20 @@ export async function updateSourceAction(
     return { status: "error", message: "Invalid source id." };
   }
 
-  const parsed = parseUpdateSourceFormData(id, formData);
+  const repository = createPrismaContextRepository();
+
+  const existing = await repository.getSource(id);
+  if (!existing) {
+    return { status: "error", message: "Source not found." };
+  }
+
+  const parsed =
+    existing.type === "conversation"
+      ? parseUpdateConversationSourceFormData(id, existing, formData)
+      : parseUpdateSourceFormData(id, formData);
   if (!parsed.success) return makeSourceErrorState(parsed.error);
 
-  const result = await updateSource(parsed.data, createPrismaContextRepository());
+  const result = await updateSource(parsed.data, repository);
   if (!result.ok) return result.state;
 
   revalidatePath("/sources");

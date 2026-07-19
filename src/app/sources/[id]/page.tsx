@@ -189,15 +189,16 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone="blue">{typeDetail.label}</Badge>
                 <Badge tone={source.status === "archived" ? "neutral" : "teal"}>{labelize(source.status)}</Badge>
+                <Badge tone={source.privacyLevel === "sensitive" ? "amber" : "neutral"}>
+                  {labelize(source.privacyLevel)}
+                </Badge>
               </div>
               <h1 className="mt-3 text-3xl font-bold tracking-tight">{source.title}</h1>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-end shrink-0">
-              {source.type !== "conversation" && (
-                <ButtonLink href={`/sources/${source.id}/edit`} variant="primary" className="w-full sm:w-auto">
-                  Edit
-                </ButtonLink>
-              )}
+              <ButtonLink href={`/sources/${source.id}/edit`} variant="primary" className="w-full sm:w-auto">
+                Edit
+              </ButtonLink>
               <DeleteForm
                 action={deleteSourceAction.bind(null, source.id)}
                 title="Delete source"
@@ -211,7 +212,8 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
 
         {source.type === "conversation" && (
           <p className="text-xs leading-5 text-muted-foreground">
-            Imported transcript — read-only. Promote a worthwhile insight to an Entry instead of editing this source.
+            Imported transcript — content is read-only. Promote a worthwhile insight to an Entry instead of editing
+            it here. Status, themes, and references can still be edited.
           </p>
         )}
 

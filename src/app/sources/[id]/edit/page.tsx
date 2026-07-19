@@ -25,10 +25,6 @@ export default async function EditSourcePage({ params }: { params: Promise<{ id:
       notFound();
     }
 
-    if (source.type === "conversation") {
-      notFound();
-    }
-
     const boundAction = updateSourceAction.bind(null, id);
 
     return (

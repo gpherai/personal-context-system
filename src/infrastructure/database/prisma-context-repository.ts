@@ -1452,6 +1452,7 @@ export class PrismaContextRepository implements ContextRepository {
           description: command.description ?? null,
           body: command.body ?? null,
           status: command.status,
+          privacyLevel: command.privacyLevel,
           metadata: command.metadata as Prisma.InputJsonValue,
           searchText: searchText || null
         }
@@ -1495,6 +1496,7 @@ export class PrismaContextRepository implements ContextRepository {
           description: command.description ?? null,
           body: command.body ?? null,
           status: command.status,
+          privacyLevel: command.privacyLevel,
           metadata: command.metadata as Prisma.InputJsonValue,
           searchText: searchText || null
         }
@@ -1551,6 +1553,7 @@ export class PrismaContextRepository implements ContextRepository {
     const where: Prisma.SourceWhereInput = {};
     if (query?.type) where.type = query.type;
     if (query?.status) where.status = query.status;
+    if (query?.privacyLevel) where.privacyLevel = query.privacyLevel;
     if (query?.themeSlug) where.themes = { some: { theme: { slug: query.themeSlug } } };
     return where;
   }
@@ -1569,8 +1572,14 @@ export class PrismaContextRepository implements ContextRepository {
     const where = this.buildSourceWhere(query);
 
     if (!query?.search) {
+      const orderBy: Prisma.SourceOrderByWithRelationInput[] =
+        query?.sort === "createdAt"
+          ? [{ createdAt: "desc" }]
+          : query?.sort === "updatedAt"
+            ? [{ updatedAt: "desc" }]
+            : [{ title: "asc" }];
       const [sources, total] = await Promise.all([
-        this.prisma.source.findMany({ where, include: sourceInclude, orderBy: [{ title: "asc" }], skip: offset, take: limit }),
+        this.prisma.source.findMany({ where, include: sourceInclude, orderBy, skip: offset, take: limit }),
         this.prisma.source.count({ where })
       ]);
       return {

@@ -34,6 +34,7 @@ import {
   privacyLevelSchema,
   promoteEntryToQuestionCommandSchema,
   recordStatusSchema,
+  sourceSortOptions,
   sourceTypeSchema,
   titleFromBody,
   updateDecisionStatusCommandSchema,
@@ -53,6 +54,7 @@ import type {
   FilterRepository,
   QuestionRepository,
   SnapshotRepository,
+  SourceRecord,
   SourceRepository,
   TaskRepository,
   TaxonomyRepository,
@@ -621,6 +623,7 @@ export function parseCreateSourceFormData(formData: FormData) {
     description: parseOptionalString(formStr(formData, "description")),
     body: parseOptionalString(formStr(formData, "body")),
     status: parseOptionalString(formStr(formData, "status")) ?? "active",
+    privacyLevel: parseOptionalString(formStr(formData, "privacyLevel")) ?? "private",
     metadata: buildRawSourceMetadata(type, formData),
     themeIds: formData.getAll("themeIds").filter((v): v is string => typeof v === "string" && v.trim().length > 0),
     referenceIds: formData.getAll("referenceId").filter((v): v is string => typeof v === "string" && v.trim().length > 0),
@@ -636,7 +639,28 @@ export function parseUpdateSourceFormData(id: string, formData: FormData) {
     description: parseOptionalString(formStr(formData, "description")),
     body: parseOptionalString(formStr(formData, "body")),
     status: parseOptionalString(formStr(formData, "status")),
+    privacyLevel: parseOptionalString(formStr(formData, "privacyLevel")),
     metadata: buildRawSourceMetadata(type, formData),
+    themeIds: formData.getAll("themeIds").filter((v): v is string => typeof v === "string" && v.trim().length > 0),
+    referenceIds: formData.getAll("referenceId").filter((v): v is string => typeof v === "string" && v.trim().length > 0),
+    newReferenceUrls: parseNewReferenceUrls(formData)
+  });
+}
+
+// Conversation sources are imported transcripts (read-only content): title,
+// description, body, and metadata must never change after import, only
+// status/themes/references can. The form never renders editable inputs for
+// the read-only fields, but this also re-asserts it server-side by ignoring
+// whatever the form sent for them and reusing the stored record instead.
+export function parseUpdateConversationSourceFormData(id: string, existing: SourceRecord, formData: FormData) {
+  return updateSourceCommandSchema.safeParse({
+    id,
+    title: existing.title,
+    description: existing.description,
+    body: existing.body,
+    status: parseOptionalString(formStr(formData, "status")) ?? existing.status,
+    privacyLevel: parseOptionalString(formStr(formData, "privacyLevel")) ?? existing.privacyLevel,
+    metadata: existing.metadata,
     themeIds: formData.getAll("themeIds").filter((v): v is string => typeof v === "string" && v.trim().length > 0),
     referenceIds: formData.getAll("referenceId").filter((v): v is string => typeof v === "string" && v.trim().length > 0),
     newReferenceUrls: parseNewReferenceUrls(formData)
@@ -682,7 +706,9 @@ export async function deleteSource(id: string, repository: SourceRepository) {
 
 const laxListSourcesQuerySchema = listSourcesQuerySchema.extend({
   type: sourceTypeSchema.optional().catch(undefined),
-  status: recordStatusSchema.optional().catch(undefined)
+  status: recordStatusSchema.optional().catch(undefined),
+  privacyLevel: privacyLevelSchema.optional().catch(undefined),
+  sort: z.enum(sourceSortOptions).optional().catch(undefined)
 });
 
 export const SOURCES_PAGE_SIZE = 60;
@@ -698,6 +724,8 @@ export async function listSources(repository: SourceRepository, params?: Record<
     // mining is done) drop out of the main list/search without deleting them.
     // An explicit ?status= still overrides this.
     status: parseOptionalString(params?.["status"] ?? null) ?? "active",
+    privacyLevel: parseOptionalString(params?.["privacyLevel"] ?? null),
+    sort: parseOptionalString(params?.["sort"] ?? null),
     limit: SOURCES_PAGE_SIZE,
     offset: (page - 1) * SOURCES_PAGE_SIZE
   });
